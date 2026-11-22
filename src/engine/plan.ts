@@ -61,7 +61,12 @@ export const PlanSchema = z
     finance: z.object({
       /** Keep at least this much cash in the business before paying the party. */
       reserveTargetCp: cp.max(1_000_000),
-      /** Share of cash above the reserve target paid out to the party weekly. */
+      /**
+       * "automatic": a share of cash above the reserve is paid to the party each week (handy in sandbox runs).
+       * "dm-only": money leaves the business only when the DM records a withdrawal (for real play).
+       */
+      payoutMode: z.enum(["automatic", "dm-only"]).default("automatic"),
+      /** Share of cash above the reserve target paid out to the party weekly (automatic mode). */
       ownerDrawShare: z.number().min(0).max(1),
       /** Share of weekly profit added to next week's advertising. */
       reinvestAdvertisingShare: z.number().min(0).max(1),

@@ -17,6 +17,18 @@ Every number in `src/world/` is provisional. This page lists what to calibrate f
 | 9 | **Kitchen rent share.** Should the business pay part of the canon 14 gp rent? | 25% (3.5 gp/wk) | `kitchenRentShareCpPerWeek` |
 | 10 | **Calendar.** Adopt or change the proposed 13×28+1 calendar, month and weekday names, festivals, and the current date. | Start 1 Harvest 940 CY (placeholder) | `world/calendar.ts` |
 | 11 | **Pace of events.** Is about one decision every 4–6 in-game weeks right for a well-run business? | ≥ 21 days between opportunity decisions; quiet spell 14 days after major events | `world/pacing.ts`, hazard rates in `world/events/` |
+| 12 | **The business account.** How much should the party keep in the business, and how much credit do suppliers give? | Floor = 1 week of running costs; credit = about 1 week of ingredients at +10% | `assumptions.account` |
+
+## The business account
+
+The pie money is kept apart from the party's own purses, in a place the party chooses (a label; the default is a strongbox, location to be decided). Only the DM records withdrawals and deposits, and the server enforces that. The account shows a dated statement, the balance, an **operating floor** (provisional: one week of running costs), and what is **safe to withdraw** above it.
+
+When the account runs dry there are no loans; the remedy is a deposit the DM records. Short of that:
+
+- **Overdrawn:** suppliers sell on credit at +10%, wages go out late (each employee loses morale every week), and players get a "bills going unpaid" notice.
+- **Beyond the suppliers' credit** (provisional: about a week of ingredients): deliveries stop, and the constructs stand idle until a deposit arrives. This is a major event with a session hook.
+- **Unattended sandbox runs** assume the party covers the debts at week's end once suppliers have cut the business off, recorded as a deposit by "sandbox assumption". Set "If the money runs out" to "Nobody does" for real play.
+- **Payouts:** the plan's "Paying the party" setting is either an automatic share above the reserve (handy for sandbox comparisons) or "only when the DM records a withdrawal" (real play).
 
 ## Pacing (how often things happen)
 

@@ -27,7 +27,7 @@ import { dateFromDay, type CalendarDate } from "./calendar";
 import { computeDerived, updateHidden, updateStaff, updateWholesaleAccounts, weekStats } from "./dynamics";
 import { dailyConstructCapacity, emptyLedger, hasActiveCondition, ledgerCosts, ledgerIncome, runOperations, weeklyFixedCosts } from "./economy";
 import { applyChange, applyEffect, hireStaff, nextId } from "./effects";
-import { clamp, clamp01, round } from "./math";
+import { clamp, clamp01, formatCp, round } from "./math";
 import { parsePlan, type BusinessPlan, type BusinessPlanInput } from "./plan";
 import { rngFor, uniformFor } from "./rng";
 import type {
@@ -47,6 +47,7 @@ import type {
   WorldState,
 } from "./types";
 import { initialWeather, nextMarket, nextWeather } from "./weather";
+import { accountStatusOf, accountSummary } from "./account";
 
 export type PauseMode = "never" | "decisions" | "decisions-and-major";
 
@@ -150,7 +151,7 @@ export function createInitialState(world: WorldDefinition, planInput: BusinessPl
     startDay: opts.startDay,
     day: opts.startDay,
     plan,
-    sandbox: { licensingOutcome: "approve", inspectionRulings: "uphold", ...opts.sandbox },
+    sandbox: { licensingOutcome: "approve", inspectionRulings: "uphold", partyTopUps: "when-cut-off", ...opts.sandbox },
     weather: initialWeather(world.climate, world.calendar, date),
     market: { meatShock: 0, grainShock: 0 },
     business: {
@@ -165,6 +166,7 @@ export function createInitialState(world: WorldDefinition, planInput: BusinessPl
       consecutiveLossWeeks: 0,
       reinvestAdvertisingCp: 0,
       lastWeekProfitCp: 0,
+      account: { location: "Business strongbox (location to be decided)", withdrawnCp: 0, depositedCp: 0, statement: [] },
     },
     threads: Object.fromEntries(world.threads.map((t) => [t.id, { id: t.id, stage: 0, progress: 0, peakStage: 0, lastChangeDay: opts.startDay, lastPressure: [] }])),
     conditions: [],
@@ -179,8 +181,13 @@ export function createInitialState(world: WorldDefinition, planInput: BusinessPl
     weeks: [],
     current: newAccumulator(1, opts.startDay, plan.startingCapitalCp - startup, { ...a.initialHidden }),
     seq: 0,
+    appliedInterventions: [],
   };
-  if (startup > 0) state.current.ledger.guildDues += startup;
+  state.business.account.statement.push({ id: nextId(state, "stmt"), day: opts.startDay, kind: "deposit", description: "Opening capital from the party", amountCp: plan.startingCapitalCp, balanceCp: plan.startingCapitalCp });
+  if (startup > 0) {
+    state.current.ledger.guildDues += startup;
+    state.business.account.statement.push({ id: nextId(state, "stmt"), day: opts.startDay, kind: "one-off", description: "Guild initiation fee", amountCp: -startup, balanceCp: plan.startingCapitalCp - startup });
+  }
   if (world.scheduled.some((s) => s.id === LICENSING_EVENT_ID)) {
     state.scheduled.push({ id: nextId(state, "sched"), eventId: LICENSING_EVENT_ID, day: state.business.licensing.decisionDay, data: {} });
   }
@@ -188,7 +195,7 @@ export function createInitialState(world: WorldDefinition, planInput: BusinessPl
 }
 
 function newAccumulator(index: number, startDay: number, cashStartCp: number, hiddenStart: WorldState["business"]["hidden"]): WeekAccumulator {
-  return { index, startDay, days: [], ledger: emptyLedger(), cashStartCp, hiddenStart };
+  return { index, startDay, days: [], ledger: emptyLedger(), cashStartCp, hiddenStart, tradingCp: 0, withdrawnCp: 0, depositedCp: 0 };
 }
 
 // ---------------------------------------------------------------------------
@@ -444,14 +451,16 @@ export interface Intervention {
  */
 export function applyIntervention(world: WorldDefinition, input: WorldState, intervention: Intervention): { state: WorldState; change: AppliedChange } {
   const state = structuredClone(input);
+  const refId = intervention.refId ?? `intervention-${state.seq + 1}`;
   const change = applyChange(world, state, {
     day: state.day,
     authority: intervention.authority,
-    cause: { kind: "intervention", refId: intervention.refId ?? `intervention-${state.seq + 1}` },
+    cause: { kind: "intervention", refId },
     description: intervention.description,
     effects: intervention.effects,
     recordedAt: intervention.recordedAt,
   });
+  state.appliedInterventions.push(refId);
   return { state, change };
 }
 
@@ -467,12 +476,19 @@ function closeWeek(world: WorldDefinition, state: WorldState, date: CalendarDate
   for (const line of weeklyFixedCosts(world, state, avgIngredient)) {
     acc.ledger[line.category] += line.amountCp;
     b.cashCp -= line.amountCp;
+    acc.tradingCp = (acc.tradingCp ?? 0) - line.amountCp;
   }
+  const wagesLate = b.cashCp < 0;
 
   const derivedBefore = computeDerived(world, state, estimatedWeeklyFixed(world, state));
   const hidden = updateHidden(world, state, stats, derivedBefore, date.absoluteDay);
   b.hidden = hidden.next;
   b.staff = updateStaff(world, state.plan, b.staff, stats);
+  if (wagesLate) {
+    // Wages went out late this week: everyone notices.
+    const hit = world.assumptions.account.unpaidWageMoraleHit;
+    b.staff = b.staff.map((s) => ({ ...s, morale: Math.max(0, s.morale - hit) }));
+  }
   const wholesale = updateWholesaleAccounts(world, state, stats);
   b.wholesaleAccounts = wholesale.accounts;
 
@@ -484,10 +500,32 @@ function closeWeek(world: WorldDefinition, state: WorldState, date: CalendarDate
   b.lastWeekProfitCp = profit;
   b.consecutiveLossWeeks = profit < 0 ? b.consecutiveLossWeeks + 1 : 0;
   b.reinvestAdvertisingCp = profit > 0 ? Math.round(profit * state.plan.finance.reinvestAdvertisingShare) : 0;
+  // Sandbox assumption: once suppliers have cut the business off, the party settles the debts at week's end.
+  if (state.sandbox.partyTopUps === "when-cut-off" && acc.days.some((d) => d.reason === "suppliers won't deliver until the bills are paid") && b.cashCp < 0) {
+    applyChange(world, state, {
+      day: date.absoluteDay,
+      authority: "sandbox-assumption",
+      cause: { kind: "scheduled", refId: `top-up-week-${acc.index}` },
+      description: "The party covers the business's debts (sandbox assumption)",
+      effects: [{ kind: "account", action: "deposit", amountCp: -b.cashCp, note: "The party covered the business's debts (sandbox assumption)" }],
+    });
+  }
+  const takings = acc.days.reduce((x, d) => x + d.revenueReportedCp, 0);
+  b.account.statement.push({
+    id: nextId(state, "stmt"),
+    day: date.absoluteDay,
+    kind: "trading",
+    description: `Week ${acc.index} trading: takings ${formatCp(takings)} less running costs ${formatCp(takings - (acc.tradingCp ?? 0))}`,
+    amountCp: acc.tradingCp ?? 0,
+    balanceCp: b.cashCp,
+  });
   let draw = 0;
-  if (b.cashCp > state.plan.finance.reserveTargetCp) draw = Math.floor((b.cashCp - state.plan.finance.reserveTargetCp) * state.plan.finance.ownerDrawShare);
+  if (state.plan.finance.payoutMode === "automatic" && b.cashCp > state.plan.finance.reserveTargetCp) {
+    draw = Math.floor((b.cashCp - state.plan.finance.reserveTargetCp) * state.plan.finance.ownerDrawShare);
+  }
   b.cashCp -= draw;
   b.ownerDrawsCp += draw;
+  if (draw > 0) b.account.statement.push({ id: nextId(state, "stmt"), day: date.absoluteDay, kind: "payout", description: "Automatic payout to the party (standing order)", amountCp: -draw, balanceCp: b.cashCp, authority: "standing-order" });
   b.minCashCp = Math.min(b.minCashCp, b.cashCp);
 
   const derived = computeDerived(world, state, estimatedWeeklyFixed(world, state));
@@ -516,6 +554,12 @@ function closeWeek(world: WorldDefinition, state: WorldState, date: CalendarDate
     profitCp: profit,
     skimmedCp: acc.days.reduce((a, d) => a + d.skimmedCp, 0),
     ownerDrawCp: draw,
+    withdrawnCp: acc.withdrawnCp ?? 0,
+    depositedCp: acc.depositedCp ?? 0,
+    ...(() => {
+      const summary = accountSummary(world, state);
+      return { accountStatus: accountStatusOf(b.cashCp, summary.floorCp, summary.creditLimitCp), accountFloorCp: summary.floorCp };
+    })(),
     cashStartCp: acc.cashStartCp,
     cashEndCp: b.cashCp,
     hiddenStart: acc.hiddenStart,
@@ -573,6 +617,7 @@ function simulateDay(world: WorldDefinition, state: WorldState): EventRecord[] {
     net += k === "revenue" ? v : -v;
   }
   b.cashCp += net;
+  state.current.tradingCp = (state.current.tradingCp ?? 0) + net;
   if (ops.record.skimmedCp > 0) {
     // Attribute skimming to the dishonest staff who handled cash (hidden from players).
     const takers = b.staff.filter((s) => s.traits.honesty < world.assumptions.dynamics.skimming.honestyThreshold && !ops.record.absentStaff.includes(s.id));
@@ -634,17 +679,16 @@ export function runSimulation(world: WorldDefinition, input: WorldState, options
   const early = settle();
   if (early) return early;
 
-  const interventions = options.interventions ?? [];
-  while (state.day <= untilDay) {
-    for (const iv of interventions.filter((x) => x.day === state.day)) {
-      applyChange(world, state, {
-        day: state.day,
-        authority: iv.authority,
-        cause: { kind: "intervention", refId: iv.refId ?? `scheduled-${iv.day}` },
-        description: iv.description,
-        effects: iv.effects,
-      });
+  const interventions = (options.interventions ?? []).map((iv, i) => ({ ...iv, refId: iv.refId ?? `scheduled-${iv.day}-${i}` }));
+  // Apply scheduled interventions for a day exactly once, even across replays and split runs.
+  const applyScheduled = (day: number) => {
+    for (const iv of interventions.filter((x) => x.day === day && !state.appliedInterventions.includes(x.refId))) {
+      applyChange(world, state, { day, authority: iv.authority, cause: { kind: "intervention", refId: iv.refId }, description: iv.description, effects: iv.effects });
+      state.appliedInterventions.push(iv.refId);
     }
+  };
+  while (state.day <= untilDay) {
+    applyScheduled(state.day);
     const fired = simulateDay(world, state);
     const halted = settle();
     if (halted) return halted;
@@ -657,6 +701,8 @@ export function runSimulation(world: WorldDefinition, input: WorldState, options
       if (major) return { state, status: "paused", pending: [...state.pending], blocking: [], pausedOnEvent: major };
     }
   }
+  // Anything recorded for "first thing tomorrow" (e.g. a withdrawal the DM just entered) shows immediately.
+  applyScheduled(state.day);
   return { state, status: "completed", pending: [...state.pending], blocking: [] };
 }
 

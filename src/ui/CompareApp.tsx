@@ -117,7 +117,7 @@ export function CompareApp({ catalog }: { catalog: Catalog }) {
               <table className="data">
                 <thead>
                   <tr>
-                    <th>Strategy</th><th>Median profit</th><th>Paid to party</th><th>P(net loss)</th><th>P(cash &lt; 0)</th><th>Losing weeks</th><th>End reputation</th><th>Waste</th><th>Adverse events</th>
+                    <th>Strategy</th><th>Median profit</th><th>Paid to party</th><th>P(net loss)</th><th>P(overdrawn)</th><th>P(party had to bail out)</th><th>Losing weeks</th><th>End reputation</th><th>Waste</th><th>Adverse events</th>
                     {THREADS.map((t) => <th key={t.label}>{t.label}</th>)}
                     <th className="left">Most common end state</th>
                   </tr>
@@ -132,6 +132,7 @@ export function CompareApp({ catalog }: { catalog: Catalog }) {
                         <td>{formatCp(s.ownerDrawsCp.p50)}</td>
                         <td>{pct(s.pNetLoss)}</td>
                         <td>{pct(s.pCashNegative)}</td>
+                        <td>{pct(s.pBailout)}</td>
                         <td>{s.lossWeeks.mean.toFixed(1)}</td>
                         <td>{Math.round(s.endReputation.mean)}</td>
                         <td>{pct(s.wasteRate.mean)}</td>

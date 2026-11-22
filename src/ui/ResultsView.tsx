@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { ColumnChart, DriverBars, LineChart, SmallMultiples, type LineSeries } from "./Charts";
 import { formatCp, pct, r1 } from "./format";
-import type { DmView, EventRecord, HiddenVar, PlayerView } from "./types";
+import type { AccountView, DmView, EventRecord, HiddenVar, PlayerView } from "./types";
 
 export interface RunSummary {
   label: string;
@@ -404,7 +404,123 @@ function Audit({ view }: { view: DmView }) {
   );
 }
 
-type Tab = "overview" | "reports" | "events" | "hidden" | "threads" | "inspector" | "ledger" | "audit";
+const ACCOUNT_STATUS: Record<AccountView["status"], { icon: string; label: string; color: string; note: string }> = {
+  healthy: { icon: "●", label: "Healthy", color: "var(--good)", note: "Above the operating floor." },
+  thin: { icon: "◆", label: "Running thin", color: "var(--warning)", note: "Below the operating floor (a week of running costs): a bad week could put it in the red." },
+  overdrawn: { icon: "▲", label: "Overdrawn", color: "var(--serious)", note: "Bills unpaid: suppliers charge extra and wages go out late." },
+  "cut-off": { icon: "■", label: "Cut off", color: "var(--critical)", note: "Suppliers have stopped delivering until the debts are paid." },
+};
+
+type AccountActionInput = { action: "withdraw" | "deposit" | "relocate"; amountCp?: number; location?: string; note: string };
+
+function AccountPanel({ account, onAccountAction, busy }: { account: AccountView; onAccountAction?: (a: AccountActionInput) => void; busy: boolean }) {
+  const [action, setAction] = useState<AccountActionInput["action"]>("withdraw");
+  const [gpAmount, setGpAmount] = useState(10);
+  const [note, setNote] = useState("");
+  const [location, setLocation] = useState("");
+  const [showTrading, setShowTrading] = useState(true);
+  const st = ACCOUNT_STATUS[account.status];
+  const rows = [...account.statement].reverse().filter((e) => showTrading || e.kind !== "trading");
+  const submit = () => {
+    if (!onAccountAction) return;
+    if (action === "relocate") onAccountAction({ action, location: location.trim() || "Business strongbox", note: note.trim() });
+    else onAccountAction({ action, amountCp: Math.round(Math.max(0, gpAmount) * 100), note: note.trim() });
+    setNote("");
+  };
+  return (
+    <div className="stack">
+      <div className="tiles">
+        <div className="panel tile">
+          <div className="tile-label">Balance</div>
+          <div className="tile-value">{formatCp(account.balanceCp)}</div>
+          <div className="tile-delta"><span className="badge"><span className="badge-dot" style={{ background: st.color }} aria-hidden="true" /><span aria-hidden="true">{st.icon}</span> {st.label}</span></div>
+        </div>
+        <div className="panel tile">
+          <div className="tile-label">Safe to withdraw</div>
+          <div className="tile-value">{formatCp(account.safeToWithdrawCp)}</div>
+          <div className="tile-delta">anything above the operating floor</div>
+        </div>
+        <div className="panel tile">
+          <div className="tile-label">Operating floor</div>
+          <div className="tile-value">{formatCp(account.floorCp)}</div>
+          <div className="tile-delta">≈ {formatCp(account.weeklyRunningCostsCp)} running costs a week</div>
+        </div>
+        <div className="panel tile">
+          <div className="tile-label">Taken out / put in</div>
+          <div className="tile-value">{formatCp(account.withdrawnCp)}</div>
+          <div className="tile-delta">deposits {formatCp(account.depositedCp)}</div>
+        </div>
+      </div>
+      <p className="small secondary">
+        {st.note} Kept at: <strong>{account.location}</strong>. Suppliers extend about {formatCp(account.creditLimitCp)} of credit before they stop delivering.
+      </p>
+
+      {onAccountAction ? (
+        <div className="panel panel-pad">
+          <h3 style={{ marginBottom: 8 }}>Record a withdrawal or deposit (DM)</h3>
+          <div className="row" style={{ alignItems: "end" }}>
+            <label className="field" style={{ width: 190 }}>
+              <span>Action</span>
+              <select value={action} onChange={(e) => setAction(e.target.value as AccountActionInput["action"])}>
+                <option value="withdraw">Party withdraws</option>
+                <option value="deposit">Party deposits</option>
+                <option value="relocate">Change where it's kept</option>
+              </select>
+            </label>
+            {action !== "relocate" ? (
+              <label className="field" style={{ width: 120 }}>
+                <span>Amount (gp)</span>
+                <input type="number" min={0} step={1} value={gpAmount} onChange={(e) => setGpAmount(Number(e.target.value))} />
+              </label>
+            ) : (
+              <label className="field" style={{ flex: 1, minWidth: 200 }}>
+                <span>Where</span>
+                <input type="text" value={location} maxLength={120} placeholder="e.g. strongbox under the stairs" onChange={(e) => setLocation(e.target.value)} />
+              </label>
+            )}
+            <label className="field" style={{ flex: 1, minWidth: 200 }}>
+              <span>Note</span>
+              <input type="text" value={note} maxLength={200} placeholder="what it's for" onChange={(e) => setNote(e.target.value)} />
+            </label>
+            <button type="button" className="btn btn-primary" disabled={busy || (action !== "relocate" && gpAmount <= 0)} onClick={submit}>Record</button>
+          </div>
+          {action === "withdraw" && gpAmount * 100 > account.safeToWithdrawCp && (
+            <p className="small" style={{ marginTop: 6, color: "var(--critical)" }}>This takes the business below its operating floor{gpAmount * 100 > account.balanceCp ? " and into the red" : ""}.</p>
+          )}
+          <p className="small muted" style={{ marginTop: 6 }}>Applies first thing tomorrow in game time; it's added to the statement and the audit trail.</p>
+        </div>
+      ) : (
+        <p className="small muted">Withdrawals and deposits are recorded by the DM.</p>
+      )}
+
+      <div className="panel panel-pad">
+        <div className="row" style={{ marginBottom: 6 }}>
+          <h3>Statement</h3>
+          <span className="spacer" />
+          <label className="check"><input type="checkbox" checked={showTrading} onChange={(e) => setShowTrading(e.target.checked)} /> Weekly trading lines</label>
+        </div>
+        <div className="table-wrap" style={{ maxHeight: 480, overflowY: "auto" }}>
+          <table className="data">
+            <thead><tr><th>Date</th><th className="left">Entry</th><th>Amount</th><th>Balance</th><th className="left">By</th></tr></thead>
+            <tbody>
+              {rows.map((e) => (
+                <tr key={e.id}>
+                  <td>{e.date}</td>
+                  <td className="left" style={{ whiteSpace: "normal" }}>{e.description}</td>
+                  <td style={{ color: e.amountCp < 0 ? "var(--critical)" : undefined }}>{e.kind === "note" ? "" : formatCp(e.amountCp)}</td>
+                  <td>{e.balanceCp !== undefined ? formatCp(e.balanceCp) : ""}</td>
+                  <td className="left">{e.by ?? ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type Tab = "overview" | "reports" | "events" | "account" | "hidden" | "threads" | "inspector" | "ledger" | "audit";
 
 export function ResultsView({
   view,
@@ -412,6 +528,7 @@ export function ResultsView({
   answers,
   onAnswer,
   onAcknowledge,
+  onAccountAction,
   busy,
 }: {
   view: DmView | PlayerView;
@@ -419,6 +536,7 @@ export function ResultsView({
   answers: Record<string, string>;
   onAnswer: (id: string, option: string, dueNow: boolean) => void;
   onAcknowledge: (eventId: string) => void;
+  onAccountAction?: (a: AccountActionInput) => void;
   busy: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
@@ -431,6 +549,7 @@ export function ResultsView({
         { id: "overview", label: "Overview" },
         { id: "reports", label: "Weekly reports" },
         { id: "events", label: "Events" },
+        { id: "account", label: "Account" },
         { id: "hidden", label: "Hidden state" },
         { id: "threads", label: "Threads" },
         { id: "inspector", label: "Why? (week inspector)" },
@@ -441,6 +560,7 @@ export function ResultsView({
         { id: "overview", label: "Overview" },
         { id: "reports", label: "Weekly reports" },
         { id: "events", label: "News & events" },
+        { id: "account", label: "Account" },
         { id: "ledger", label: "Ledger" },
       ];
   const activeTab = tabs.some((t) => t.id === tab) ? tab : "overview";
@@ -469,7 +589,7 @@ export function ResultsView({
             <div className="tiles">
               <Tile label="Total profit" value={formatCp(summary.totalProfitCp)} delta={delta("totalProfitCp")} />
               <Tile label="Paid to the party" value={formatCp(summary.ownerDrawsCp)} delta={delta("ownerDrawsCp")} />
-              <Tile label="Cash at the end" value={formatCp(summary.cashEndCp)} delta={delta("cashEndCp")} />
+              <Tile label="In the business account" value={formatCp(summary.cashEndCp)} delta={delta("cashEndCp")} note={`${ACCOUNT_STATUS[view.account.status].label} · ${formatCp(view.account.safeToWithdrawCp)} safe to withdraw`} />
               <Tile label="Lowest cash" value={formatCp(summary.minCashCp)} delta={delta("minCashCp")} />
               <Tile label="Losing weeks" value={String(summary.lossWeeks)} note={previous ? `previous run: ${previous.lossWeeks}` : undefined} />
               <Tile label="Pies sold" value={summary.sold.toLocaleString()} note={`${pct(summary.wasteRate)} of output wasted`} />
@@ -504,6 +624,7 @@ export function ResultsView({
         )}
         {activeTab === "reports" && <Reports reports={reports} showBasis={isDm} />}
         {activeTab === "events" && <EventsList view={view} />}
+        {activeTab === "account" && <AccountPanel account={view.account} onAccountAction={onAccountAction} busy={busy} />}
         {activeTab === "hidden" && isDm && (
           <div className="stack">
             <SmallMultiples labels={labels} items={HIDDEN_ORDER.map((h) => ({ name: h.label, values: view.state.weeks.map((w) => w.hiddenEnd[h.key]) }))} height={110} />

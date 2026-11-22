@@ -45,6 +45,8 @@ export interface RunMetrics {
   longestQuietWeeks: number;
   /** Most times any single thread stage was entered (loop detector). */
   maxStageRepeats: number;
+  /** Money the party had to put back in (bail-outs, incl. sandbox top-ups). */
+  partyDepositsCp: number;
 }
 
 export function classifyEndState(state: WorldState): EndState {
@@ -90,6 +92,7 @@ export function metricsFor(scenarioId: string, seed: string, state: WorldState):
     suspendedDays: state.history.flatMap((h) => h.effects).reduce((a, e) => a + (e.kind === "suspend" ? e.days : 0), 0),
     threadPeaks: Object.fromEntries(Object.values(state.threads).map((t) => [t.id, t.peakStage])),
     endState: classifyEndState(state),
+    partyDepositsCp: state.business.account.depositedCp,
     ...pacingMetrics(state),
   };
 }
@@ -150,6 +153,9 @@ export interface ScenarioSummary {
   majorMoments: Distribution;
   longestQuietWeeks: Distribution;
   maxStageRepeats: Distribution;
+  partyDepositsCp: Distribution;
+  /** Share of runs in which the party had to put money back in. */
+  pBailout: number;
   /** Share of runs ending with total profit below zero. */
   pNetLoss: number;
   /** Share of runs in which cash ever went negative. */
@@ -187,6 +193,8 @@ export function summarize(label: string, scenarioId: string, runs: RunMetrics[])
     majorMoments: dist(runs.map((r) => r.majorMoments)),
     longestQuietWeeks: dist(runs.map((r) => r.longestQuietWeeks)),
     maxStageRepeats: dist(runs.map((r) => r.maxStageRepeats)),
+    partyDepositsCp: dist(runs.map((r) => r.partyDepositsCp)),
+    pBailout: runs.filter((r) => r.partyDepositsCp > 0).length / n,
     pNetLoss: runs.filter((r) => r.totalProfitCp < 0).length / n,
     pCashNegative: runs.filter((r) => r.minCashCp < 0).length / n,
     threadReach,

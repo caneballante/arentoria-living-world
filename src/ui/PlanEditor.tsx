@@ -234,8 +234,18 @@ export function PlanEditor({ catalog, plan, onChange }: { catalog: Catalog; plan
       <Section n={12} title="Finance & reinvestment">
         <NumberField label="Starting capital" suffix="cp" value={plan.startingCapitalCp} min={0} step={100} onChange={(v) => set("startingCapitalCp", v)} hint={formatCp(plan.startingCapitalCp)} />
         <NumberField label="Cash reserve to keep" suffix="cp" value={plan.finance.reserveTargetCp} min={0} step={100} onChange={(v) => set("finance", { ...plan.finance, reserveTargetCp: v })} hint={formatCp(plan.finance.reserveTargetCp)} />
+        <Select
+          label="Paying the party"
+          value={plan.finance.payoutMode ?? "automatic"}
+          options={[
+            { value: "automatic", label: "Automatic share above the reserve (sandbox)" },
+            { value: "dm-only", label: "Only when the DM records a withdrawal (real play)" },
+          ]}
+          onChange={(v) => set("finance", { ...plan.finance, payoutMode: v })}
+          hint="The business money is kept apart from the party's own purses. Withdrawals and deposits are recorded by the DM on the Account tab."
+        />
         <div className="grid-2">
-          <NumberField label="Pay party (share above reserve)" suffix="%" value={Math.round(plan.finance.ownerDrawShare * 100)} min={0} max={100} onChange={(v) => set("finance", { ...plan.finance, ownerDrawShare: v / 100 })} />
+          {(plan.finance.payoutMode ?? "automatic") === "automatic" && <NumberField label="Pay party (share above reserve)" suffix="%" value={Math.round(plan.finance.ownerDrawShare * 100)} min={0} max={100} onChange={(v) => set("finance", { ...plan.finance, ownerDrawShare: v / 100 })} />}
           <NumberField label="Profit into advertising" suffix="%" value={Math.round(plan.finance.reinvestAdvertisingShare * 100)} min={0} max={100} onChange={(v) => set("finance", { ...plan.finance, reinvestAdvertisingShare: v / 100 })} />
         </div>
       </Section>

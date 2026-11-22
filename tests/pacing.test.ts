@@ -102,7 +102,7 @@ describe("plan changes between sessions", () => {
     const plan = planOf("commons-compliant");
     const revised = { ...plan, priceCp: 6, advertisingCpPerWeek: 120 };
     const day = START + 40;
-    const iv = { day, authority: "players" as const, description: "Plan revised", effects: [{ kind: "plan" as const, patch: revised, note: "Revised between sessions" }] };
+    const iv = { day, authority: "players" as const, description: "Plan revised", refId: `scheduled-${day}`, effects: [{ kind: "plan" as const, patch: revised, note: "Revised between sessions" }] };
     const scheduled = simulateScenario(world, { plan, seed: "revise", weeks: 12, startDay: START, interventions: [iv] });
 
     const first = runSimulation(world, createInitialState(world, plan, { seed: "revise", startDay: START }), { untilDay: day - 1 });

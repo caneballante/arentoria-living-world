@@ -17,8 +17,9 @@ Done:
 - Campaign-clock controls (day/week/month/"until something needs the party"), response windows on decisions, plan revisions applied mid-season, "since last time" digests.
 - Pacing tuned per in-game time: opportunity and dilemma decisions, decision spacing, quiet spells after major events, threats that resolve instead of looping, a pacing table in strategy comparison.
 - Risk and reward: a "pushed" construct workload (more output, strain, breakdowns, fire risk), showcase spectacles, strongbox robberies, consequences scaled to business size, escalating penalties for repeat offences, and a "careful expansion" scenario for like-for-like comparison.
+- A business account kept apart from the party's purses: dated statement, operating floor, safe-to-withdraw, DM-only withdrawals and deposits (server-enforced), real consequences when it runs dry, and an optional automatic payout for sandbox runs.
 - One-step launcher and a playtest plan (`docs/TEST_PLAN.md`).
-- 81 automated tests.
+- 91 automated tests.
 
 Next small steps (before Phase 2):
 

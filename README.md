@@ -26,7 +26,8 @@ Then, in the browser:
 3. Read the "Since last time" summary and the reports. **DM view** shows the hidden state and why each value changed; **Players** shows only what the party would learn.
 4. Answer decisions now, or before their deadline. Urgent ones stop the clock; unanswered ones fall back to the standing orders.
 5. Change the plan mid-season and click **Apply from day N** to continue under the new plan. Or restart the season and compare it with the previous run.
-6. Use **Compare strategies** to run every scenario (and your own plan) over many seeds, including how often each produces decisions and crises.
+6. Track the money on the **Account** tab. The business money is kept apart from the party's own purses (where it's kept is the party's choice). The DM records withdrawals and deposits; the tab shows the balance, the operating floor, what's safe to withdraw, and a dated statement.
+7. Use **Compare strategies** to run every scenario (and your own plan) over many seeds, including how often each produces decisions and crises.
 
 ## Commands
 

@@ -4,6 +4,7 @@
  * allow-listing (not by deleting fields), so hidden variables cannot leak by accident.
  */
 import { dateFromDay, formatDate, formatShortDate } from "../engine/calendar";
+import { accountSummary, type AccountSummary } from "../engine/account";
 import { describeEffect } from "../engine/effects";
 import type { BusinessPlan } from "../engine/plan";
 import type { RunResult } from "../engine/simulate";
@@ -28,6 +29,20 @@ export interface PartialWeek {
   daysElapsed: number;
   sold: number;
   takingsCp: number;
+}
+
+/** The business account as the party sees it: balance, floor, and a dated statement. */
+export interface AccountView extends AccountSummary {
+  statement: { id: string; date: string; kind: string; description: string; amountCp: number; balanceCp?: number; by?: string }[];
+}
+
+function accountView(world: WorldDefinition, state: WorldState): AccountView {
+  const short = (day: number) => formatShortDate(dateFromDay(world.calendar, day));
+  const by = (a?: string) => (a === "dm" ? "DM" : a === "players" ? "party" : a === "standing-order" ? "standing order" : a === "sandbox-assumption" ? "sandbox assumption" : undefined);
+  return {
+    ...accountSummary(world, state),
+    statement: state.business.account.statement.map((e) => ({ id: e.id, date: short(e.day), kind: e.kind, description: e.description, amountCp: e.amountCp, balanceCp: e.balanceCp, by: by(e.authority) })),
+  };
 }
 
 export interface ViewOptions {
@@ -78,6 +93,7 @@ export interface PlayerView {
   digest?: { title: string; lines: Omit<ReportLine, "basis">[] };
   /** Why the clock stopped (player-safe wording). */
   stoppedOn?: { id: string; title: string; text: string; severity: EventRecord["severity"] };
+  account: AccountView;
 }
 
 export interface DmView {
@@ -93,6 +109,7 @@ export interface DmView {
   clock: ClockInfo;
   currentWeek: PartialWeek;
   digest?: Digest;
+  account: AccountView;
   days: WorldState["current"]["days"];
   labels: {
     actors: Record<string, string>;
@@ -199,6 +216,7 @@ export function buildPlayerView(world: WorldDefinition, result: RunResult, opts:
         ? { id: result.pausedOnEvent.id, title: result.pausedOnEvent.title, text: result.pausedOnEvent.playerText, severity: result.pausedOnEvent.severity }
         : { id: result.pausedOnEvent.id, title: "The DM has paused the clock", text: "Something is happening that the DM wants to look at.", severity: "notable" }
       : undefined,
+    account: accountView(world, s),
     clock: clock(world, s),
     currentWeek: partialWeek(s),
     digest: (() => {
@@ -230,6 +248,7 @@ export function buildDmView(world: WorldDefinition, result: RunResult, opts: Vie
     clock: clock(world, s),
     currentWeek: partialWeek(s),
     digest: digestFor(world, s, opts),
+    account: accountView(world, s),
     days,
     labels: {
       actors: Object.fromEntries(world.actors.map((a) => [a.id, a.name])),

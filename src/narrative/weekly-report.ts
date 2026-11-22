@@ -133,6 +133,15 @@ export function buildWeeklyReport(world: WorldDefinition, state: WorldState, w: 
   if (w.weather.avgTempC < 6) add("weather", "good", "Cold enough that hot pies practically sold themselves.", `Avg ${w.weather.avgTempC}°C boosts hot-food appeal.`);
   for (const f of w.festivals) add("weather", "good", `${f} brought crowds into the streets.`, "Festival demand multiplier (proposed calendar).");
 
+  // --- The business account ---
+  if (w.accountStatus === "thin") {
+    add("summary", "bad", "Money in the business is getting thin — less than a week's running costs.", `Balance ${formatCp(w.cashEndCp)} vs operating floor ${formatCp(w.accountFloorCp)}.`);
+  } else if (w.accountStatus === "healthy" && w.cashEndCp >= w.accountFloorCp * 1.5 && w.index % 4 === 0) {
+    add("summary", "good", `The business could spare about ${formatCp(w.cashEndCp - w.accountFloorCp)} for the party without running short.`, `Safe to withdraw = balance ${formatCp(w.cashEndCp)} − floor ${formatCp(w.accountFloorCp)}.`);
+  }
+  if (w.withdrawnCp > 0) add("summary", "neutral", `The party withdrew ${formatCp(w.withdrawnCp)} from the business this week.`, "DM-recorded withdrawal(s).");
+  if (w.depositedCp > 0) add("summary", "neutral", `The party put ${formatCp(w.depositedCp)} into the business this week.`, "DM-recorded deposit(s).");
+
   // --- The constructs (the party can see their own chefs straining) ---
   if (h1.constructStrain >= 30) add("operations", "bad", "The constructs are running hot: one judders between batches and the kitchen smells of scorched brass.", `Construct strain ${round(h1.constructStrain, 0)} — serious breakdowns (even a fire) are now possible.`);
   else if (h1.constructStrain >= 18 && h0.constructStrain < 18) add("operations", "neutral", "The constructs are working flat out; the kitchen never really stops now.", `Construct strain ${round(h1.constructStrain, 0)}.`);

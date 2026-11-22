@@ -185,6 +185,11 @@ export function dailyConstructCapacity(world: WorldDefinition, plan: BusinessPla
   return c.count * c.piesPerDayEach * (plan.constructWorkload === "pushed" ? c.pushedCapacityMultiplier : 1);
 }
 
+/** How far into the red suppliers will let the business go before they stop delivering. */
+export function supplierCreditLimitCp(world: WorldDefinition, plan: BusinessPlan, priceIndex = 1): number {
+  return world.assumptions.account.supplierCreditWeeks * plan.weeklyProduction * qualityTierCost(world, plan.quality) * priceIndex;
+}
+
 export function productionCapacity(world: WorldDefinition, state: WorldState, day: number): number {
   return Math.floor(dailyConstructCapacity(world, state.plan) * modifierProduct(state, "productionCap", day));
 }
@@ -256,7 +261,10 @@ export function runOperations(world: WorldDefinition, state: WorldState, date: C
   const festivalBoost = date.festivals.length ? plan.festivalProductionMultiplier : 1;
   const planned = (plan.weeklyProduction / plan.operatingDays) * festivalBoost;
   const capacity = productionCapacity(world, state, day);
-  const produced = Math.max(0, Math.floor(Math.min(planned, capacity)));
+  // An overdrawn account buys on credit at a premium; past the credit limit, suppliers stop delivering.
+  const overdrawn = state.business.cashCp < 0;
+  const cutOff = state.business.cashCp < -supplierCreditLimitCp(world, plan, priceIndex);
+  const produced = cutOff ? 0 : Math.max(0, Math.floor(Math.min(planned, capacity)));
   const shortage = modifierProduct(state, "productionCap", day) < 1;
 
   const assignment = assignStaff(world, plan, state.business.staff, absent);
@@ -317,7 +325,7 @@ export function runOperations(world: WorldDefinition, state: WorldState, date: C
   const retailRevenue = channels.filter((c) => c.channel !== "wholesale").reduce((a, c) => a + c.revenueCp, 0);
 
   const wages = state.business.staff.filter((s) => !absent.has(s.id)).reduce((a, s) => a + s.wageCpPerDay, 0);
-  const ingredients = produced * unitIngredientCost(world, state, plan, priceIndex, day);
+  const ingredients = produced * unitIngredientCost(world, state, plan, priceIndex, day) * (overdrawn ? world.assumptions.account.arrearsIngredientPremium : 1);
   const fuel = produced * world.assumptions.fuelCostPerPieCp * fuelPriceIndex(world.market, world.calendar, date.dayOfYear);
   const taxes = plan.compliance === "full" ? retailRevenue * n.marketTaxRate : 0;
 
@@ -325,6 +333,7 @@ export function runOperations(world: WorldDefinition, state: WorldState, date: C
     record: {
       ...baseRecord,
       operating: true,
+      reason: cutOff ? "suppliers won't deliver until the bills are paid" : undefined,
       produced,
       sold,
       waste: produced - sold,

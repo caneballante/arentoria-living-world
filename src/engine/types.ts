@@ -178,6 +178,17 @@ export interface EconomicAssumptions {
     fairPriceQualitySlope: number;
   };
   wholesale: { piesPerAccountPerDay: number; priceFraction: number; maxNewAccountsPerWeek: number; lossPerShortfallWeek: number; initialAccounts: number };
+  /** The business account: operating floor, supplier credit and what happens when it runs dry. */
+  account: {
+    /** Weeks of running costs the account should hold; "safe to withdraw" is anything above this. */
+    operatingFloorWeeks: number;
+    /** Weeks of ingredients suppliers will extend on credit before refusing to deliver. */
+    supplierCreditWeeks: number;
+    /** Ingredient price multiplier while the account is overdrawn (buying on credit). */
+    arrearsIngredientPremium: number;
+    /** Morale lost by each employee for every week wages go out late. */
+    unpaidWageMoraleHit: number;
+  };
   /** Hidden state of a brand-new business. */
   initialHidden: HiddenState;
   /** Days from simulation start until the constructs' licensing decision (canon: ~six months). */
@@ -400,7 +411,9 @@ export type Effect =
   | { kind: "plan"; patch: PlanPatch; note: string }
   | { kind: "suspend"; days: number; reason: string }
   | { kind: "licensing"; status: LicensingStatus; note: string }
-  | { kind: "wholesaleAccounts"; delta: number };
+  | { kind: "wholesaleAccounts"; delta: number }
+  /** Money moved in or out of the business account by the DM (party withdrawals and deposits), or where it is kept. */
+  | { kind: "account"; action: "withdraw" | "deposit" | "relocate"; amountCp?: number; location?: string; note: string };
 
 export type PlanPatch = Partial<Omit<BusinessPlan, "standingOrders" | "finance">> & {
   standingOrders?: Partial<BusinessPlan["standingOrders"]>;
@@ -585,6 +598,10 @@ export interface WeekAccumulator {
   startDay: number;
   days: DayRecord[];
   ledger: WeekLedger;
+  /** Net cash from ordinary trading this week (takings minus running costs). */
+  tradingCp?: number;
+  withdrawnCp?: number;
+  depositedCp?: number;
   cashStartCp: number;
   hiddenStart: HiddenState;
 }
@@ -618,6 +635,12 @@ export interface WeekRecord {
   profitCp: number;
   skimmedCp: number;
   ownerDrawCp: number;
+  /** DM-recorded withdrawals and deposits this week (not profit or loss). */
+  withdrawnCp: number;
+  depositedCp: number;
+  accountStatus: AccountStatus;
+  /** Operating floor at the end of the week (weeks of running costs). */
+  accountFloorCp: number;
   cashStartCp: number;
   cashEndCp: number;
   hiddenStart: HiddenState;
@@ -633,10 +656,28 @@ export interface WeekRecord {
   eventIds: string[];
 }
 
+export type AccountStatus = "healthy" | "thin" | "overdrawn" | "cut-off";
+
+export interface StatementEntry {
+  id: string;
+  day: number;
+  kind: "trading" | "one-off" | "payout" | "withdrawal" | "deposit" | "note";
+  description: string;
+  amountCp: number;
+  /** Balance immediately after this entry, where it is exactly known. */
+  balanceCp?: number;
+  authority?: Authority;
+}
+
 export interface SandboxAssumptions {
   /** How DM-owned decisions are auto-resolved in unattended runs. */
   licensingOutcome: "approve" | "delay" | "deny";
   inspectionRulings: "uphold" | "lenient";
+  /**
+   * Unattended runs only: when suppliers have cut the business off, does the party cover
+   * the debts at week's end? In real play the DM records deposits instead ("never").
+   */
+  partyTopUps: "when-cut-off" | "never";
 }
 
 export interface WorldState {
@@ -665,6 +706,13 @@ export interface WorldState {
     consecutiveLossWeeks: number;
     reinvestAdvertisingCp: number;
     lastWeekProfitCp: number;
+    account: {
+      /** Where the party keeps the business money (their choice; a label). */
+      location: string;
+      withdrawnCp: number;
+      depositedCp: number;
+      statement: StatementEntry[];
+    };
   };
   threads: Record<string, ThreadState>;
   conditions: Condition[];
@@ -679,4 +727,6 @@ export interface WorldState {
   weeks: WeekRecord[];
   current: WeekAccumulator;
   seq: number;
+  /** Ids of scheduled interventions already applied (keeps replays idempotent). */
+  appliedInterventions: string[];
 }

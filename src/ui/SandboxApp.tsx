@@ -44,9 +44,19 @@ interface ApiResponse {
   view: DmView | PlayerView;
 }
 
+export interface AccountAction {
+  dayOffset: number;
+  action: "withdraw" | "deposit" | "relocate";
+  amountCp?: number;
+  location?: string;
+  note: string;
+}
+
 interface Session {
   basePlan: BusinessPlanInput;
   planChanges: { dayOffset: number; plan: BusinessPlanInput }[];
+  /** DM-recorded withdrawals, deposits and moves of the money (replayed like everything else). */
+  accountActions: AccountAction[];
   /** Days the clock has been asked to reach. */
   target: number;
   resolutions: Record<string, string>;
@@ -69,6 +79,7 @@ export function SandboxApp({ catalog }: { catalog: Catalog }) {
   const [mode, setMode] = useState<ViewMode>("dm");
   const [licensing, setLicensing] = useState<"approve" | "delay" | "deny">("approve");
   const [inspections, setInspections] = useState<"uphold" | "lenient">("uphold");
+  const [topUps, setTopUps] = useState<"when-cut-off" | "never">("when-cut-off");
   const [session, setSession] = useState<Session | null>(null);
   const [resp, setResp] = useState<ApiResponse | null>(null);
   const [issues, setIssues] = useState<{ path: string; message: string }[]>([]);
@@ -106,6 +117,7 @@ export function SandboxApp({ catalog }: { catalog: Catalog }) {
           body: JSON.stringify({
             plan: next.basePlan,
             planChanges: next.planChanges,
+            accountActions: next.accountActions,
             seed,
             days: next.target,
             pause: next.pause,
@@ -114,7 +126,7 @@ export function SandboxApp({ catalog }: { catalog: Catalog }) {
             digestFromOffset: next.digestFrom,
             stopWhenNeededFromOffset: next.stopFrom,
             view,
-            sandbox: { licensingOutcome: licensing, inspectionRulings: inspections },
+            sandbox: { licensingOutcome: licensing, inspectionRulings: inspections, partyTopUps: topUps },
           }),
         });
         const json = await res.json();
@@ -131,17 +143,17 @@ export function SandboxApp({ catalog }: { catalog: Catalog }) {
         setBusy(false);
       }
     },
-    [seed, licensing, inspections, resp],
+    [seed, licensing, inspections, topUps, resp],
   );
 
   /** Start over from day 0 with the current plan and run `days` days. */
   const runFresh = (days: number) =>
-    call({ basePlan: plan, planChanges: [], target: days, resolutions: {}, acknowledged: [], digestFrom: 0, pause }, mode, { fresh: true });
+    call({ basePlan: plan, planChanges: [], accountActions: [], target: days, resolutions: {}, acknowledged: [], digestFrom: 0, pause }, mode, { fresh: true });
 
   /** Move the clock forward from where it stands. */
   const advance = (days: number, untilNeeded = false) => {
     if (!session) {
-      call({ basePlan: plan, planChanges: [], target: days, resolutions: {}, acknowledged: [], digestFrom: 0, stopFrom: untilNeeded ? 0 : undefined, pause }, mode);
+      call({ basePlan: plan, planChanges: [], accountActions: [], target: days, resolutions: {}, acknowledged: [], digestFrom: 0, stopFrom: untilNeeded ? 0 : undefined, pause }, mode);
       return;
     }
     call({ ...session, target: elapsed + days, digestFrom: elapsed, stopFrom: untilNeeded ? elapsed : undefined, pause }, mode);
@@ -164,6 +176,11 @@ export function SandboxApp({ catalog }: { catalog: Catalog }) {
     const next = { ...session, planChanges: [...changes, { dayOffset: elapsed, plan }], digestFrom: elapsed };
     if (elapsed === 0) call({ ...next, basePlan: plan, planChanges: [] }, mode);
     else call(next, mode);
+  };
+  /** DM records a withdrawal/deposit: it applies "first thing tomorrow" and shows straight away. */
+  const onAccountAction = (a: Omit<AccountAction, "dayOffset">) => {
+    if (!session) return;
+    call({ ...session, accountActions: [...session.accountActions, { ...a, dayOffset: elapsed }] }, mode);
   };
   const switchMode = (m: ViewMode) => {
     setMode(m);
@@ -232,6 +249,13 @@ export function SandboxApp({ catalog }: { catalog: Catalog }) {
                 <option value="approve">Approve (canon expects)</option>
                 <option value="delay">Delay 4 weeks</option>
                 <option value="deny">Deny</option>
+              </select>
+            </label>
+            <label className="field" style={{ minWidth: 170 }}>
+              <span>If the money runs out</span>
+              <select value={topUps} onChange={(e) => setTopUps(e.target.value as typeof topUps)} title="Unattended runs only. In real play the DM records deposits.">
+                <option value="when-cut-off">Party covers debts (sandbox)</option>
+                <option value="never">Nobody does — I'll record deposits</option>
               </select>
             </label>
             <label className="field" style={{ minWidth: 140 }}>
@@ -303,7 +327,15 @@ export function SandboxApp({ catalog }: { catalog: Catalog }) {
 
         {resp ? (
           <div style={{ opacity: busy ? 0.6 : 1, transition: "opacity 120ms" }}>
-            <ResultsView view={resp.view} previous={previous} answers={session?.resolutions ?? {}} onAnswer={onAnswer} onAcknowledge={onAcknowledge} busy={busy} />
+            <ResultsView
+              view={resp.view}
+              previous={previous}
+              answers={session?.resolutions ?? {}}
+              onAnswer={onAnswer}
+              onAcknowledge={onAcknowledge}
+              onAccountAction={resp.role === "dm" && resp.view.kind === "dm" ? onAccountAction : undefined}
+              busy={busy}
+            />
           </div>
         ) : (
           <div className="panel empty">

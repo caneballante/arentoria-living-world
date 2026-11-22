@@ -61,6 +61,11 @@ export function buildDigest(world: WorldDefinition, state: WorldState, fromDay: 
     `Ledger over the period. Partial-week days count toward sales and takings only; costs settle at week end.`,
   );
 
+  // Money the party took out or put in.
+  for (const e of state.business.account.statement.filter((x) => x.day >= fromDay && x.day <= toDay && (x.kind === "withdrawal" || x.kind === "deposit"))) {
+    add("summary", "neutral", `${short(e.day)} — ${e.kind === "withdrawal" ? "Withdrawn" : "Deposited"}: ${formatCp(Math.abs(e.amountCp))}${e.description ? ` (${e.description})` : ""}. Balance ${formatCp(e.balanceCp ?? 0)}.`, `Recorded by ${e.authority ?? "the DM"}.`);
+  }
+
   // Qualitative trends players could sense.
   if (weeks.length >= 1) {
     const h0 = hiddenAt(state, fromDay - 1);

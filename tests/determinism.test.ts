@@ -75,6 +75,7 @@ describe("determinism and replay", () => {
         ...s,
         history: s.history.map((h) => ({ ...h, authority: "x", description: h.description.replace(" (no answer by the deadline)", "") })),
         events: s.events.map((e) => ({ ...e, resolution: e.resolution && { ...e.resolution, authority: "x" } })),
+        business: { ...s.business, account: { ...s.business.account, statement: s.business.account.statement.map((x) => ({ ...x, authority: x.authority && "x" })) } },
       });
     expect(strip(state)).toBe(strip(auto.state));
   });

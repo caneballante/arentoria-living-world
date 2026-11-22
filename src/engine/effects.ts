@@ -8,14 +8,18 @@
 
 import { clamp, clamp100 } from "./math";
 import { PlanSchema } from "./plan";
-import type { AppliedChange, Authority, Effect, WorldDefinition, WorldState } from "./types";
+import type { AppliedChange, Authority, Effect, StatementEntry, WorldDefinition, WorldState } from "./types";
 
 export function nextId(state: WorldState, prefix: string): string {
   state.seq += 1;
   return `${prefix}-${state.seq}`;
 }
 
-export function applyEffect(world: WorldDefinition, state: WorldState, effect: Effect, day: number): void {
+function statementEntry(state: WorldState, entry: Omit<StatementEntry, "id">): void {
+  state.business.account.statement.push({ id: nextId(state, "stmt"), ...entry });
+}
+
+export function applyEffect(world: WorldDefinition, state: WorldState, effect: Effect, day: number, authority?: Authority): void {
   const b = state.business;
   switch (effect.kind) {
     case "adjust": {
@@ -26,6 +30,34 @@ export function applyEffect(world: WorldDefinition, state: WorldState, effect: E
       b.cashCp += effect.amountCp;
       const cat = effect.amountCp >= 0 ? (effect.category === "revenue" ? "revenue" : "otherIncome") : effect.category;
       state.current.ledger[cat] += Math.abs(effect.amountCp);
+      statementEntry(state, { day, kind: "one-off", description: effect.note, amountCp: effect.amountCp, authority });
+      return;
+    }
+    case "account": {
+      // Withdrawals and deposits move money between the business and the party. They are not profit or loss.
+      if (effect.action === "relocate") {
+        b.account.location = effect.location ?? b.account.location;
+        statementEntry(state, { day, kind: "note", description: `Money now kept at: ${b.account.location}${effect.note ? ` (${effect.note})` : ""}`, amountCp: 0, authority });
+        return;
+      }
+      const amount = Math.max(0, Math.round(effect.amountCp ?? 0));
+      if (effect.action === "withdraw") {
+        b.cashCp -= amount;
+        b.account.withdrawnCp += amount;
+        state.current.withdrawnCp = (state.current.withdrawnCp ?? 0) + amount;
+      } else {
+        b.cashCp += amount;
+        b.account.depositedCp += amount;
+        state.current.depositedCp = (state.current.depositedCp ?? 0) + amount;
+      }
+      statementEntry(state, {
+        day,
+        kind: effect.action === "withdraw" ? "withdrawal" : "deposit",
+        description: effect.note || (effect.action === "withdraw" ? "Withdrawal by the party" : "Deposit by the party"),
+        amountCp: effect.action === "withdraw" ? -amount : amount,
+        balanceCp: b.cashCp,
+        authority,
+      });
       return;
     }
     case "addCondition": {
@@ -153,7 +185,7 @@ export function applyChange(
   state: WorldState,
   change: Omit<AppliedChange, "id"> & { authority: Authority },
 ): AppliedChange {
-  for (const e of change.effects) applyEffect(world, state, e, change.day);
+  for (const e of change.effects) applyEffect(world, state, e, change.day, change.authority);
   const record: AppliedChange = { id: nextId(state, "chg"), ...change };
   state.history.push(record);
   return record;
@@ -188,5 +220,7 @@ export function describeEffect(e: Effect): string {
       return `construct licensing → ${e.status}`;
     case "wholesaleAccounts":
       return `wholesale accounts ${e.delta >= 0 ? "+" : ""}${e.delta}`;
+    case "account":
+      return e.action === "relocate" ? `business money now kept at: ${e.location}` : `${e.action} ${Math.round(e.amountCp ?? 0)} cp (${e.note})`;
   }
 }
