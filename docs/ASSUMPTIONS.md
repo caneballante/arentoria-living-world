@@ -11,7 +11,7 @@ Every number in `src/world/` is provisional. This page lists what to calibrate f
 | 3 | **Construct output.** How many pies can three constructs bake in a day? This caps every strategy, and most good plans hit it. | 70/day each → 210/day | `constructs.piesPerDayEach` |
 | 4 | **Is luxury in High March meant to be the best strategy?** It currently earns about 2.2× the Commons plan at almost no risk. | High March: 150 buyers/day, quality weight 0.55, low crime | `neighborhoods.ts` (`high-march`) |
 | 5 | **How dangerous is the Commons?** Over 52 weeks a busy, law-abiding Commons cart that refuses protection draws the Ninepenny Crew to a warning in ~67% of runs. Too often? | crime 0.55, criminal attention tolerance 25, precautions −25% | `neighborhoods.ts`, `dynamics.criminal`, extortion thread in `events/threads.ts` |
-| 6 | **Licensing timeline.** When was the filing? Canon says approval in about six months. | Ruling on day 168 after the sim start (week 24) | `licensingDecisionAfterDays` |
+| 6 | **Licensing timeline.** When was the filing? Canon says approval in about six months. | Ruling on day 168 after the sim start (start of week 25) | `licensingDecisionAfterDays` |
 | 7 | **Wages and staff.** Is 2 sp/day right for a seller? How honest is the typical hire? | vendor 20 cp, runner 18 cp, guard 40 cp; skimming starts below honesty 50 | `marketWageCpPerDay`, `staff.ts`, `dynamics.skimming` |
 | 8 | **Guild dues and permits.** | Associate 2 gp + 1 gp/wk; member 10 gp + 2.5 gp/wk; permits 0.5–1.5 gp/wk | `assumptions.guild`, neighborhood fees |
 | 9 | **Kitchen rent share.** Should the business pay part of the canon 14 gp rent? | 25% (3.5 gp/wk) | `kitchenRentShareCpPerWeek` |

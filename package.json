@@ -8,6 +8,7 @@
     "node": ">=22.12"
   },
   "scripts": {
+    "launch": "node scripts/launch.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

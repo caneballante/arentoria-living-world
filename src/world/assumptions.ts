@@ -51,7 +51,7 @@ export const assumptions: EconomicAssumptions = {
   wholesale: { piesPerAccountPerDay: 30, priceFraction: 0.8, maxNewAccountsPerWeek: 1, lossPerShortfallWeek: 1, initialAccounts: 1 },
   initialHidden: { reputation: 50, loyalty: 0, visibility: 5, scrutiny: 5, guildRelation: 45, criminalAttention: 5, rivalHostility: 5 },
   // Canon: approval expected six months after filing. Assumes filing happened ~2 weeks before the
-  // simulation start (unresolved), so the ruling lands in week 24.
+  // simulation start (unresolved), so the ruling lands at the start of week 25.
   licensingDecisionAfterDays: 168,
   dynamics: {
     reputation: { adjustRate: 0.2, qualityPerTier: 10, valueWeight: 25, valueCap: 15, serviceWeight: 0.25, stockoutPenalty: 6, minExposurePies: 300 },

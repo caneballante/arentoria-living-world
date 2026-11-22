@@ -6,12 +6,18 @@ A persistent, simulation-driven companion to a tabletop D&D campaign set in Aren
 
 ## Quick start
 
-Requires Node.js 22.12+.
+Requires [Node.js](https://nodejs.org) 22.12 or newer.
+
+**Easiest:** double-click **`Launch Arentoria.cmd`** (Windows) or **`Launch Arentoria.command`** (Mac). It installs dependencies on the first run, starts the app on a free port and opens your browser. Close the window (or press Ctrl+C) to stop.
+
+From a terminal:
 
 ```bash
-npm install
-npm run dev          # http://localhost:3000
+npm run launch               # same as the double-click launcher
+npm run launch -- --prod     # production build (snappier pages)
 ```
+
+A 20-minute playtest checklist is in **[docs/TEST_PLAN.md](docs/TEST_PLAN.md)**.
 
 Then, in the browser:
 
@@ -27,7 +33,8 @@ With **Pause for decisions**, the run stops on the day a decision arises, such a
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | Web app (sandbox, strategy comparison, canon & assumptions register) |
+| `npm run launch` | Install if needed, start the app, open the browser (`-- --prod`, `-- --no-open`, `-- --port 4000`) |
+| `npm run dev` | Web app dev server only (sandbox, strategy comparison, canon & assumptions register) |
 | `npm test` | All automated tests (Vitest) |
 | `npm run typecheck` | TypeScript, strict |
 | `npm run build` | Production build (Vercel-compatible) |
