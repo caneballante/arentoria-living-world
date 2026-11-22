@@ -26,6 +26,8 @@
 import { dateFromDay, type CalendarDate } from "./calendar";
 import { computeDerived, updateHidden, updateStaff, updateWholesaleAccounts, weekStats } from "./dynamics";
 import { dailyConstructCapacity, emptyLedger, hasActiveCondition, ledgerCosts, ledgerIncome, runOperations, weeklyFixedCosts } from "./economy";
+import { stageViolations } from "./stage";
+export { stageViolations } from "./stage";
 import { applyChange, applyEffect, hireStaff, nextId } from "./effects";
 import { clamp, clamp01, formatCp, round } from "./math";
 import { parsePlan, type BusinessPlan, type BusinessPlanInput } from "./plan";
@@ -110,7 +112,7 @@ export interface PlanCheck {
 }
 
 export function checkPlan(world: WorldDefinition, plan: BusinessPlan): PlanCheck {
-  const errors: string[] = [];
+  const errors: string[] = [...stageViolations(world, plan)];
   const warnings: string[] = [];
   if (!world.neighborhoods[plan.neighborhood]) errors.push(`Unknown neighborhood "${plan.neighborhood}"`);
   if (!world.assumptions.qualityTiers.some((t) => t.tier === plan.quality)) errors.push(`Unknown quality tier ${plan.quality}`);

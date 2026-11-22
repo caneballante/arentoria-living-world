@@ -6,7 +6,9 @@ The goal is to confirm the prototype works, and to collect your judgment on whet
 
 The **campaign clock** bar is how you move time: **+1 day**, **+1 week**, **+4 weeks**, or **Until something needs the party** (up to 8 weeks, stopping as soon as a decision arises or something major happens). **Run a whole season** plays 13–52 weeks in one go.
 
-Start with the defaults: *Conservative Commons cart*, seed `autumn-940`, "Stop and ask".
+**First, the real starting point.** The default plan is *Starting out: one cart in the Commons*. Check the "Business size" box at the top of the plan: you can't add a second outlet, hire a second person, push the constructs, or bake more than 500 pies a week. Click **+1 week**: the report shows the week's summary and up to three notes. Click **Every note + DM explanations** to see the rest. Then try **Unrestricted (sandbox)** and back: a bigger plan offers **Trim the plan to fit**.
+
+For the steps below, pick *Conservative Commons cart* (an unrestricted strategy study), seed `autumn-940`, "Stop and ask".
 
 | # | Do | Expect |
 |---|---|---|
@@ -18,7 +20,7 @@ Start with the defaults: *Conservative Commons cart*, seed `autumn-940`, "Stop a
 | 6 | **Change the plan mid-season.** Raise **Price per pie** by 1 cp. | A banner says "The plan has changed" with **Apply from day N**, **Restart…** and **Undo edits**. The clock buttons wait until you choose. |
 | 7 | Click **Apply from day N**, then **+4 weeks**. Open **Audit trail**. | The business carries on under the new price. The audit trail lists "Business plan revised between sessions". |
 | 7b | **The business account.** Open the **Account** tab. As DM, record a withdrawal (say 15 gp, "Shopping for the dungeon"), then use "Change where it's kept". Click **+1 week**. | The balance drops immediately and the withdrawal appears on the statement "by DM". It's counted once after the clock moves. The tab shows the operating floor and what's safe to withdraw. To feel running dry, set "If the money runs out" to **Nobody does** and withdraw nearly everything: bills go unpaid, wages go out late, and then suppliers stop delivering until you record a deposit. |
-| 8 | Click **Players** in the top bar. | The same moment as the party sees it: the digest, reports, open decisions with deadlines and the account statement (read-only), but no hidden numbers, no "↳" explanations, and no Threads/Why tabs. Switch back to **DM**. |
+| 8 | Click **Players** in the top bar. | The same moment as the party sees it: the digest, short reports (summary plus up to three notes), open decisions with deadlines and the account statement (read-only), but no hidden numbers, no "↳" explanations, and no Threads/Why tabs. Switch back to **DM**. |
 | 9 | **Whole season, unattended.** Set "When a decision comes due" to **Don't stop**, choose **26 weeks**, then click **Restart & run season**. Click it again. | Total profit about **273 gp**, identical both times (same seed + same plan = same world). Every decision was handled by the standing orders. |
 | 10 | Change the price to **7 cp** and click **Restart & run season** again. | Profit drops to about **127 gp**. The tiles say "▼ … vs previous run", and the cash chart shows the previous run dashed. |
 | 11 | Pick the **Aggressive Grand Market expansion** scenario and run the season with **Stop and ask**. Decline the guild and refuse the crew. | A busier, rougher year: the guild's formal notice (about week 8), an inspection you rule on as DM (week 9), a formal complaint, then the protection racket's proposition, warning and reprisal (weeks 18–22). Warning signs come before each escalation. Joining the guild or paying the crew changes everything after that point. |
@@ -35,7 +37,8 @@ Start with the defaults: *Conservative Commons cart*, seed `autumn-940`, "Stop a
 - **Money.** Does ~10 gp/week for an honest Commons cart and ~25 gp/week for a luxury High March business feel right next to 14 gp/week rent?
 - **Trouble.** A busy Commons cart that refuses to pay usually meets the Ninepenny Crew in its first year (watchers, then a demand, then a warning). Too often, or about right?
 - **Risk.** Is pushing the constructs tempting but scary? Is a kitchen fire in about one pushed year in six the right level of danger?
-- **Voice.** Do the reports and the "since last time" summary read like something the party would hear?
+- **Voice.** Do the reports and the "since last time" summary read like something the party would hear? Are three notes a week the right amount?
+- **Starting small.** Does one cart with one seller feel like the right start? It earns only about 2–4 gp a week after costs (see ASSUMPTIONS, "Starting small").
 - **Decisions.** Which choices felt meaningful, and which decisions are missing?
 
 ## Automated checks (developers)

@@ -19,6 +19,22 @@ Every number in `src/world/` is provisional. This page lists what to calibrate f
 | 11 | **Pace of events.** Is about one decision every 4–6 in-game weeks right for a well-run business? | ≥ 21 days between opportunity decisions; quiet spell 14 days after major events | `world/pacing.ts`, hazard rates in `world/events/` |
 | 12 | **The business account.** How much should the party keep in the business, and how much credit do suppliers give? | Floor = 1 week of running costs; credit = about 1 week of ingredients at +10% | `assumptions.account` |
 | 13 | **Districts.** Do the characters above match the city? Should the Shades and the Outer Ward be more or less dangerous? Should the Scholarium's recess be in summer? What is Guildstrand like? | See "The districts" | `neighborhoods.ts`, `actors.ts` |
+| 14 | **Starting small.** Is one cart, one seller and 500 pies a week the right start? Should it earn more than ~2–4 gp a week (lower rent share, busier cart)? What unlocks next, and when? | See "Starting small" | `src/world/stages.ts`, `kitchenRentShareCpPerWeek` |
+
+## Starting small (business size)
+
+The DM's guard rail (22 Nov 2026): the party **starts with one district, one cart and one hire**, and the business grows only when the DM unlocks a bigger size. The plan's "Business size" sets the limits, and the server rejects anything bigger, including a mid-season revision. Only the DM can change the size.
+
+| Size | Limits |
+|---|---|
+| **Starting out** | One street cart in one district; one hire (a seller); up to **500 pies a week** (provisional); constructs at a steady pace; no extra festival-day baking. |
+| **Unrestricted (sandbox)** | No limits. For strategy studies only. |
+
+The next sizes (a stall, a second seller, delivery, more output, pushing the constructs) are for the table to decide as the business grows.
+
+**What a starting cart earns** (Commons, honest pies at 5 cp, 450 a week, 20 seeds): about **49 gp in the first 26 weeks and 131 gp in 52**, rising from about break-even to roughly **4 gp a week** as people learn about the cart, and it never loses money over a year. One seller sells about 400–450 pies a week. The kitchen rent share (3.5 gp a week) is the largest cost. A cart is hopeless in High March or the Crown Ward (few buyers, and they don't buy from carts), and the Shades is thin at 4 cp. If a starting cart should earn more, the knobs are the rent share (`kitchenRentShareCpPerWeek`) and the cart's share of district traffic (`channels.cart.trafficShare`).
+
+**Short reports.** Each weekly report keeps its summary plus the three notes that matter most (events and threats first, weather last). Players see only that; the DM can switch to every note with its explanation. A starting cart averages about 3 lines a week, down from about 9 (lines plus DM explanations).
 
 ## The districts
 

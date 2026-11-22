@@ -6,6 +6,7 @@ import { dateFromDay, formatDate } from "../engine/calendar";
 import { formatCp } from "../engine/math";
 import type { BusinessPlanInput } from "../engine/plan";
 import { arentoria, DEFAULT_START_DAY, scenarios } from "../world";
+import { unmodelledNeighborhoods } from "../world/neighborhoods";
 
 export interface Catalog {
   startDate: string;
@@ -13,6 +14,18 @@ export interface Catalog {
   scenarios: { id: string; label: string; summary: string; quality: string; plan: BusinessPlanInput }[];
   neighborhoods: { id: string; name: string; description: string }[];
   unmodelled: string[];
+  /** Business sizes (the DM's guard rails) and their limits. */
+  stages: {
+    id: string;
+    label: string;
+    description: string;
+    outlets?: Record<string, number>;
+    maxStaff?: number;
+    roles?: string[];
+    maxWeeklyProduction?: number;
+    allowPushedWorkload: boolean;
+    allowFestivalPush: boolean;
+  }[];
   channels: { type: string; label: string; description: string; role: string }[];
   staff: { id: string; name: string; roles: string[]; blurb: string; askingWageCpPerDay: number; provenance: string }[];
   qualityTiers: { tier: number; label: string; costHint: string }[];
@@ -30,7 +43,18 @@ export function publicCatalog(): Catalog {
     calendarLabel: w.calendar.label,
     scenarios: scenarios.map((s) => ({ id: s.id, label: s.label, summary: s.summary, quality: s.quality, plan: s.plan })),
     neighborhoods: Object.values(w.neighborhoods).map((n) => ({ id: n.id, name: n.name, description: n.description })),
-    unmodelled: ["Guildstrand", "Stoneback", "Scholarium", "Crown Ward", "the Shades", "Outer Ward"],
+    unmodelled: unmodelledNeighborhoods,
+    stages: Object.values(w.stages).map((s) => ({
+      id: s.id,
+      label: s.label,
+      description: s.description,
+      ...(s.outlets ? { outlets: s.outlets as Record<string, number> } : {}),
+      ...(s.maxStaff !== undefined ? { maxStaff: s.maxStaff } : {}),
+      ...(s.roles ? { roles: s.roles } : {}),
+      ...(s.maxWeeklyProduction !== undefined ? { maxWeeklyProduction: s.maxWeeklyProduction } : {}),
+      allowPushedWorkload: s.allowPushedWorkload,
+      allowFestivalPush: s.allowFestivalPush,
+    })),
     channels: Object.values(w.channels).map((c) => ({ type: c.type, label: c.label, description: c.description, role: c.staffRole })),
     staff: w.staffPool.map((s) => ({ id: s.id, name: s.name, roles: s.roles, blurb: s.blurb, askingWageCpPerDay: s.askingWageCpPerDay, provenance: s.provenance.status })),
     qualityTiers: a.qualityTiers.map((t) => ({ tier: t.tier, label: t.label, costHint: `~${t.ingredientCostCp} cp ingredients/pie` })),

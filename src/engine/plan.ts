@@ -20,6 +20,8 @@ export const PlanSchema = z
     /** 2. Operating neighborhood */
     neighborhood: z.string().min(1),
     /** 3. Weekly production (pies) and operating rhythm */
+    /** Business size set by the DM (see world stages). Older plans have no limits. */
+    stage: z.string().trim().min(1).max(40).default("unrestricted"),
     weeklyProduction: z.number().int().min(0).max(5000),
     operatingDays: z.number().int().min(1).max(7),
     /** Extra production multiplier on festival days (festival-oriented businesses). */

@@ -7,6 +7,7 @@
  */
 
 import { clamp, clamp100 } from "./math";
+import { stageViolations } from "./stage";
 import { PlanSchema } from "./plan";
 import type { AppliedChange, Authority, Effect, StatementEntry, WorldDefinition, WorldState } from "./types";
 
@@ -130,7 +131,11 @@ export function applyEffect(world: WorldDefinition, state: WorldState, effect: E
         standingOrders: { ...state.plan.standingOrders, ...(effect.patch.standingOrders ?? {}) },
         finance: { ...state.plan.finance, ...(effect.patch.finance ?? {}) },
       };
-      state.plan = PlanSchema.parse(merged);
+      const revised = PlanSchema.parse(merged);
+      // The DM's guard rails: a revision can't make the business bigger than its size allows.
+      const tooBig = stageViolations(world, revised);
+      if (tooBig.length) throw new Error(`Plan revision exceeds the business size: ${tooBig.join(" ")}`);
+      state.plan = revised;
       // Keep the staff roster in sync with the plan's hiring list.
       if (effect.patch.staff) {
         const keep = new Set(state.plan.staff.map((s) => s.candidateId));

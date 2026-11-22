@@ -71,16 +71,24 @@ export async function POST(request: Request) {
   if (!base.plan || base.issues.length) return NextResponse.json({ error: "Invalid business plan", issues: base.issues }, { status: 400 });
   const interventions: ScheduledIntervention[] = [];
   let warnings = base.warnings;
+  let stage = base.plan.stage;
   for (const [i, change] of b.planChanges.entries()) {
     const v = validatePlan(change.plan, `planChanges[${i}]`);
     if (!v.plan || v.issues.length) return NextResponse.json({ error: "Invalid revised plan", issues: v.issues }, { status: 400 });
+    // Growing (or shrinking) the business is the DM's call — enforced here, not in the browser.
+    const resized = v.plan.stage !== stage;
+    if (resized && resolveRole(request, "dm") !== "dm") {
+      return NextResponse.json({ error: "Only the DM can change the size of the business." }, { status: 403 });
+    }
+    const sizeLabel = arentoria.stages[v.plan.stage]?.label ?? v.plan.stage;
+    stage = v.plan.stage;
     warnings = v.warnings;
     interventions.push({
       day: DEFAULT_START_DAY + change.dayOffset,
-      authority: "players",
-      description: "Business plan revised between sessions",
+      authority: resized ? "dm" : "players",
+      description: resized ? `The DM changed the business size to "${sizeLabel}" and revised the plan` : "Business plan revised between sessions",
       refId: `plan-change-${i + 1}`,
-      effects: [{ kind: "plan", patch: v.plan, note: "Plan revised" }],
+      effects: [{ kind: "plan", patch: v.plan, note: resized ? `Business size: ${sizeLabel}` : "Plan revised" }],
     });
   }
 

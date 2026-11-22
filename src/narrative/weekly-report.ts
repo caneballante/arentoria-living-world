@@ -7,6 +7,8 @@
  *  - Players never see hidden numbers; they get qualitative signals, filtered through
  *    staff observation (loyal staff tell you more) and street talk.
  *  - Deterministic: wording varies by seed/week, never by wall-clock time.
+ *  - Short by default: each week keeps its summary plus the few lines that matter most
+ *    (`brief`); the rest stay available to the DM.
  */
 import { dateFromDay, formatShortDate } from "../engine/calendar";
 import { formatCp, round } from "../engine/math";
@@ -21,6 +23,35 @@ export interface ReportLine {
   text: string;
   /** DM-only explanation of the underlying condition. Stripped from player views. */
   basis: string;
+  /** How much this line matters this week (higher first). */
+  weight?: number;
+  /** In the short version of the report (the summary plus the top few lines). */
+  brief?: boolean;
+}
+
+/** Lines kept in a short report besides the summary. */
+export const BRIEF_LINES = 3;
+
+/** Default importance by section and tone; events use their severity instead. */
+const WEIGHTS: Record<ReportSection, Record<ReportLine["tone"], number>> = {
+  summary: { bad: 75, neutral: 60, good: 10 },
+  events: { bad: 80, neutral: 45, good: 80 },
+  street: { bad: 70, neutral: 45, good: 35 },
+  operations: { bad: 65, neutral: 25, good: 25 },
+  customers: { bad: 55, neutral: 30, good: 40 },
+  staff: { bad: 50, neutral: 20, good: 10 },
+  weather: { bad: 18, neutral: 18, good: 15 },
+};
+
+/** Mark the summary and the most important few lines as the short report. */
+export function markBrief(lines: ReportLine[], keep = BRIEF_LINES): ReportLine[] {
+  const ranked = lines
+    .map((l, i) => ({ i, w: l.weight ?? WEIGHTS[l.section][l.tone] }))
+    .filter((x) => x.i > 0 && x.w >= 20)
+    .sort((a, b) => b.w - a.w || a.i - b.i)
+    .slice(0, keep);
+  const chosen = new Set([0, ...ranked.map((x) => x.i)]);
+  return lines.map((l, i) => ({ ...l, weight: l.weight ?? WEIGHTS[l.section][l.tone], brief: chosen.has(i) }));
 }
 
 export interface WeeklyReport {
@@ -62,7 +93,7 @@ export function buildWeeklyReport(world: WorldDefinition, state: WorldState, w: 
   const plan = state.plan;
   const n = world.neighborhoods[plan.neighborhood]!;
   const lines: ReportLine[] = [];
-  const add = (section: ReportSection, tone: ReportLine["tone"], text: string, basis: string) => lines.push({ section, tone, text, basis });
+  const add = (section: ReportSection, tone: ReportLine["tone"], text: string, basis: string, weight?: number) => lines.push({ section, tone, text, basis, ...(weight !== undefined ? { weight } : {}) });
   const rng = (key: string) => rngFor(state.seed, "narrative", w.index, key);
   const h0 = w.hiddenStart;
   const h1 = w.hiddenEnd;
@@ -131,7 +162,7 @@ export function buildWeeklyReport(world: WorldDefinition, state: WorldState, w: 
   else if (wet >= 3) add("weather", "bad", `A wet week — ${wet} day(s) of rain or storms. Foot traffic was thin.`, `Weather exposure by channel. Storm days ×${world.climate.footTraffic.storm} traffic.`);
   else if (wet === 0) add("weather", "good", "Dry weather all week; the streets were busy.", "No wet days.");
   if (w.weather.avgTempC < 6) add("weather", "good", "Cold enough that hot pies practically sold themselves.", `Avg ${w.weather.avgTempC}°C boosts hot-food appeal.`);
-  for (const f of w.festivals) add("weather", "good", `${f} brought crowds into the streets.`, "Festival demand multiplier (proposed calendar).");
+  for (const f of w.festivals) add("weather", "good", `${f} brought crowds into the streets.`, "Festival demand multiplier (proposed calendar).", 30);
 
   // --- The business account ---
   if (w.accountStatus === "thin") {
@@ -189,12 +220,13 @@ export function buildWeeklyReport(world: WorldDefinition, state: WorldState, w: 
     const tone: ReportLine["tone"] = e.category === "opportunity" ? "good" : e.severity === "minor" ? "neutral" : "bad";
     const byPlayers = e.resolution && (e.resolution.authority === "players" || e.resolution.authority === "standing-order");
     const resolution = e.resolution ? (byPlayers ? ` We decided: ${e.resolution.label}.` : ` Outcome: ${e.resolution.label}.`) : "";
-    add("events", tone, `${e.playerText}${resolution}`, `${e.title}${e.probability !== undefined ? ` (p=${e.probability})` : ""}. ${e.dmText}`);
+    const weight = e.severity === "major" ? 100 : e.severity === "notable" ? 80 : tone === "bad" ? 45 : 20;
+    add("events", tone, `${e.playerText}${resolution}`, `${e.title}${e.probability !== undefined ? ` (p=${e.probability})` : ""}. ${e.dmText}`, weight);
   }
   const absences = state.events.filter((e) => e.week === w.index && e.eventId === "staff-absence");
-  if (absences.length) add("staff", "neutral", absences.length === 1 ? absences[0]!.playerText : `Staff absences on ${absences.length} days.`, absences.map((a) => a.dmText).join(" "));
+  if (absences.length) add("staff", "neutral", absences.length === 1 ? absences[0]!.playerText : `Staff absences on ${absences.length} days.`, absences.map((a) => a.dmText).join(" "), absences.some((a) => a.playerText.includes("nobody could cover")) ? 50 : 20);
 
-  return { week: w.index, title: `Week ${w.index}`, dateRange: weekDateRange(world, w), lines };
+  return { week: w.index, title: `Week ${w.index}`, dateRange: weekDateRange(world, w), lines: markBrief(lines) };
 }
 
 export function buildAllReports(world: WorldDefinition, state: WorldState): WeeklyReport[] {

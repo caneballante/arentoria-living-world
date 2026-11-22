@@ -21,9 +21,9 @@ A 20-minute playtest checklist is in **[docs/TEST_PLAN.md](docs/TEST_PLAN.md)**.
 
 Then, in the browser:
 
-1. Pick a starting scenario (or build a plan) in the left panel. It covers all twelve business decisions plus standing orders.
+1. Pick a starting scenario (or build a plan) in the left panel. It covers all twelve business decisions plus standing orders. The default, **Starting out**, is where the party begins: one district, one cart, one hire and up to 500 pies a week. The DM unlocks bigger sizes as the business grows ("Business size" at the top of the plan). The other scenarios are unrestricted strategy studies.
 2. Move the **campaign clock**: **+1 day**, **+1 week** (a typical session), **+4 weeks**, or **Until something needs the party** (downtime: it runs up to 8 weeks and stops when a decision arises or something major happens). **Run a whole season** plays 13–52 weeks at once. The start is the placeholder date 1 Harvest 940 CY.
-3. Read the "Since last time" summary and the reports. **DM view** shows the hidden state and why each value changed; **Players** shows only what the party would learn.
+3. Read the "Since last time" summary and the reports. Reports are short: each week's summary plus the three notes that matter most. As DM, switch to **Every note + DM explanations** to see everything and why. **DM view** shows the hidden state and why each value changed; **Players** shows only what the party would learn.
 4. Answer decisions now, or before their deadline. Urgent ones stop the clock; unanswered ones fall back to the standing orders.
 5. Change the plan mid-season and click **Apply from day N** to continue under the new plan. Or restart the season and compare it with the previous run.
 6. Track the money on the **Account** tab. The business money is kept apart from the party's own purses (where it's kept is the party's choice). The DM records withdrawals and deposits; the tab shows the balance, the operating floor, what's safe to withdraw, and a dated statement.

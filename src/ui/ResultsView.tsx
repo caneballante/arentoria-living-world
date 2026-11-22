@@ -73,37 +73,58 @@ function Tile({ label, value, delta, goodWhenUp = true, note }: { label: string;
 
 const TONE_ICON = { good: "＋", bad: "−", neutral: "·" } as const;
 
-function Reports({ reports, showBasis }: { reports: { week: number; title: string; dateRange: string; lines: { section: string; tone: "good" | "bad" | "neutral"; text: string; basis?: string }[] }[]; showBasis: boolean }) {
+type ReportLineView = { section: string; tone: "good" | "bad" | "neutral"; text: string; basis?: string; brief?: boolean };
+
+/** DM switch between the short reports (what players see) and every note with its explanation. */
+function NotesToggle({ allNotes, onToggle }: { allNotes: boolean; onToggle: (v: boolean) => void }) {
+  return (
+    <div className="seg" role="group" aria-label="How much to show">
+      <button type="button" aria-pressed={!allNotes} onClick={() => onToggle(false)}>Short reports</button>
+      <button type="button" aria-pressed={allNotes} onClick={() => onToggle(true)}>Every note + DM explanations</button>
+    </div>
+  );
+}
+
+function Reports({ reports, showBasis, allNotes = false, onToggle, withOrder = true }: { reports: { week: number; title: string; dateRange: string; lines: ReportLineView[] }[]; showBasis: boolean; allNotes?: boolean; onToggle?: (v: boolean) => void; withOrder?: boolean }) {
   const [order, setOrder] = useState<"latest" | "oldest">("latest");
   const list = order === "latest" ? [...reports].reverse() : reports;
   return (
     <div>
-      <div className="row" style={{ marginBottom: 8 }}>
-        <div className="seg" role="group" aria-label="Order">
-          <button type="button" aria-pressed={order === "latest"} onClick={() => setOrder("latest")}>Latest first</button>
-          <button type="button" aria-pressed={order === "oldest"} onClick={() => setOrder("oldest")}>From the start</button>
+      {(withOrder || onToggle) && (
+        <div className="row" style={{ marginBottom: 8 }}>
+          {withOrder && (
+            <div className="seg" role="group" aria-label="Order">
+              <button type="button" aria-pressed={order === "latest"} onClick={() => setOrder("latest")}>Latest first</button>
+              <button type="button" aria-pressed={order === "oldest"} onClick={() => setOrder("oldest")}>From the start</button>
+            </div>
+          )}
+          {onToggle && <NotesToggle allNotes={allNotes} onToggle={onToggle} />}
         </div>
-        {showBasis && <span className="small muted">DM view: each line shows the simulated condition behind it.</span>}
-      </div>
-      {list.map((r) => (
-        <article key={r.week} className="report">
-          <div className="report-head">
-            <h3>{r.title}</h3>
-            <span className="small muted">{r.dateRange}</span>
-          </div>
-          <ul className="report-lines">
-            {r.lines.map((l, i) => (
-              <li key={i}>
-                <span className="tone" aria-label={l.tone}>{TONE_ICON[l.tone]}</span>
-                <div>
-                  <div>{l.text}</div>
-                  {showBasis && l.basis && <div className="basis">↳ {l.basis}</div>}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </article>
-      ))}
+      )}
+      {list.map((r) => {
+        const shown = allNotes ? r.lines : r.lines.filter((l) => l.brief !== false);
+        const hidden = r.lines.length - shown.length;
+        return (
+          <article key={r.week} className="report">
+            <div className="report-head">
+              <h3>{r.title}</h3>
+              <span className="small muted">{r.dateRange}</span>
+            </div>
+            <ul className="report-lines">
+              {shown.map((l, i) => (
+                <li key={i}>
+                  <span className="tone" aria-label={l.tone}>{TONE_ICON[l.tone]}</span>
+                  <div>
+                    <div>{l.text}</div>
+                    {showBasis && allNotes && l.basis && <div className="basis">↳ {l.basis}</div>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {hidden > 0 && <p className="small muted" style={{ margin: "4px 0 0" }}>{hidden} smaller note{hidden === 1 ? "" : "s"} not shown.</p>}
+          </article>
+        );
+      })}
     </div>
   );
 }
@@ -540,6 +561,7 @@ export function ResultsView({
   busy: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
+  const [allNotes, setAllNotes] = useState(false);
   const isDm = view.kind === "dm";
   const summary = useMemo(() => summarizeView(view, "current"), [view]);
   const weeks = isDm ? view.state.weeks : view.weeks;
@@ -579,7 +601,7 @@ export function ResultsView({
       </div>
       <div className="panel-pad stack">
         <OpenDecisions view={view} answers={answers} onAnswer={onAnswer} onAcknowledge={onAcknowledge} busy={busy} />
-        {activeTab === "overview" && view.digest && <DigestPanel digest={view.digest} showBasis={isDm} />}
+        {activeTab === "overview" && view.digest && <DigestPanel digest={view.digest} showBasis={isDm && allNotes} />}
         {activeTab === "overview" && (
           <>
             <div className="small muted">
@@ -616,13 +638,13 @@ export function ResultsView({
             {latest && (
               <div className="panel panel-pad">
                 <div className="report-head"><h3>Latest report: {latest.title}</h3><span className="small muted">{latest.dateRange}</span></div>
-                <Reports reports={[latest]} showBasis={isDm} />
+                <Reports reports={[latest]} showBasis={isDm} allNotes={allNotes} onToggle={isDm ? setAllNotes : undefined} withOrder={false} />
               </div>
             )}
             {!isDm && view.conditions.length > 0 && <p className="small">Ongoing: {view.conditions.join(" · ")}</p>}
           </>
         )}
-        {activeTab === "reports" && <Reports reports={reports} showBasis={isDm} />}
+        {activeTab === "reports" && <Reports reports={reports} showBasis={isDm} allNotes={allNotes} onToggle={isDm ? setAllNotes : undefined} />}
         {activeTab === "events" && <EventsList view={view} />}
         {activeTab === "account" && <AccountPanel account={view.account} onAccountAction={onAccountAction} busy={busy} />}
         {activeTab === "hidden" && isDm && (

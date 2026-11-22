@@ -248,6 +248,27 @@ export interface WorldDefinition {
   threads: ThreadDef[];
   scheduled: ScheduledEventDef[];
   pacing: PacingConfig;
+  /** Business sizes: the DM's guard rails on how big a plan may be. */
+  stages: Record<string, BusinessStage>;
+}
+
+/**
+ * A business size set by the DM. Plans larger than their size are rejected, so the
+ * business starts small and grows only when the DM unlocks the next size.
+ * Omitted limits mean "no limit".
+ */
+export interface BusinessStage {
+  id: string;
+  label: string;
+  provenance: Provenance;
+  description: string;
+  /** Outlets allowed, by type (e.g. { cart: 1 }). Types not listed are not allowed. */
+  outlets?: Partial<Record<ChannelType, number>>;
+  maxStaff?: number;
+  roles?: StaffRole[];
+  maxWeeklyProduction?: number;
+  allowPushedWorkload: boolean;
+  allowFestivalPush: boolean;
 }
 
 /**

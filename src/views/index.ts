@@ -154,7 +154,8 @@ export function buildPlayerView(world: WorldDefinition, result: RunResult, opts:
     week: r.week,
     title: r.title,
     dateRange: r.dateRange,
-    lines: r.lines.map((l) => ({ section: l.section, tone: l.tone, text: l.text })),
+    // Players get the short version: the summary plus the few lines that matter most.
+    lines: r.lines.filter((l) => l.brief !== false).map((l) => ({ section: l.section, tone: l.tone, text: l.text })),
   }));
   return {
     kind: "player",

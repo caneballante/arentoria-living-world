@@ -130,6 +130,12 @@ The business keeps its own account, separate from the party's purses. Every mone
 
 The API accepts `accountActions` only from the DM (`resolveRole`), and turns them into audited interventions. Scheduled interventions are idempotent: each has a `refId`, applied interventions are remembered in `state.appliedInterventions`, and anything scheduled for "first thing tomorrow" is applied when a run ends, so a withdrawal shows immediately and is never counted twice on replay.
 
+### Business size and short reports
+
+A plan carries a **business size** (`plan.stage`), defined in world data (`src/world/stages.ts`) as limits on outlets, staff, roles, weekly production, pushing the constructs and festival-day baking. `engine/stage.ts` lists any violations in plain sentences. `checkPlan` reports them as errors, `createInitialState` and plan revisions refuse them, and the API accepts a change of size only from the DM. Plans saved before sizes existed default to "unrestricted".
+
+Weekly report lines carry an importance weight (events by severity, then threats, problems, customers, staff and weather). `markBrief` flags the summary plus the top three as the short report. The player view sends only those lines; the DM view sends all lines with the flag, and the UI shows the short version unless the DM asks for every note.
+
 ### Pacing
 
 `world/pacing.ts` keeps the world from producing a crisis every week without breaking cause and effect. Opportunity and dilemma decisions are spaced at least 21 days apart and never stack. Adverse random events are damped for 14 days after a major event; this shows up as a named driver. Major thread escalations wait 14 days after any major event, and thread stages have repeat cooldowns. Threats are written to *resolve* (a crew backs off or forces a showdown, a feud burns out) rather than loop. Targets and measurements are in `docs/ASSUMPTIONS.md`; `tests/pacing.test.ts` guards them.
