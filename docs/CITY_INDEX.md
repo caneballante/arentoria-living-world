@@ -12,6 +12,7 @@ The DM's City Index (`caneballante/arentoria`) documents the map, all 1,676 buil
 
 | Date | Ruling |
 |---|---|
+| 2026-11-22 | **Big factions are in.** The City Index's major factions (Cloverpot Compact, Deep Ledger, Merchants' Guild & Guild Wardens, and others) can be used. **Smaller, less consequential local factions** sit beneath them, to be created and proposed for the canon doc. Drafts: [`proposals/small-factions.md`](proposals/small-factions.md) (spreadsheet: [`proposals/small-factions.csv`](proposals/small-factions.csv)). |
 | 2026-11-22 | **17 Dawnfire Promenade = AR-0603**, a Guildstrand row house, and the party lives there. The index's listed households at AR-0603 (the Tanners, incl. guildmaster Derrin Torr, P-02071; and the Harrowells) do not live there in the campaign. Recorded in `src/world/canon.ts` as `house-city-index`. Where those residents live instead is undecided; the index itself is unchanged. |
 
 ## Findings relevant to the simulation
@@ -23,6 +24,7 @@ The DM's City Index (`caneballante/arentoria`) documents the map, all 1,676 buil
 
 ## Open questions
 
-- Retire the proposed crews, fellowship and rivals in favor of City Index factions and businesses? (Recommended.)
+- Adopt, rename or reject the seven proposed small factions (SF-001…SF-007), then swap them into the simulation in place of the stand-ins.
+- Choose Grand Market and High March rival bakeries from the index.
 - Where do the displaced AR-0603 residents live, if it ever matters?
 - Which index version to pin, and how to review re-imports (a diff before adopting changes).
