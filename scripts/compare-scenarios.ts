@@ -56,6 +56,19 @@ for (const weeks of weeksList) {
     const parts = Object.entries(s.endStates).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${(v * 100).toFixed(0)}%`);
     console.log(`  ${s.label.padEnd(36)} ${parts.join(", ")}`);
   }
+  console.log(`\nPacing over ${weeks} weeks (means): targets per 52 weeks — sound plans ~6–10 decisions, ~10–15 notable, 2–4 major, quiet ≤ 10 wks; risky ~12–18 decisions, 6–10 major, no stage > 3×`);
+  console.log("Scenario".padEnd(36) + "Decisions".padStart(10) + "DM rulings".padStart(11) + "Notable".padStart(9) + "Major".padStart(7) + "Longest quiet".padStart(15) + "Max repeat".padStart(12));
+  for (const s of batch.summaries) {
+    console.log(
+      s.label.padEnd(36) +
+        s.playerDecisions.mean.toFixed(1).padStart(10) +
+        s.dmDecisions.mean.toFixed(1).padStart(11) +
+        s.notableEvents.mean.toFixed(1).padStart(9) +
+        s.majorMoments.mean.toFixed(1).padStart(7) +
+        `${s.longestQuietWeeks.mean.toFixed(1)} wks`.padStart(15) +
+        s.maxStageRepeats.mean.toFixed(1).padStart(12),
+    );
+  }
   const sound = chosen.filter((s) => s.quality === "sound");
   const poor = chosen.filter((s) => s.quality === "poor");
   if (sound.length && poor.length) {

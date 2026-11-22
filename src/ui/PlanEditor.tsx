@@ -230,12 +230,18 @@ export function PlanEditor({ catalog, plan, onChange }: { catalog: Catalog; plan
         </div>
       </Section>
 
-      <Section n="★" title="Standing orders" hint="What happens when a situation arises and nobody is consulted. With 'Pause for decisions', you answer these yourself.">
+      <Section n="★" title="Standing orders" hint="What staff do when a decision is due and nobody has answered. With 'Stop and ask', you answer these yourself; decisions that can wait show a deadline.">
         <Select label="If a crew demands protection money" value={orders.protectionDemand} options={[{ value: "pay", label: "Pay" }, { value: "negotiate", label: "Haggle" }, { value: "refuse", label: "Refuse" }]} onChange={(v) => setOrder("protectionDemand", v)} />
         <Select label="If the Fellowship says to join the guild" value={orders.guildNotice} options={[{ value: "join-associate", label: "Join as associate" }, { value: "join-member", label: "Join as full member" }, { value: "refuse", label: "Decline" }]} onChange={(v) => setOrder("guildNotice", v)} />
         <Select label="If a large order comes in" value={orders.largeOrder} options={[{ value: "accept", label: "Accept" }, { value: "decline", label: "Decline" }]} onChange={(v) => setOrder("largeOrder", v)} />
         <Select label="If the takings come up short" value={orders.dishonestStaff} options={[{ value: "dismiss", label: "Dismiss the seller" }, { value: "warn", label: "Have a firm word" }, { value: "ignore", label: "Let it go" }]} onChange={(v) => setOrder("dishonestStaff", v)} />
         <Select label="If a rival plays dirty" value={orders.rivalTricks} options={[{ value: "ignore", label: "Weather it" }, { value: "seek-mediation", label: "Ask the Fellowship to mediate" }]} onChange={(v) => setOrder("rivalTricks", v)} />
+        <Select label="If staff ask for a raise (or get a better offer)" value={orders.raiseRequest ?? "partial"} options={[{ value: "grant", label: "Pay what they ask" }, { value: "partial", label: "Meet halfway / appeal to loyalty" }, { value: "refuse", label: "Refuse / let them go" }]} onChange={(v) => setOrder("raiseRequest", v)} />
+        <Select label="If offered a festival pitch" value={orders.festivalPitch ?? "accept"} options={[{ value: "accept", label: "Take it" }, { value: "decline", label: "Decline" }]} onChange={(v) => setOrder("festivalPitch", v)} />
+        <Select label="If a supplier offers an exclusive deal" value={orders.supplierExclusive ?? "decline"} options={[{ value: "accept", label: "Accept (cheaper, less resilient)" }, { value: "decline", label: "Keep several suppliers" }]} onChange={(v) => setOrder("supplierExclusive", v)} />
+        <Select label="If a rival proposes a price truce" value={orders.rivalTruce ?? "accept"} options={[{ value: "accept", label: "Agree" }, { value: "decline", label: "Refuse" }]} onChange={(v) => setOrder("rivalTruce", v)} />
+        <Select label="If asked for charity" value={orders.charity ?? "accept"} options={[{ value: "accept", label: "Donate" }, { value: "decline", label: "Decline" }]} onChange={(v) => setOrder("charity", v)} />
+        <Select label="If someone leaves" value={orders.fillVacancies ?? "auto"} options={[{ value: "auto", label: "Hire a replacement" }, { value: "manual", label: "Leave it to us" }]} onChange={(v) => setOrder("fillVacancies", v)} />
       </Section>
     </div>
   );

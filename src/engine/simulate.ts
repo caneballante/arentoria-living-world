@@ -12,11 +12,15 @@
  *   8. on the last day of each 7-day accounting week: fixed costs, hidden-state
  *      dynamics, staff, wholesale accounts, weekly events, owner draws, week record
  *
- * Any decision created during a day is resolved at the end of that day: with a
- * supplied resolution, by pausing for a human, or automatically from the plan's
- * standing orders / sandbox assumptions. Because resolution happens at the same point
- * in every mode, an interactive run and an unattended run that make the same choices
- * produce identical results.
+ * Every decision has a due day: urgent ones are due the day they arise; others can
+ * wait (a response window). At the end of its due day a decision is resolved — with a
+ * supplied answer (which may have been given early), by pausing for a human, or
+ * automatically from the plan's standing orders / sandbox assumptions. Because
+ * resolution always happens at the end of the due day, an interactive run and an
+ * unattended run that make the same choices produce identical results.
+ *
+ * Interventions (DM corrections, approved freeform actions, plan revisions) can be
+ * scheduled for a given day; they are applied at the start of that day.
  */
 
 import { dateFromDay, type CalendarDate } from "./calendar";
@@ -46,22 +50,41 @@ import { initialWeather, nextMarket, nextWeather } from "./weather";
 
 export type PauseMode = "never" | "decisions" | "decisions-and-major";
 
+export interface ScheduledIntervention {
+  /** Absolute day; applied at the start of that day. */
+  day: number;
+  authority: Extract<Authority, "dm" | "players">;
+  description: string;
+  effects: Effect[];
+  refId?: string;
+}
+
 export interface RunOptions {
   /** Stop after simulating this absolute day (inclusive). */
   untilDay?: number;
   /** Alternatively: simulate this many more weeks from the current day. */
   weeks?: number;
   pause?: PauseMode;
-  /** Pre-supplied answers to decisions, keyed by decision id (deterministic ids). */
+  /** Answers to decisions, keyed by decision id (deterministic ids). Applied at each decision's due day. */
   resolutions?: Record<string, string>;
   /** Major events already acknowledged (event record ids) — no pause for these. */
   acknowledged?: string[];
+  /** Interventions to apply at the start of given days (e.g. plan revisions between sessions). */
+  interventions?: ScheduledIntervention[];
+  /**
+   * "Advance until something needs the party": stop at the end of any day after this
+   * absolute day on which a decision arose or a major event happened.
+   */
+  stopWhenNeededAfterDay?: number;
 }
 
 export interface RunResult {
   state: WorldState;
   status: "completed" | "paused";
+  /** All open decisions, including ones that can still wait. */
   pending: PendingDecision[];
+  /** Ids of decisions due now that stopped the clock. */
+  blocking: string[];
   /** When paused for a major event without a decision. */
   pausedOnEvent?: EventRecord;
 }
@@ -127,7 +150,7 @@ export function createInitialState(world: WorldDefinition, planInput: BusinessPl
     startDay: opts.startDay,
     day: opts.startDay,
     plan,
-    sandbox: { licensingOutcome: "approve", ...opts.sandbox },
+    sandbox: { licensingOutcome: "approve", inspectionRulings: "uphold", ...opts.sandbox },
     weather: initialWeather(world.climate, world.calendar, date),
     market: { meatShock: 0, grainShock: 0 },
     business: {
@@ -149,6 +172,7 @@ export function createInitialState(world: WorldDefinition, planInput: BusinessPl
     scheduled: [],
     pending: [],
     cooldowns: {},
+    pacing: { lastPlayerDecisionDay: null, lastMajorDay: null },
     events: [],
     history: [],
     knowledge: [],
@@ -229,6 +253,7 @@ function fire(world: WorldDefinition, state: WorldState, date: CalendarDate, out
     provenance: "simulated",
   };
   state.events.push(record);
+  if (record.severity === "major") state.pacing.lastMajorDay = date.absoluteDay;
   if (outcome.effects.length) {
     applyChange(world, state, {
       day: date.absoluteDay,
@@ -243,6 +268,7 @@ function fire(world: WorldDefinition, state: WorldState, date: CalendarDate, out
     const pending: PendingDecision = {
       id: `dec:${meta.eventId}:${date.absoluteDay}:${state.seq + 1}`,
       day: date.absoluteDay,
+      dueDay: date.absoluteDay + Math.max(0, Math.floor(dec.respondWithinDays ?? 0)),
       eventRecordId: record.id,
       authority: dec.authority,
       prompt: dec.prompt,
@@ -254,6 +280,7 @@ function fire(world: WorldDefinition, state: WorldState, date: CalendarDate, out
     state.seq += 1;
     record.decisionId = pending.id;
     state.pending.push(pending);
+    if (dec.authority === "players") state.pacing.lastPlayerDecisionDay = date.absoluteDay;
   }
   return record;
 }
@@ -264,9 +291,22 @@ function evaluateConditional(world: WorldDefinition, state: WorldState, date: Ca
   for (const def of world.events) {
     if (def.phase !== phase) continue;
     if ((state.cooldowns[def.id] ?? -Infinity) > day) continue;
+    const pacing = world.pacing;
+    if (def.pacing === "decision") {
+      // Space out the party's decisions; never stack a new one on an unanswered one.
+      const last = state.pacing.lastPlayerDecisionDay;
+      if (last !== null && day - last < pacing.minDaysBetweenPlayerDecisions) continue;
+      if (state.pending.some((x) => x.authority === "players")) continue;
+    }
     const ctx = makeContext(world, state, date, extra);
-    const { probability, drivers } = def.hazard(ctx);
-    const p = clamp01(probability);
+    const hazard = def.hazard(ctx);
+    let p = clamp01(hazard.probability);
+    const drivers = [...hazard.drivers];
+    const lastMajor = state.pacing.lastMajorDay;
+    if (def.pacing === "adverse" && lastMajor !== null && day - lastMajor < pacing.quietDaysAfterMajor && p > 0) {
+      drivers.push({ label: "Quiet spell after a major event (pacing)", value: -(p * (1 - pacing.quietHazardMultiplier)) });
+      p *= pacing.quietHazardMultiplier;
+    }
     if (p <= 0) continue;
     if (uniformFor(state.seed, "event", def.id, day) >= p) continue;
     const outcome = def.resolve(ctx, rngFor(state.seed, "event-resolve", def.id, day));
@@ -292,7 +332,12 @@ function processThreads(world: WorldDefinition, state: WorldState, date: Calenda
     if (day - t.lastChangeDay < def.minDwellDays) continue;
     const next = def.stages.find((s) => s.stage === t.stage + 1);
     const current = def.stages.find((s) => s.stage === t.stage);
-    if (next && t.progress >= next.threshold) {
+    const lastEntry = next ? t.lastEntered?.[String(next.stage)] : undefined;
+    const coolingDown = next?.repeatCooldownDays !== undefined && lastEntry !== undefined && day - lastEntry < next.repeatCooldownDays;
+    const lastMajor = state.pacing.lastMajorDay;
+    const majorSpacing = next?.major && lastMajor !== null && day - lastMajor < world.pacing.minDaysBetweenMajorEscalations;
+    if (next && t.progress >= next.threshold && !coolingDown && !majorSpacing) {
+      t.lastEntered = { ...(t.lastEntered ?? {}), [String(next.stage)]: day };
       t.stage = next.stage;
       t.peakStage = Math.max(t.peakStage, t.stage);
       t.lastChangeDay = day;
@@ -348,8 +393,8 @@ function processScheduled(world: WorldDefinition, state: WorldState, date: Calen
 // Decisions and interventions
 // ---------------------------------------------------------------------------
 
-/** Apply a chosen option to a pending decision. Mutates the working state. */
-function applyResolution(world: WorldDefinition, state: WorldState, decisionId: string, optionId: string, authority: Authority): void {
+/** Apply a chosen option to a pending decision at its due day. Mutates the working state. */
+function applyResolution(world: WorldDefinition, state: WorldState, decisionId: string, optionId: string, authority: Authority, note = ""): void {
   const pending = state.pending.find((p) => p.id === decisionId);
   if (!pending) throw new Error(`No pending decision ${decisionId}`);
   const option = pending.options.find((o) => o.id === optionId) ?? pending.options.find((o) => o.id === pending.defaultOptionId)!;
@@ -357,10 +402,10 @@ function applyResolution(world: WorldDefinition, state: WorldState, decisionId: 
   const record = state.events.find((e) => e.id === pending.eventRecordId);
   if (record) record.resolution = { optionId: option.id, label: option.label, authority };
   applyChange(world, state, {
-    day: pending.day,
+    day: pending.dueDay,
     authority,
     cause: { kind: "decision", refId: decisionId },
-    description: `${pending.prompt} → ${option.label}`,
+    description: `${pending.prompt} → ${option.label}${note}`,
     effects: option.effects,
   });
 }
@@ -414,7 +459,7 @@ export function applyIntervention(world: WorldDefinition, input: WorldState, int
 // Daily step and weekly close
 // ---------------------------------------------------------------------------
 
-function closeWeek(world: WorldDefinition, state: WorldState, date: CalendarDate): void {
+function closeWeek(world: WorldDefinition, state: WorldState, date: CalendarDate): EventRecord[] {
   const acc = state.current;
   const b = state.business;
   const stats = weekStats(world, acc);
@@ -431,7 +476,7 @@ function closeWeek(world: WorldDefinition, state: WorldState, date: CalendarDate
   const wholesale = updateWholesaleAccounts(world, state, stats);
   b.wholesaleAccounts = wholesale.accounts;
 
-  evaluateConditional(world, state, date, "weekly", { week: acc });
+  const weeklyEvents = evaluateConditional(world, state, date, "weekly", { week: acc });
 
   const revenue = ledgerIncome(acc.ledger);
   const costs = ledgerCosts(acc.ledger);
@@ -490,6 +535,7 @@ function closeWeek(world: WorldDefinition, state: WorldState, date: CalendarDate
   };
   state.weeks.push(record);
   state.current = newAccumulator(acc.index + 1, date.absoluteDay + 1, b.cashCp, { ...b.hidden });
+  return weeklyEvents;
 }
 
 function simulateDay(world: WorldDefinition, state: WorldState): EventRecord[] {
@@ -537,7 +583,7 @@ function simulateDay(world: WorldDefinition, state: WorldState): EventRecord[] {
   fired.push(...evaluateConditional(world, state, date, "evening", { today: ops.record }));
 
   // 8. Weekly close
-  if ((day - state.startDay + 1) % 7 === 0) closeWeek(world, state, date);
+  if ((day - state.startDay + 1) % 7 === 0) fired.push(...closeWeek(world, state, date));
 
   b.minCashCp = Math.min(b.minCashCp, b.cashCp);
   state.day = day + 1;
@@ -563,41 +609,67 @@ export function runSimulation(world: WorldDefinition, input: WorldState, options
   const acknowledged = new Set(options.acknowledged ?? []);
   const untilDay = options.untilDay ?? state.day + (options.weeks ?? 26) * 7 - 1;
 
-  // Decisions left pending by an earlier paused run.
+  // Resolve every decision whose due day has ended (the day just simulated, or earlier
+  // for a state handed over from a paused run). Decisions that can still wait stay open.
   const settle = (): RunResult | null => {
-    for (const p of [...state.pending]) {
+    const lastDay = state.day - 1;
+    const due = state.pending.filter((p) => p.dueDay <= lastDay).sort((a, b) => a.dueDay - b.dueDay || a.id.localeCompare(b.id));
+    const blocking: string[] = [];
+    for (const p of due) {
       const supplied = resolutions[p.id];
       if (supplied) {
         applyResolution(world, state, p.id, supplied, p.authority === "dm" ? "dm" : "players");
         continue;
       }
-      if (pause !== "never") return { state, status: "paused", pending: [...state.pending] };
+      if (pause !== "never") {
+        blocking.push(p.id);
+        continue;
+      }
       const auto = automaticChoice(state, p);
-      applyResolution(world, state, p.id, auto.optionId, auto.authority);
+      applyResolution(world, state, p.id, auto.optionId, auto.authority, p.dueDay > p.day ? " (no answer by the deadline)" : "");
     }
-    return null;
+    return blocking.length ? { state, status: "paused", pending: [...state.pending], blocking } : null;
   };
 
   const early = settle();
   if (early) return early;
 
+  const interventions = options.interventions ?? [];
   while (state.day <= untilDay) {
+    for (const iv of interventions.filter((x) => x.day === state.day)) {
+      applyChange(world, state, {
+        day: state.day,
+        authority: iv.authority,
+        cause: { kind: "intervention", refId: iv.refId ?? `scheduled-${iv.day}` },
+        description: iv.description,
+        effects: iv.effects,
+      });
+    }
     const fired = simulateDay(world, state);
     const halted = settle();
     if (halted) return halted;
+    if (options.stopWhenNeededAfterDay !== undefined && state.day - 1 > options.stopWhenNeededAfterDay) {
+      const trigger = fired.find((e) => (e.decisionId !== undefined || e.severity === "major") && !acknowledged.has(e.id));
+      if (trigger) return { state, status: "paused", pending: [...state.pending], blocking: [], pausedOnEvent: trigger };
+    }
     if (pause === "decisions-and-major") {
       const major = fired.find((e) => e.severity === "major" && !acknowledged.has(e.id));
-      if (major) return { state, status: "paused", pending: [], pausedOnEvent: major };
+      if (major) return { state, status: "paused", pending: [...state.pending], blocking: [], pausedOnEvent: major };
     }
   }
-  return { state, status: "completed", pending: [] };
+  return { state, status: "completed", pending: [...state.pending], blocking: [] };
 }
 
 export interface ScenarioRunInput {
   plan: BusinessPlanInput | BusinessPlan;
   seed: string;
+  /** Length of the run in weeks (ignored when `days` is given). */
   weeks: number;
+  /** Length of the run in days (allows partial weeks). */
+  days?: number;
   startDay: number;
+  interventions?: ScheduledIntervention[];
+  stopWhenNeededAfterDay?: number;
   pause?: PauseMode;
   resolutions?: Record<string, string>;
   acknowledged?: string[];
@@ -608,10 +680,12 @@ export interface ScenarioRunInput {
 export function simulateScenario(world: WorldDefinition, input: ScenarioRunInput): RunResult {
   const initial = createInitialState(world, input.plan, { seed: input.seed, startDay: input.startDay, sandbox: input.sandbox });
   return runSimulation(world, initial, {
-    untilDay: input.startDay + input.weeks * 7 - 1,
+    untilDay: input.startDay + (input.days ?? input.weeks * 7) - 1,
     pause: input.pause,
     resolutions: input.resolutions,
     acknowledged: input.acknowledged,
+    interventions: input.interventions,
+    stopWhenNeededAfterDay: input.stopWhenNeededAfterDay,
   });
 }
 

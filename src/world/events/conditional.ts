@@ -21,6 +21,7 @@ const staffAbsence: ConditionalEventDef = {
   provenance: P,
   phase: "morning",
   cooldownDays: 0,
+  pacing: "flavor",
   hazard(ctx) {
     if (!isOperatingDay(ctx)) return { probability: 0, drivers: [] };
     const k = ctx.world.assumptions.dynamics.absence;
@@ -53,6 +54,7 @@ const supplyShortage: ConditionalEventDef = {
   provenance: P,
   phase: "morning",
   cooldownDays: 5,
+  pacing: "adverse",
   hazard(ctx) {
     if (!isOperatingDay(ctx)) return { probability: 0, drivers: [] };
     const disruption = ctx.world.climate.transportDisruption[ctx.state.weather.condition];
@@ -96,6 +98,7 @@ const unexpectedCrowd: ConditionalEventDef = {
   provenance: P,
   phase: "morning",
   cooldownDays: 10,
+  pacing: "flavor",
   hazard(ctx) {
     if (!isOperatingDay(ctx)) return { probability: 0, drivers: [] };
     return { probability: 0.025, drivers: [{ label: "Ordinary city life", value: 0.025 }] };
@@ -123,6 +126,7 @@ const pettyTheft: ConditionalEventDef = {
   provenance: P,
   phase: "evening",
   cooldownDays: 4,
+  pacing: "adverse",
   hazard(ctx) {
     const today = ctx.today;
     if (!today?.operating) return { probability: 0, drivers: [] };
@@ -164,6 +168,7 @@ const badBatch: ConditionalEventDef = {
   provenance: P,
   phase: "evening",
   cooldownDays: 10,
+  pacing: "adverse",
   hazard(ctx) {
     const today = ctx.today;
     if (!today?.operating || today.sold === 0) return { probability: 0, drivers: [] };
@@ -207,6 +212,7 @@ const notablePraise: ConditionalEventDef = {
   provenance: P,
   phase: "weekly",
   cooldownDays: 28,
+  pacing: "flavor",
   hazard(ctx) {
     const q = ctx.plan.quality;
     const base = q >= 4 ? 0.18 : q === 3 ? 0.05 : 0.01;
@@ -241,15 +247,16 @@ const largeOrder: ConditionalEventDef = {
   provenance: P,
   phase: "weekly",
   cooldownDays: 21,
+  pacing: "decision",
   hazard(ctx) {
     const h = ctx.state.business.hidden;
-    const rep = clamp01((h.reputation - 55) / 35);
+    const rep = clamp01((h.reputation - 45) / 35);
     const vis = clamp01(h.visibility / 60);
     const guild = { none: 1, associate: 1.2, member: 1.4 }[ctx.plan.guild];
     return {
       probability: 0.2 * rep * vis * guild,
       drivers: [
-        { label: "Reputation above 55", value: rep },
+        { label: "Reputation above 45", value: rep },
         { label: "Visibility", value: vis },
         { label: "Guild connections", value: guild },
       ],
@@ -269,8 +276,9 @@ const largeOrder: ConditionalEventDef = {
         prompt: `Accept an order for ${qty} pies (${formatCp(qty * price)}) due in three days?`,
         standingOrder: "largeOrder",
         defaultOptionId: "accept",
+        respondWithinDays: 1,
         options: [
-          { id: "accept", label: "Accept", description: "Bake the extra batch and deliver.", effects: [{ kind: "schedule", eventId: "large-order-delivery", inDays: 3, data: { qty, priceCp: price, who } }] },
+          { id: "accept", label: "Accept", description: "Bake the extra batch and deliver.", effects: [{ kind: "schedule", eventId: "large-order-delivery", inDays: 2, data: { qty, priceCp: price, who } }] },
           { id: "decline", label: "Decline politely", description: "Keep the regular schedule.", effects: [] },
         ],
       },
@@ -285,6 +293,7 @@ const skimmingNoticed: ConditionalEventDef = {
   provenance: P,
   phase: "weekly",
   cooldownDays: 21,
+  pacing: "decision",
   hazard(ctx) {
     if (ctx.plan.oversight === "hands-off") return { probability: 0, drivers: [{ label: "Nobody checks the books", value: 0 }] };
     const suspect = [...ctx.state.business.staff].sort((a, b) => b.skimmedCp - a.skimmedCp)[0];
@@ -306,6 +315,7 @@ const skimmingNoticed: ConditionalEventDef = {
         prompt: `The takings are short. What do we do about ${suspect.name}?`,
         standingOrder: "dishonestStaff",
         defaultOptionId: "warn",
+        respondWithinDays: 7,
         options: [
           {
             id: "dismiss",
@@ -336,6 +346,7 @@ const staffQuits: ConditionalEventDef = {
   provenance: P,
   phase: "weekly",
   cooldownDays: 7,
+  pacing: "flavor",
   hazard(ctx) {
     const k = ctx.world.assumptions.dynamics.staff;
     const unhappy = ctx.state.business.staff.filter((s) => s.lowMoraleWeeks >= k.quitAfterWeeks);
@@ -360,6 +371,7 @@ const protectionFeeReview: ConditionalEventDef = {
   provenance: P,
   phase: "weekly",
   cooldownDays: 28,
+  pacing: "adverse",
   hazard(ctx) {
     const deal = ctx.state.conditions.find((c) => c.id === "paying-protection");
     if (!deal || typeof deal.data?.feeCp !== "number") return { probability: 0, drivers: [] };
@@ -380,6 +392,50 @@ const protectionFeeReview: ConditionalEventDef = {
   },
 };
 
+const vacancyFilled: ConditionalEventDef = {
+  id: "vacancy-filled",
+  title: "A replacement is hired",
+  category: "conditional",
+  provenance: P,
+  phase: "weekly",
+  cooldownDays: 0,
+  pacing: "flavor",
+  hazard(ctx) {
+    if (ctx.plan.standingOrders.fillVacancies !== "auto") return { probability: 0, drivers: [] };
+    const missing = vacantRoles(ctx);
+    return { probability: missing.length ? 0.7 : 0, drivers: missing.map((r) => ({ label: `No ${r} for an outlet that needs one`, value: 0.7 })) };
+  },
+  resolve(ctx) {
+    const role = vacantRoles(ctx)[0]!;
+    const hired = new Set(ctx.plan.staff.map((s) => s.candidateId));
+    const candidate = ctx.world.staffPool.filter((c) => !hired.has(c.id) && c.roles.includes(role)).sort((a, b) => a.askingWageCpPerDay - b.askingWageCpPerDay || a.id.localeCompare(b.id))[0];
+    if (!candidate) {
+      return {
+        severity: "notable",
+        playerText: `We couldn't find anyone to work as a ${role}; an outlet stays short-handed.`,
+        dmText: "Hiring pool exhausted for this role.",
+        effects: [{ kind: "plan", patch: { standingOrders: { fillVacancies: "manual" } }, note: "No candidates left; stop searching" }],
+      };
+    }
+    return {
+      severity: "minor",
+      playerText: `We hired ${candidate.name} as a ${role} (${candidate.askingWageCpPerDay} cp/day) to fill the gap.`,
+      dmText: `Standing order "fill vacancies": hired the cheapest available ${role}. Traits hidden: honesty ${candidate.traits.honesty}, reliability ${candidate.traits.reliability}.`,
+      effects: [{ kind: "plan", patch: { staff: [...ctx.plan.staff, { candidateId: candidate.id, role, wageCpPerDay: candidate.askingWageCpPerDay }] }, note: `Hired ${candidate.name} to fill a vacancy` }],
+    };
+  },
+};
+
+/** Roles with fewer staff than outlets that need them (e.g. two outlets, one seller). */
+function vacantRoles(ctx: Parameters<ConditionalEventDef["hazard"]>[0]) {
+  const needed = new Map<string, number>();
+  for (const c of ctx.plan.channels) if (c.share > 0) needed.set(ctx.world.channels[c.type].staffRole, (needed.get(ctx.world.channels[c.type].staffRole) ?? 0) + 1);
+  return [...needed.entries()]
+    .filter(([role, outlets]) => ctx.plan.staff.filter((s) => s.role === role).length < outlets)
+    .map(([role]) => role as (typeof ctx.plan.staff)[number]["role"])
+    .sort();
+}
+
 export const conditionalEvents: ConditionalEventDef[] = [
   staffAbsence,
   supplyShortage,
@@ -391,6 +447,7 @@ export const conditionalEvents: ConditionalEventDef[] = [
   skimmingNoticed,
   staffQuits,
   protectionFeeReview,
+  vacancyFilled,
 ];
 
 // Exposed for the large-order delivery check.

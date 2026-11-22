@@ -8,9 +8,32 @@ import { describeEffect } from "../engine/effects";
 import type { BusinessPlan } from "../engine/plan";
 import type { RunResult } from "../engine/simulate";
 import type { EventRecord, PendingDecision, WeekRecord, WorldDefinition, WorldState } from "../engine/types";
+import { buildDigest, type Digest } from "../narrative/digest";
 import { buildAllReports, explainWeek, type ReportLine } from "../narrative/weekly-report";
 
 export const SANDBOX_NOTICE = "Sandbox simulation — provisional results, not campaign canon. Nothing here changes the campaign until the DM approves it.";
+
+/** Where the clock stands, for both views. */
+export interface ClockInfo {
+  startDay: number;
+  /** Last simulated absolute day (startDay − 1 before anything has run). */
+  lastDay: number;
+  daysElapsed: number;
+  date: string;
+  weekNumber: number;
+  dayOfWeek: number;
+}
+
+export interface PartialWeek {
+  daysElapsed: number;
+  sold: number;
+  takingsCp: number;
+}
+
+export interface ViewOptions {
+  /** Build a "since last time" digest starting at this absolute day. */
+  digestFromDay?: number;
+}
 
 export interface PlayerWeek {
   index: number;
@@ -49,7 +72,12 @@ export interface PlayerView {
   events: { id: string; date: string; title: string; text: string; severity: EventRecord["severity"]; resolution?: string; decidedBy?: "us" | "others" }[];
   knowledge: { date: string; topic: string; text: string }[];
   conditions: string[];
-  pending: { id: string; prompt: string; options: { id: string; label: string; description: string }[] }[];
+  pending: { id: string; prompt: string; dueDate: string; dueDay: number; dueNow: boolean; options: { id: string; label: string; description: string }[] }[];
+  clock: ClockInfo;
+  currentWeek: PartialWeek;
+  digest?: { title: string; lines: Omit<ReportLine, "basis">[] };
+  /** Why the clock stopped (player-safe wording). */
+  stoppedOn?: { id: string; title: string; text: string; severity: EventRecord["severity"] };
 }
 
 export interface DmView {
@@ -60,8 +88,11 @@ export interface DmView {
   state: Omit<WorldState, "current"> & { current: Omit<WorldState["current"], "days"> };
   reports: ReturnType<typeof buildAllReports>;
   explanations: { week: number; variables: ReturnType<typeof explainWeek> }[];
-  pending: (PendingDecision & { optionEffects: Record<string, string[]> })[];
+  pending: (PendingDecision & { optionEffects: Record<string, string[]>; dueDate: string; dueNow: boolean })[];
   pausedOnEvent?: EventRecord;
+  clock: ClockInfo;
+  currentWeek: PartialWeek;
+  digest?: Digest;
   days: WorldState["current"]["days"];
   labels: {
     actors: Record<string, string>;
@@ -70,12 +101,35 @@ export interface DmView {
   };
 }
 
+function clock(world: WorldDefinition, state: WorldState): ClockInfo {
+  const lastDay = state.day - 1;
+  const elapsed = state.day - state.startDay;
+  return {
+    startDay: state.startDay,
+    lastDay,
+    daysElapsed: elapsed,
+    date: formatDate(dateFromDay(world.calendar, Math.max(state.startDay, lastDay)), world.calendar),
+    weekNumber: Math.floor(Math.max(0, elapsed - 1) / 7) + 1,
+    dayOfWeek: elapsed === 0 ? 0 : ((elapsed - 1) % 7) + 1,
+  };
+}
+
+function partialWeek(state: WorldState): PartialWeek {
+  const d = state.current.days;
+  return { daysElapsed: d.length, sold: d.reduce((a, x) => a + x.sold, 0), takingsCp: d.reduce((a, x) => a + x.revenueReportedCp, 0) };
+}
+
+function digestFor(world: WorldDefinition, state: WorldState, opts: ViewOptions): Digest | undefined {
+  if (opts.digestFromDay === undefined || opts.digestFromDay > state.day - 1) return undefined;
+  return buildDigest(world, state, Math.max(state.startDay, opts.digestFromDay), state.day - 1);
+}
+
 function period(world: WorldDefinition, state: WorldState) {
   const last = Math.max(state.startDay, state.day - 1);
   return { start: formatDate(dateFromDay(world.calendar, state.startDay), world.calendar), end: formatDate(dateFromDay(world.calendar, last), world.calendar) };
 }
 
-export function buildPlayerView(world: WorldDefinition, result: RunResult): PlayerView {
+export function buildPlayerView(world: WorldDefinition, result: RunResult, opts: ViewOptions = {}): PlayerView {
   const s = result.state;
   const cal = world.calendar;
   const short = (day: number) => formatShortDate(dateFromDay(cal, day));
@@ -132,11 +186,29 @@ export function buildPlayerView(world: WorldDefinition, result: RunResult): Play
     conditions: s.conditions.filter((c) => c.visibleToPlayers).map((c) => c.label),
     pending: result.pending
       .filter((p) => p.authority === "players")
-      .map((p) => ({ id: p.id, prompt: p.prompt, options: p.options.map((o) => ({ id: o.id, label: o.label, description: o.description })) })),
+      .map((p) => ({
+        id: p.id,
+        prompt: p.prompt,
+        dueDate: short(p.dueDay),
+        dueDay: p.dueDay,
+        dueNow: result.blocking.includes(p.id),
+        options: p.options.map((o) => ({ id: o.id, label: o.label, description: o.description })),
+      })),
+    stoppedOn: result.pausedOnEvent
+      ? result.pausedOnEvent.visibleToPlayers
+        ? { id: result.pausedOnEvent.id, title: result.pausedOnEvent.title, text: result.pausedOnEvent.playerText, severity: result.pausedOnEvent.severity }
+        : { id: result.pausedOnEvent.id, title: "The DM has paused the clock", text: "Something is happening that the DM wants to look at.", severity: "notable" }
+      : undefined,
+    clock: clock(world, s),
+    currentWeek: partialWeek(s),
+    digest: (() => {
+      const d = digestFor(world, s, opts);
+      return d ? { title: d.title, lines: d.lines.map((l) => ({ section: l.section, tone: l.tone, text: l.text })) } : undefined;
+    })(),
   };
 }
 
-export function buildDmView(world: WorldDefinition, result: RunResult): DmView {
+export function buildDmView(world: WorldDefinition, result: RunResult, opts: ViewOptions = {}): DmView {
   const s = result.state;
   const { current, ...rest } = s;
   const { days, ...currentRest } = current;
@@ -148,8 +220,16 @@ export function buildDmView(world: WorldDefinition, result: RunResult): DmView {
     state: { ...rest, current: currentRest },
     reports: buildAllReports(world, s),
     explanations: s.weeks.map((w) => ({ week: w.index, variables: explainWeek(w) })),
-    pending: result.pending.map((p) => ({ ...p, optionEffects: Object.fromEntries(p.options.map((o) => [o.id, o.effects.map(describeEffect)])) })),
+    pending: result.pending.map((p) => ({
+      ...p,
+      optionEffects: Object.fromEntries(p.options.map((o) => [o.id, o.effects.map(describeEffect)])),
+      dueDate: formatShortDate(dateFromDay(world.calendar, p.dueDay)),
+      dueNow: result.blocking.includes(p.id),
+    })),
     pausedOnEvent: result.pausedOnEvent,
+    clock: clock(world, s),
+    currentWeek: partialWeek(s),
+    digest: digestFor(world, s, opts),
     days,
     labels: {
       actors: Object.fromEntries(world.actors.map((a) => [a.id, a.name])),

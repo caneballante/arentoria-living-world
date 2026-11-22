@@ -10,17 +10,20 @@ Done:
 - A business plan with all twelve decisions plus standing orders (zod-validated).
 - Daily production and sales, weekly accounting, cash, owner draws and reinvestment.
 - Hidden state as stocks and flows with named drivers; derived resilience and vulnerability.
-- Ten conditional/opportunity events, four multi-stage threads and two scheduled events.
+- Nineteen conditional and opportunity events, four multi-stage threads and three scheduled events.
 - Pauses mid-week, decisions (player and DM), "flag for session", deterministic replay, snapshots.
 - An intervention commit point with an audit trail; player and DM projections; weekly narrative reports.
 - Seeded batch comparison across nine strategies at 26/52 weeks; CLI and web UI.
-- 64 automated tests.
+- Campaign-clock controls (day/week/month/"until something needs the party"), response windows on decisions, plan revisions applied mid-season, "since last time" digests.
+- Pacing tuned per in-game time: opportunity and dilemma decisions, decision spacing, quiet spells after major events, threats that resolve instead of looping, a pacing table in strategy comparison.
+- One-step launcher and a playtest plan (`docs/TEST_PLAN.md`).
+- 77 automated tests.
 
 Next small steps (before Phase 2):
 
-- Calibrate with the DM using the questions in `docs/ASSUMPTIONS.md`.
+- Calibrate with the DM using the questions in `docs/ASSUMPTIONS.md`, including pacing.
+- Decide whether risky strategies should also be clearly less profitable, or pay only in trouble (see ASSUMPTIONS, "Observed behavior").
 - Add a one-factor sensitivity view ("what if only the price changed?") to the compare page.
-- Mid-season plan changes in the sandbox UI (the engine already supports them as `plan` effects).
 
 ## Phase 2: world state and interventions
 

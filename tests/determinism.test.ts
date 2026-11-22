@@ -62,7 +62,7 @@ describe("determinism and replay", () => {
       if (r.status === "completed") break;
       pauses++;
       const resolutions: Record<string, string> = {};
-      for (const p of r.pending) {
+      for (const p of r.pending.filter((x) => r.blocking.includes(x.id))) {
         const record = auto.state.events.find((e) => e.decisionId === p.id);
         expect(record?.resolution, `decision ${p.id} also occurs in the unattended run`).toBeDefined();
         resolutions[p.id] = record!.resolution!.optionId;
@@ -70,7 +70,12 @@ describe("determinism and replay", () => {
       state = runSimulation(world, state, { untilDay: state.day - 1, resolutions }).state;
     }
     expect(pauses).toBe(decisions.length);
-    const strip = (s: typeof state) => JSON.stringify({ ...s, history: s.history.map((h) => ({ ...h, authority: "x" })), events: s.events.map((e) => ({ ...e, resolution: e.resolution && { ...e.resolution, authority: "x" } })) });
+    const strip = (s: typeof state) =>
+      JSON.stringify({
+        ...s,
+        history: s.history.map((h) => ({ ...h, authority: "x", description: h.description.replace(" (no answer by the deadline)", "") })),
+        events: s.events.map((e) => ({ ...e, resolution: e.resolution && { ...e.resolution, authority: "x" } })),
+      });
     expect(strip(state)).toBe(strip(auto.state));
   });
 
@@ -78,7 +83,7 @@ describe("determinism and replay", () => {
     const plan = planOf("grand-market-aggressive");
     const first = simulateScenario(world, { plan, seed: "replay", weeks: 26, startDay: START, pause: "decisions" });
     expect(first.status).toBe("paused");
-    const p = first.pending[0]!;
+    const p = first.pending.find((x) => first.blocking.includes(x.id))!;
     const choice = p.options[p.options.length - 1]!.id;
     const a = simulateScenario(world, { plan, seed: "replay", weeks: 26, startDay: START, pause: "decisions", resolutions: { [p.id]: choice } });
     const b = simulateScenario(world, { plan, seed: "replay", weeks: 26, startDay: START, pause: "decisions", resolutions: { [p.id]: choice } });

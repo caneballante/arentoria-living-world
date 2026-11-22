@@ -71,6 +71,13 @@ export const PlanSchema = z
       largeOrder: z.enum(["accept", "decline"]),
       dishonestStaff: z.enum(["dismiss", "warn", "ignore"]),
       rivalTricks: z.enum(["ignore", "seek-mediation"]),
+      // Added in v0.2 — defaults keep older plans valid.
+      raiseRequest: z.enum(["grant", "partial", "refuse"]).default("partial"),
+      festivalPitch: z.enum(["accept", "decline"]).default("accept"),
+      supplierExclusive: z.enum(["accept", "decline"]).default("decline"),
+      rivalTruce: z.enum(["accept", "decline"]).default("accept"),
+      charity: z.enum(["accept", "decline"]).default("accept"),
+      fillVacancies: z.enum(["auto", "manual"]).default("auto"),
     }),
   })
   .superRefine((plan, ctx) => {

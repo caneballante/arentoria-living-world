@@ -96,15 +96,30 @@ Reputation, loyalty, visibility, scrutiny, guild relationship, criminal attentio
 - `WorldState` is plain JSON. `snapshot()` and `restore()` are JSON round trips, and resuming from any day reproduces the uninterrupted run exactly (tested, including a split mid-week).
 - Decision ids are deterministic (`dec:<event>:<day>:<seq>`).
 
-### Pauses and DM authority
+### Decisions, response windows and DM authority
 
-Decisions are resolved at the end of the day they arise, in every mode:
+Every decision has a **due day**. Urgent ones (a crew at the door, an inspection ruling, the licensing board) are due the day they arise. Others carry a **response window** (`respondWithinDays`, 1–14 days), so they can wait for the next session. At the end of its due day a decision is resolved, in every mode:
 
-- **Unattended**: by the plan's standing orders (players' instructions) or sandbox assumptions (DM-owned rulings).
-- **Interactive**: the run pauses (`status: "paused"`), the DM or players choose, and the run resumes. With `decisions-and-major`, it also stops on any major event, even mid-week.
-- **Stateless replay**: the web UI keeps only `{plan, seed, resolutions, acknowledged}`, and the server re-simulates from the start. Hidden state never lives in the browser.
+- **Answered** (possibly early): the supplied option takes effect at the due day, never earlier. That keeps replays deterministic no matter when someone clicked.
+- **Unattended** (`pause: "never"`): the plan's standing orders (players) or sandbox assumptions (DM rulings) decide. Unanswered decisions are logged "(no answer by the deadline)".
+- **Interactive**: the run stops (`status: "paused"`, `blocking` lists what is due), someone chooses, and the run resumes. With `decisions-and-major` it also stops on any major event, even mid-week.
 
-The tests prove that an interactive run answering as the standing orders would is byte-identical to the unattended run.
+The tests prove that an interactive run answering as the standing orders would is identical to the unattended run.
+
+### The clock: advancing time between sessions
+
+Pacing is per in-game time; the DM chooses how far the clock moves each session. The sandbox's clock bar maps to engine options:
+
+- **+1 day / +1 week / +4 weeks**: run to a target day (`untilDay`, or `days` from the start).
+- **Until something needs the party**: `stopWhenNeededAfterDay`. The run stops at the end of the first later day on which a decision arose or a major event happened (cap 8 weeks). Acknowledged events don't stop it again.
+- **Plan revisions between sessions**: `interventions` scheduled for a day, applied at the start of that day and audited as `authority: "players"`. Applying a plan change mid-season equals stopping there and calling `applyIntervention` (tested).
+- **"Since last time" digest** (`narrative/digest.ts`): summarizes any span of days (sales, money, trends, events, decisions, open deadlines), with a DM basis per line.
+
+The web UI uses **stateless replay**: it keeps only `{starting plan, plan revisions by day, seed, resolutions, acknowledged events, target day}`, and the server re-simulates from the start each time (a year takes ~10 ms). Hidden state never lives in the browser.
+
+### Pacing
+
+`world/pacing.ts` keeps the world from producing a crisis every week without breaking cause and effect. Opportunity and dilemma decisions are spaced at least 21 days apart and never stack. Adverse random events are damped for 14 days after a major event; this shows up as a named driver. Major thread escalations wait 14 days after any major event, and thread stages have repeat cooldowns. Threats are written to *resolve* (a crew backs off or forces a showdown, a feud burns out) rather than loop. Targets and measurements are in `docs/ASSUMPTIONS.md`; `tests/pacing.test.ts` guards them.
 
 "Flag for the next session" is an option on major decisions. It freezes the thread and records an "awaiting in-person resolution" condition, so the DM can run it at the table and commit the outcome as an intervention.
 

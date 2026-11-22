@@ -11,9 +11,11 @@ import { arentorCalendar } from "./calendar";
 import { canonFacts } from "./canon";
 import { arentoriaClimate, arentoriaMarket } from "./climate";
 import { conditionalEvents } from "./events/conditional";
+import { festivalPitch, opportunityEvents } from "./events/opportunities";
 import { scheduledEvents } from "./events/scheduled";
 import { threads } from "./events/threads";
 import { channels, neighborhoods } from "./neighborhoods";
+import { pacing } from "./pacing";
 import { staffPool } from "./staff";
 
 export const arentoria: WorldDefinition = {
@@ -29,9 +31,10 @@ export const arentoria: WorldDefinition = {
   actors,
   canon: canonFacts,
   assumptions,
-  events: conditionalEvents,
+  events: [...conditionalEvents, ...opportunityEvents],
   threads,
-  scheduled: scheduledEvents,
+  scheduled: [...scheduledEvents, festivalPitch],
+  pacing,
 };
 
 const calendarProblems = validateCalendar(arentorCalendar);

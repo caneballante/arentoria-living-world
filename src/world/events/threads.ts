@@ -65,6 +65,7 @@ export const extortion: ThreadDef = {
       stage: 2,
       title: "The proposition",
       threshold: 9,
+      repeatCooldownDays: 28,
       onEnter(ctx) {
         const crew = ctx.actorName(ctx.neighborhood.crewActorId);
         const already = ctx.hasCondition("paying-protection");
@@ -87,6 +88,8 @@ export const extortion: ThreadDef = {
             prompt: `${crew} want ${formatCp(fee)} a week for "protection". How do we answer?`,
             standingOrder: "protectionDemand",
             defaultOptionId: "refuse",
+            // "We'll be back on market day for your answer."
+            respondWithinDays: 3,
             options: [
               { id: "pay", label: `Pay ${formatCp(fee)} a week`, description: "Buy peace. It may not stay this price.", effects: pay(fee, -25, 2, 0) },
               {
@@ -111,6 +114,8 @@ export const extortion: ThreadDef = {
       stage: 3,
       title: "A warning",
       threshold: 14,
+      major: true,
+      repeatCooldownDays: 28,
       onEnter(ctx, rng) {
         const crew = ctx.actorName(ctx.neighborhood.crewActorId);
         const damage = 150 + rng.int(0, 10) * 10;
@@ -134,10 +139,56 @@ export const extortion: ThreadDef = {
       stage: 4,
       title: "Reprisal",
       threshold: 20,
+      major: true,
+      repeatCooldownDays: 35,
       onEnter(ctx) {
         const crew = ctx.actorName(ctx.neighborhood.crewActorId);
         const fee = protectionFee(ctx, 1.5);
         const staff = vendors(ctx)[0];
+        // Threats resolve rather than loop: the second refusal ends this round, one way or another.
+        const defiance = Number(ctx.state.conditions.find((c) => c.id === "crew-defiance")?.data?.count ?? 0);
+        const secured = ctx.plan.security.precautions || ctx.state.business.staff.some((s) => s.role === "guard");
+        const refuse: DecisionOption =
+          defiance === 0
+            ? {
+                id: "refuse",
+                label: "Refuse again",
+                description: "They will probably try once more.",
+                effects: [
+                  { kind: "addCondition", id: "crew-defiance", label: `Defied ${crew}`, data: { count: 1 }, durationDays: 365, visibleToPlayers: false },
+                  { kind: "thread", threadId: "extortion", setProgress: 15, setStage: 3 },
+                  ...moraleHit(ctx, -10),
+                ],
+              }
+            : secured
+              ? {
+                  id: "refuse",
+                  label: "Refuse — and make it stick",
+                  description: "With our precautions and guard, they may decide we're not worth the trouble.",
+                  effects: [
+                    { kind: "thread", threadId: "extortion", setProgress: 0, setStage: 0, freezeDays: 84 },
+                    { kind: "removeCondition", id: "crew-defiance" },
+                    { kind: "adjust", variable: "criminalAttention", delta: -35 },
+                    { kind: "adjust", variable: "reputation", delta: 2 },
+                    { kind: "addCondition", id: "stood-up-to-crew", label: `Stood up to ${crew}`, durationDays: 84, visibleToPlayers: true },
+                    { kind: "reveal", topic: "street", text: `Word is ${crew} have decided we're more trouble than we're worth.` },
+                  ],
+                }
+              : {
+                  id: "refuse",
+                  label: "Refuse — this gets settled in person",
+                  description: "Without real security they'll hit us hard first; the showdown happens at the table.",
+                  effects: [
+                    { kind: "cash", amountCp: -400, category: "losses", note: "Smashed stock and stolen takings" },
+                    { kind: "modifier", id: "crew-intimidation", label: "Customers avoiding trouble", target: "demand", multiplier: 0.7, durationDays: 14 },
+                    { kind: "adjust", variable: "reputation", delta: -3 },
+                    ...moraleHit(ctx, -15),
+                    { kind: "thread", threadId: "extortion", freezeDays: 56 },
+                    { kind: "removeCondition", id: "crew-defiance" },
+                    { kind: "adjust", variable: "criminalAttention", delta: -10 },
+                    { kind: "addCondition", id: "awaiting-session:extortion", label: `Showdown with ${crew} awaits in-person play`, durationDays: 56, visibleToPlayers: true },
+                  ],
+                };
         return {
           severity: "major",
           playerText: `${staff ? staff.name : "Our seller"} was cornered and roughed up on the way home. ${crew} say the price is now ${formatCp(fee)} a week.`,
@@ -160,12 +211,7 @@ export const extortion: ThreadDef = {
                   { kind: "thread", threadId: "extortion", setProgress: 2, setStage: 0 },
                 ],
               },
-              {
-                id: "refuse",
-                label: "Refuse again",
-                description: "They will keep coming.",
-                effects: [{ kind: "thread", threadId: "extortion", setProgress: 15, setStage: 3 }, ...moraleHit(ctx, -10)],
-              },
+              refuse,
               flagOption("extortion", 28),
             ],
           },
@@ -241,6 +287,7 @@ export const guildPressure: ThreadDef = {
             prompt: "The Fellowship expects us to join the Merchants' Guild. Our answer?",
             standingOrder: "guildNotice",
             defaultOptionId: "refuse",
+            respondWithinDays: 14,
             options: [
               { id: "join-associate", label: `Join as associate (${formatCp(a.associateInitiationCp)} + ${formatCp(a.associateDuesCpPerWeek)}/wk)`, description: "Minimum standing; most pressure stops.", effects: join("associate", a.associateInitiationCp, 10) },
               { id: "join-member", label: `Join as full member (${formatCp(a.memberInitiationCp)} + ${formatCp(a.memberDuesCpPerWeek)}/wk)`, description: "Full standing, connections and protection from rivals.", effects: join("member", a.memberInitiationCp, 18) },
@@ -255,6 +302,7 @@ export const guildPressure: ThreadDef = {
       stage: 3,
       title: "The cold shoulder",
       threshold: 14,
+      repeatCooldownDays: 56,
       onEnter() {
         return {
           severity: "notable",
@@ -272,6 +320,8 @@ export const guildPressure: ThreadDef = {
       stage: 4,
       title: "A formal complaint",
       threshold: 20,
+      major: true,
+      repeatCooldownDays: 84,
       onEnter() {
         return {
           severity: "major",
@@ -312,6 +362,7 @@ export const inspection: ThreadDef = {
       stage: 1,
       title: "Questions asked",
       threshold: 4,
+      repeatCooldownDays: 28,
       onEnter() {
         return {
           severity: "minor",
@@ -325,6 +376,8 @@ export const inspection: ThreadDef = {
       stage: 2,
       title: "Inspection",
       threshold: 9,
+      major: true,
+      repeatCooldownDays: 42,
       onEnter(ctx) {
         const plan = ctx.plan;
         const licensed = ctx.state.business.licensing.status === "approved";
@@ -358,19 +411,48 @@ export const inspection: ThreadDef = {
         }
         const fine = violations.reduce((a, v) => a + v.fine, 0);
         const suspend = Math.max(...violations.map((v) => v.suspendDays));
+        const orders = violations.flatMap((v) => (v.order ? [v.order] : []));
+        const found = violations.map((v) => v.text).join("; ");
         return {
           severity: "major",
-          playerText: `Inspectors found ${violations.map((v) => v.text).join("; ")}. Fine: ${formatCp(fine)}.${suspend ? ` Trading suspended for ${suspend} days.` : ""}${violations.some((v) => v.order) ? " We have been ordered to correct the problems." : ""}`,
-          dmText: `Inspection failed (${violations.length} violation(s)).`,
+          playerText: `Inspectors from the licensing office found problems: ${found}.`,
+          dmText: `Inspection failed (${violations.length} violation(s)). Standard penalty: ${formatCp(fine)} fine${suspend ? `, ${suspend}-day suspension` : ""}${orders.length ? ", correction orders" : ""}. The DM rules on the outcome.`,
           sessionHook: "Galen Vale could contest the findings; an inspector might be persuadable (or bribable).",
-          effects: [
-            { kind: "cash", amountCp: -fine, category: "fines", note: "Inspection fine" },
-            ...(suspend ? [{ kind: "suspend" as const, days: suspend, reason: "Failed inspection" }] : []),
-            ...violations.flatMap((v) => (v.order ? [v.order] : [])),
-            { kind: "adjust", variable: "reputation", delta: -3 },
-            { kind: "adjust", variable: "scrutiny", delta: -8 },
-            { kind: "thread", threadId: "inspection", setProgress: 3, setStage: 0 },
-          ],
+          effects: [{ kind: "adjust", variable: "reputation", delta: -3 }],
+          decision: {
+            authority: "dm",
+            prompt: `Inspectors found: ${found}. How does the licensing office rule?`,
+            dmAssumption: "inspectionRulings",
+            defaultOptionId: "uphold",
+            options: [
+              {
+                id: "uphold",
+                label: `Full penalty: ${formatCp(fine)}${suspend ? ` and ${suspend} days' suspension` : ""}`,
+                description: "The office applies its standard penalties and correction orders.",
+                effects: [
+                  { kind: "cash", amountCp: -fine, category: "fines", note: "Inspection fine" },
+                  ...(suspend ? [{ kind: "suspend" as const, days: suspend, reason: "Failed inspection" }] : []),
+                  ...orders,
+                  { kind: "reveal", topic: "legal", text: `Fined ${formatCp(fine)}${suspend ? ` and suspended for ${suspend} days` : ""} after an inspection.` },
+                  { kind: "adjust", variable: "scrutiny", delta: -8 },
+                  { kind: "thread", threadId: "inspection", setProgress: 3, setStage: 0 },
+                ],
+              },
+              {
+                id: "lenient",
+                label: `Warning and half fine (${formatCp(Math.round(fine / 2))})`,
+                description: "A first offence; correction orders still apply.",
+                effects: [
+                  { kind: "cash", amountCp: -Math.round(fine / 2), category: "fines", note: "Inspection fine (reduced)" },
+                  ...orders,
+                  { kind: "reveal", topic: "legal", text: `Let off with a warning and a reduced fine after an inspection.` },
+                  { kind: "adjust", variable: "scrutiny", delta: -4 },
+                  { kind: "thread", threadId: "inspection", setProgress: 4, setStage: 0 },
+                ],
+              },
+              flagOption("inspection", 21),
+            ],
+          },
         };
       },
     },
@@ -411,6 +493,7 @@ export const rivalResponse: ThreadDef = {
       stage: 2,
       title: "Price war",
       threshold: 9,
+      repeatCooldownDays: 56,
       onEnter(ctx) {
         const rival = ctx.actorName(ctx.neighborhood.rivalActorId);
         return {
@@ -425,6 +508,7 @@ export const rivalResponse: ThreadDef = {
       stage: 3,
       title: "Whispers",
       threshold: 14,
+      repeatCooldownDays: 70,
       onEnter(ctx) {
         const rival = ctx.actorName(ctx.neighborhood.rivalActorId);
         return {
@@ -443,9 +527,35 @@ export const rivalResponse: ThreadDef = {
       stage: 4,
       title: "Dirty tricks",
       threshold: 20,
+      major: true,
+      repeatCooldownDays: 120,
       onEnter(ctx) {
         const rival = ctx.actorName(ctx.neighborhood.rivalActorId);
         const member = ctx.plan.guild !== "none";
+        const feud = Number(ctx.state.conditions.find((c) => c.id === "rival-feud")?.data?.count ?? 0);
+        const weather: DecisionOption =
+          feud === 0
+            ? {
+                id: "ignore",
+                label: "Weather it",
+                description: "Absorb the losses; tempers may cool.",
+                effects: [
+                  { kind: "addCondition", id: "rival-feud", label: `Feud with ${rival}`, data: { count: 1 }, durationDays: 365, visibleToPlayers: false },
+                  { kind: "thread", threadId: "rival-response", setProgress: 6, setStage: 1 },
+                ],
+              }
+            : {
+                id: "ignore",
+                label: "Weather it again",
+                description: "Feuds burn out when one side refuses to play.",
+                effects: [
+                  { kind: "thread", threadId: "rival-response", setProgress: 0, setStage: 0, freezeDays: 112 },
+                  { kind: "removeCondition", id: "rival-feud" },
+                  { kind: "adjust", variable: "rivalHostility", delta: -25 },
+                  { kind: "addCondition", id: "feud-cooled", label: `Uneasy peace with ${rival}`, durationDays: 112, visibleToPlayers: true },
+                  { kind: "reveal", topic: "street", text: `The feud with ${rival} seems to have burned itself out.` },
+                ],
+              };
         return {
           severity: "major",
           playerText: "Someone salted our flour and cut the cart's wheel strap. It wasn't an accident.",
@@ -461,15 +571,16 @@ export const rivalResponse: ThreadDef = {
             prompt: `${rival} are sabotaging us. How do we respond?`,
             standingOrder: "rivalTricks",
             defaultOptionId: "ignore",
+            respondWithinDays: 7,
             options: [
-              { id: "ignore", label: "Weather it", description: "Absorb the losses and keep trading.", effects: [{ kind: "thread", threadId: "rival-response", setProgress: 12, setStage: 2 }] },
+              weather,
               {
                 id: "seek-mediation",
                 label: member ? "Ask the Fellowship to mediate" : "Ask the Fellowship to mediate (we are not members)",
                 description: member ? "Members settle disputes through the Fellowship." : "They are unlikely to help non-members.",
                 effects: member
                   ? [{ kind: "cash", amountCp: -100, category: "guildDues", note: "Mediation fee" }, { kind: "thread", threadId: "rival-response", setProgress: 5, setStage: 1 }, { kind: "adjust", variable: "rivalHostility", delta: -20 }]
-                  : [{ kind: "thread", threadId: "rival-response", setProgress: 14, setStage: 3 }, { kind: "adjust", variable: "guildRelation", delta: -2 }],
+                  : [{ kind: "thread", threadId: "rival-response", setProgress: 8, setStage: 1 }, { kind: "adjust", variable: "guildRelation", delta: -2 }],
               },
               flagOption("rival-response", 28),
             ],

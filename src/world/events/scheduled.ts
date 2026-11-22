@@ -71,7 +71,10 @@ export const largeOrderDelivery: ScheduledEventDef = {
   resolve(ctx, _rng, data) {
     const qty = Number(data.qty);
     const price = Number(data.priceCp);
-    const spare = spareCapacity(ctx, 3);
+    const lead = Number(data.lead ?? 3);
+    // "divert": the constructs work through the night and a day's street stock is held back.
+    const divert = Number(data.divert ?? 0) > 0 ? Math.floor(ctx.plan.weeklyProduction / ctx.plan.operatingDays) : 0;
+    const spare = spareCapacity(ctx, lead) + divert;
     const delivered = Math.min(qty, Math.floor(spare));
     const unit = unitCostToday(ctx);
     const full = delivered >= qty;
@@ -82,8 +85,9 @@ export const largeOrderDelivery: ScheduledEventDef = {
       playerText: full
         ? `Delivered all ${qty} pies to ${String(data.who)}; paid ${formatCp(revenue)}.`
         : `Could only bake ${delivered} of the ${qty} pies promised to ${String(data.who)}. They paid for what arrived, coldly.`,
-      dmText: `Large order: spare capacity ${Math.round(spare)} over 3 days vs ${qty} ordered. Revenue ${formatCp(revenue)}, ingredients ${formatCp(cost)}.`,
+      dmText: `Large order: capacity ${Math.round(spare)} over ${lead} days${divert ? ` (incl. ${divert} diverted street stock)` : ""} vs ${qty} ordered. Revenue ${formatCp(revenue)}, ingredients ${formatCp(cost)}.`,
       effects: [
+        ...(divert ? [{ kind: "modifier" as const, id: "diverted-stock", label: "Street stock diverted to a commission", target: "demand" as const, multiplier: 0.4, durationDays: 1 }] : []),
         { kind: "cash", amountCp: revenue, category: "revenue", note: "Large order" },
         { kind: "cash", amountCp: -cost, category: "ingredients", note: "Large order ingredients" },
         { kind: "adjust", variable: "reputation", delta: full ? 3 : -4 },

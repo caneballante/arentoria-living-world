@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { runBatch } from "../src/analysis/batch";
 import { createInitialState, runSimulation, simulateScenario } from "../src/engine/simulate";
-import { planOf, run, START, world } from "./helpers";
+import { planOf, run, START, stepToDecision, world } from "./helpers";
 
 describe("event system", () => {
   it("triggers conditional events from real conditions within a 26-week season", () => {
     const s = run("commons-compliant", "events", 26).state;
-    const conditional = s.events.filter((e) => e.category === "conditional" || e.category === "opportunity");
+    const random = new Set(world.events.map((d) => d.id));
+    const conditional = s.events.filter((e) => random.has(e.eventId));
     expect(conditional.length).toBeGreaterThan(0);
     for (const e of conditional) {
       expect(e.probability).toBeGreaterThan(0);
@@ -16,9 +17,8 @@ describe("event system", () => {
   });
 
   it("fires the canon-anchored licensing decision as a DM decision that can pause the run", () => {
-    const r = simulateScenario(world, { plan: planOf("commons-compliant"), seed: "lic", weeks: 26, startDay: START, pause: "decisions" });
+    const { result: r, decision: lic } = stepToDecision("commons-compliant", "lic", 26, (p) => p.id.startsWith("dec:construct-license-decision"));
     expect(r.status).toBe("paused");
-    const lic = r.pending.find((p) => p.id.startsWith("dec:construct-license-decision"));
     expect(lic?.authority).toBe("dm");
     // Deny instead of the sandbox default and confirm the consequence is recorded.
     const denied = runSimulation(world, r.state, { untilDay: r.state.day - 1, resolutions: { [lic!.id]: "deny" } }).state;
@@ -58,8 +58,8 @@ describe("event system", () => {
   });
 
   it("freezes a thread flagged for in-person play", () => {
-    const r = simulateScenario(world, { plan: planOf("grand-market-aggressive"), seed: "flag", weeks: 26, startDay: START, pause: "decisions" });
-    const p = r.pending.find((x) => x.options.some((o) => o.id === "flag"))!;
+    const { result: r, decision } = stepToDecision("grand-market-aggressive", "flag", 26, (x) => x.options.some((o) => o.id === "flag"));
+    const p = decision!;
     expect(p).toBeDefined();
     const after = runSimulation(world, r.state, { untilDay: r.state.day + 13, resolutions: { [p.id]: "flag" }, pause: "never" }).state;
     const threadId = p.options.find((o) => o.id === "flag")!.effects.find((e) => e.kind === "thread")!;

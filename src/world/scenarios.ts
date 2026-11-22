@@ -88,7 +88,7 @@ export const scenarios: Scenario[] = [
       reserveDays: 0,
       startingCapitalCp: 5000,
       finance: { reserveTargetCp: 1000, ownerDrawShare: 0.7, reinvestAdvertisingShare: 0.2 },
-      standingOrders: { protectionDemand: "refuse", guildNotice: "refuse", largeOrder: "accept", dishonestStaff: "ignore", rivalTricks: "ignore" },
+      standingOrders: { protectionDemand: "refuse", guildNotice: "refuse", largeOrder: "accept", dishonestStaff: "ignore", rivalTricks: "ignore", raiseRequest: "refuse", supplierExclusive: "accept", charity: "decline" },
     },
   },
   {
@@ -157,7 +157,7 @@ export const scenarios: Scenario[] = [
       reserveDays: 0,
       startingCapitalCp: 5000,
       finance: { reserveTargetCp: 1500, ownerDrawShare: 0.6, reinvestAdvertisingShare: 0 },
-      standingOrders: { protectionDemand: "refuse", guildNotice: "refuse", largeOrder: "accept", dishonestStaff: "ignore", rivalTricks: "ignore" },
+      standingOrders: { protectionDemand: "refuse", guildNotice: "refuse", largeOrder: "accept", dishonestStaff: "ignore", rivalTricks: "ignore", raiseRequest: "refuse", supplierExclusive: "accept", rivalTruce: "decline", charity: "decline" },
     },
   },
   {

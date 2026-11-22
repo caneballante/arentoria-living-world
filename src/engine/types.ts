@@ -214,6 +214,23 @@ export interface WorldDefinition {
   events: ConditionalEventDef[];
   threads: ThreadDef[];
   scheduled: ScheduledEventDef[];
+  pacing: PacingConfig;
+}
+
+/**
+ * Narrative pacing, measured in in-game days (never in real-world sessions). These keep
+ * the world from producing a crisis every week without breaking cause and effect: they
+ * delay or soften events and always show up as named drivers.
+ */
+export interface PacingConfig {
+  provenance: Provenance;
+  /** Minimum days between new player decisions from opportunity/dilemma events. */
+  minDaysBetweenPlayerDecisions: number;
+  /** After a major event, adverse random events are damped for this many days. */
+  quietDaysAfterMajor: number;
+  quietHazardMultiplier: number;
+  /** Major thread escalations wait at least this long after any major event. */
+  minDaysBetweenMajorEscalations: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -248,6 +265,12 @@ export interface DecisionSpec {
   standingOrder?: keyof BusinessPlan["standingOrders"];
   /** Sandbox assumption key consulted when auto-resolving DM decisions. */
   dmAssumption?: keyof SandboxAssumptions;
+  /**
+   * 0 / omitted: urgent — resolved at the end of the day it arises (pauses the clock).
+   * N: can wait — the answer takes effect at the end of day + N; an unanswered decision
+   * falls back to the standing order at that deadline.
+   */
+  respondWithinDays?: number;
 }
 
 export interface EventOutcome {
@@ -287,6 +310,8 @@ export interface ConditionalEventDef {
   provenance: Provenance;
   phase: EventPhase;
   cooldownDays: number;
+  /** "decision": spaced by pacing.minDaysBetweenPlayerDecisions; "adverse": damped after major events. */
+  pacing?: "decision" | "adverse" | "flavor";
   hazard(ctx: EventContext): { probability: number; drivers: Driver[] };
   resolve(ctx: EventContext, rng: Rng): EventOutcome;
 }
@@ -304,6 +329,10 @@ export interface ThreadStageDef {
   title: string;
   /** Progress needed to enter this stage. */
   threshold: number;
+  /** A serious escalation: spaced from other major events by pacing rules. */
+  major?: boolean;
+  /** This stage cannot be entered again within this many days of its last entry. */
+  repeatCooldownDays?: number;
   onEnter(ctx: EventContext, rng: Rng): EventOutcome;
 }
 
@@ -461,6 +490,8 @@ export interface ThreadState {
   lastChangeDay: number;
   /** Latest weekly-rate pressure, for explanation. */
   lastPressure: Driver[];
+  /** Day each stage was last entered (keyed by stage number). */
+  lastEntered?: Record<string, number>;
 }
 
 export interface ScheduledEvent {
@@ -473,6 +504,8 @@ export interface ScheduledEvent {
 export interface PendingDecision {
   id: string;
   day: number;
+  /** End of this day the decision takes effect (= day for urgent decisions). */
+  dueDay: number;
   eventRecordId: string;
   authority: DecisionAuthority;
   prompt: string;
@@ -600,6 +633,7 @@ export interface WeekRecord {
 export interface SandboxAssumptions {
   /** How DM-owned decisions are auto-resolved in unattended runs. */
   licensingOutcome: "approve" | "delay" | "deny";
+  inspectionRulings: "uphold" | "lenient";
 }
 
 export interface WorldState {
@@ -635,6 +669,7 @@ export interface WorldState {
   scheduled: ScheduledEvent[];
   pending: PendingDecision[];
   cooldowns: Record<string, number>;
+  pacing: { lastPlayerDecisionDay: number | null; lastMajorDay: number | null };
   events: EventRecord[];
   history: AppliedChange[];
   knowledge: KnowledgeItem[];

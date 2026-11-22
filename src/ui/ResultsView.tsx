@@ -118,42 +118,97 @@ const HIDDEN_ORDER: { key: HiddenVar; label: string }[] = [
   { key: "rivalHostility", label: "Rival hostility" },
 ];
 
-function DecisionPanel({ view, onResolve, onAcknowledge, busy }: { view: DmView | PlayerView; onResolve: (id: string, option: string) => void; onAcknowledge: (eventId: string) => void; busy: boolean }) {
-  if (view.status !== "paused") return null;
-  if (view.kind === "dm" && view.pausedOnEvent && !view.pending.length) {
-    const e = view.pausedOnEvent;
-    return (
-      <div className="callout" role="region" aria-label="Simulation paused">
-        <div className="row"><SeverityBadge severity={e.severity} category={e.category} /><strong>Paused: {e.title}</strong></div>
-        <p style={{ marginTop: 6 }}>{e.playerText}</p>
-        <p className="small muted" style={{ marginTop: 4 }}>DM: {e.dmText}{e.sessionHook ? ` · Session hook: ${e.sessionHook}` : ""}</p>
-        <div className="row" style={{ marginTop: 10 }}>
-          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => onAcknowledge(e.id)}>Continue the simulation</button>
-          <span className="small muted">Run it at the table first if you like — the world waits.</span>
-        </div>
-      </div>
-    );
-  }
-  const pending = view.kind === "dm" ? view.pending : view.pending;
-  if (!pending.length) return null;
-  const p = pending[0]!;
-  const dm = view.kind === "dm" ? view.pending[0] : undefined;
+type AnyPending = { id: string; prompt: string; dueDate: string; dueNow: boolean; authority?: string; options: { id: string; label: string; description: string }[]; optionEffects?: Record<string, string[]> };
+
+/**
+ * Open decisions. Due-now decisions stopped the clock and must be answered to continue.
+ * Others can wait until their deadline: answering early just records the choice, which
+ * takes effect on the due date (unanswered ones fall back to the standing order).
+ */
+function OpenDecisions({ view, answers, onAnswer, onAcknowledge, busy }: { view: DmView | PlayerView; answers: Record<string, string>; onAnswer: (id: string, option: string, dueNow: boolean) => void; onAcknowledge: (eventId: string) => void; busy: boolean }) {
+  const pending: AnyPending[] = view.pending as AnyPending[];
+  const due = pending.filter((p) => p.dueNow);
+  const waiting = pending.filter((p) => !p.dueNow);
+  const paused = view.kind === "dm"
+    ? view.pausedOnEvent && { id: view.pausedOnEvent.id, title: view.pausedOnEvent.title, text: view.pausedOnEvent.playerText, severity: view.pausedOnEvent.severity, category: view.pausedOnEvent.category, dm: `${view.pausedOnEvent.dmText}${view.pausedOnEvent.sessionHook ? ` · Session hook: ${view.pausedOnEvent.sessionHook}` : ""}` }
+    : view.stoppedOn && { ...view.stoppedOn, category: undefined, dm: undefined };
+  if (!due.length && !waiting.length && !paused) return null;
   return (
-    <div className="callout" role="region" aria-label="Decision required">
-      <div className="row">
-        <strong>Decision needed{dm ? ` (${dm.authority === "dm" ? "DM ruling" : "players' choice"})` : ""}</strong>
-        <span className="small muted">The simulation stopped at the end of the day this arose.</span>
-      </div>
-      <p style={{ marginTop: 6 }}>{p.prompt}</p>
-      <div className="option-list">
-        {p.options.map((o) => (
-          <button key={o.id} type="button" className="option" disabled={busy} onClick={() => onResolve(p.id, o.id)}>
-            <strong>{o.label}</strong>
-            <span className="small secondary">{o.description}</span>
-            {dm && <span className="effects">Effects: {dm.optionEffects[o.id]?.join("; ") || "none"}</span>}
-          </button>
+    <div className="stack" style={{ gap: 10 }}>
+      {paused && !due.length && (
+        <div className="callout" role="region" aria-label="Simulation stopped">
+          <div className="row"><SeverityBadge severity={paused.severity} category={paused.category} /><strong>Stopped: {paused.title}</strong></div>
+          <p style={{ marginTop: 6 }}>{paused.text}</p>
+          {paused.dm && <p className="small muted" style={{ marginTop: 4 }}>DM: {paused.dm}</p>}
+          <div className="row" style={{ marginTop: 10 }}>
+            <button type="button" className="btn btn-primary" disabled={busy} onClick={() => onAcknowledge(paused.id)}>Noted — keep going</button>
+            <span className="small muted">Run it at the table first if you like; the clock waits.</span>
+          </div>
+        </div>
+      )}
+      {due.map((p) => (
+        <div key={p.id} className="callout" role="region" aria-label="Decision required">
+          <div className="row">
+            <strong>Decision needed now{p.authority ? ` (${p.authority === "dm" ? "DM ruling" : "players' choice"})` : ""}</strong>
+            <span className="small muted">The clock stopped at the end of {p.dueDate}.</span>
+          </div>
+          <p style={{ marginTop: 6 }}>{p.prompt}</p>
+          <div className="option-list">
+            {p.options.map((o) => (
+              <button key={o.id} type="button" className="option" disabled={busy} onClick={() => onAnswer(p.id, o.id, true)}>
+                <strong>{o.label}</strong>
+                <span className="small secondary">{o.description}</span>
+                {p.optionEffects && <span className="effects">Effects: {p.optionEffects[o.id]?.join("; ") || "none"}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+      {waiting.length > 0 && (
+        <div className="panel panel-pad">
+          <h3 style={{ marginBottom: 6 }}>Waiting on an answer</h3>
+          <p className="small muted" style={{ marginBottom: 8 }}>These can wait. An answer takes effect on its due date; if nobody answers, the standing order applies.</p>
+          {waiting.map((p) => {
+            const chosen = answers[p.id];
+            return (
+              <div key={p.id} className="list-row" style={{ marginBottom: 8 }}>
+                <div className="row">
+                  <strong style={{ flex: 1 }}>{p.prompt}</strong>
+                  <span className="badge">answer by {p.dueDate}</span>
+                  {p.authority === "dm" && <span className="badge">DM</span>}
+                </div>
+                <div className="row">
+                  {p.options.map((o) => (
+                    <button key={o.id} type="button" className={`btn btn-small ${chosen === o.id ? "btn-primary" : ""}`} aria-pressed={chosen === o.id} disabled={busy} onClick={() => onAnswer(p.id, o.id, false)} title={p.optionEffects?.[o.id]?.join("; ") ?? o.description}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+                {chosen && <span className="small secondary">Answered — takes effect {p.dueDate}.</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DigestPanel({ digest, showBasis }: { digest: { title: string; lines: { tone: "good" | "bad" | "neutral"; text: string; basis?: string }[] }; showBasis: boolean }) {
+  return (
+    <div className="panel panel-pad" style={{ borderLeft: "4px solid var(--accent)" }}>
+      <h3 style={{ marginBottom: 6 }}>{digest.title}</h3>
+      <ul className="report-lines">
+        {digest.lines.map((l, i) => (
+          <li key={i}>
+            <span className="tone" aria-label={l.tone}>{TONE_ICON[l.tone]}</span>
+            <div>
+              <div>{l.text}</div>
+              {showBasis && l.basis && <div className="basis">↳ {l.basis}</div>}
+            </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
@@ -350,7 +405,21 @@ function Audit({ view }: { view: DmView }) {
 
 type Tab = "overview" | "reports" | "events" | "hidden" | "threads" | "inspector" | "ledger" | "audit";
 
-export function ResultsView({ view, previous, onResolve, onAcknowledge, busy }: { view: DmView | PlayerView; previous: RunSummary | null; onResolve: (id: string, option: string) => void; onAcknowledge: (eventId: string) => void; busy: boolean }) {
+export function ResultsView({
+  view,
+  previous,
+  answers,
+  onAnswer,
+  onAcknowledge,
+  busy,
+}: {
+  view: DmView | PlayerView;
+  previous: RunSummary | null;
+  answers: Record<string, string>;
+  onAnswer: (id: string, option: string, dueNow: boolean) => void;
+  onAcknowledge: (eventId: string) => void;
+  busy: boolean;
+}) {
   const [tab, setTab] = useState<Tab>("overview");
   const isDm = view.kind === "dm";
   const summary = useMemo(() => summarizeView(view, "current"), [view]);
@@ -388,10 +457,14 @@ export function ResultsView({ view, previous, onResolve, onAcknowledge, busy }: 
         ))}
       </div>
       <div className="panel-pad stack">
-        <DecisionPanel view={view} onResolve={onResolve} onAcknowledge={onAcknowledge} busy={busy} />
+        <OpenDecisions view={view} answers={answers} onAnswer={onAnswer} onAcknowledge={onAcknowledge} busy={busy} />
+        {activeTab === "overview" && view.digest && <DigestPanel digest={view.digest} showBasis={isDm} />}
         {activeTab === "overview" && (
           <>
-            <div className="small muted">{view.period.start} → {view.period.end} · {weeks.length} weeks · {view.notice}</div>
+            <div className="small muted">
+              {view.period.start} → {view.period.end} · {weeks.length} complete week{weeks.length === 1 ? "" : "s"}
+              {view.currentWeek.daysElapsed > 0 ? ` + ${view.currentWeek.daysElapsed} day(s) of week ${weeks.length + 1} (sold ${view.currentWeek.sold}, takings ${formatCp(view.currentWeek.takingsCp)} so far)` : ""} · {view.notice}
+            </div>
             <div className="tiles">
               <Tile label="Total profit" value={formatCp(summary.totalProfitCp)} delta={delta("totalProfitCp")} />
               <Tile label="Paid to the party" value={formatCp(summary.ownerDrawsCp)} delta={delta("ownerDrawsCp")} />
@@ -402,7 +475,8 @@ export function ResultsView({ view, previous, onResolve, onAcknowledge, busy }: 
               {isDm && <Tile label="Reputation (hidden)" value={String(Math.round(view.state.business.hidden.reputation))} note={previous?.endReputation !== undefined ? `previous run: ${Math.round(previous.endReputation)}` : "50 = average seller"} />}
               {isDm && weeks.length > 0 && <Tile label="Resilience (derived)" value={String(Math.round(view.state.weeks[view.state.weeks.length - 1]!.derived.resilience))} note="from suppliers, reserves, staff, channels…" />}
             </div>
-            <div className="grid-cards">
+            {weeks.length === 0 && <p className="muted">Weekly accounts close every seventh day; charts appear after the first full week.</p>}
+            {weeks.length > 0 && <div className="grid-cards">
               <div className="panel chart-card">
                 <div className="chart-head"><h3>Weekly profit</h3><span className="chart-sub">after all costs</span></div>
                 <ColumnChart data={weeks.map((w) => ({ label: `W${w.index}`, value: w.profitCp / 100 }))} format={(v) => `${r1(v)} gp`} />
@@ -411,8 +485,8 @@ export function ResultsView({ view, previous, onResolve, onAcknowledge, busy }: 
                 <div className="chart-head"><h3>Cash on hand</h3><span className="chart-sub">end of each week, after paying the party</span></div>
                 <LineChart labels={labels} series={cashSeries.map((s) => ({ ...s, values: s.values.map((v) => v / 100) }))} format={(v) => `${r1(v)} gp`} />
               </div>
-            </div>
-            {isDm && (
+            </div>}
+            {isDm && weeks.length > 0 && (
               <div className="panel chart-card">
                 <div className="chart-head"><h3>Hidden state</h3><span className="chart-sub">0–100 · players never see these numbers — see “Why?” for causes</span></div>
                 <SmallMultiples labels={labels} items={HIDDEN_ORDER.map((h) => ({ name: h.label, values: view.state.weeks.map((w) => w.hiddenEnd[h.key]) }))} />

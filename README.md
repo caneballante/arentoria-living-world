@@ -22,12 +22,11 @@ A 20-minute playtest checklist is in **[docs/TEST_PLAN.md](docs/TEST_PLAN.md)**.
 Then, in the browser:
 
 1. Pick a starting scenario (or build a plan) in the left panel. It covers all twelve business decisions plus standing orders.
-2. Click **Run the season** (26 weeks from the placeholder date 1 Harvest 940 CY).
-3. Read the results. **DM view** shows the hidden state and why each value changed; **Players** shows only what the party would learn.
-4. Change one thing, then click **Run again**. The tiles show the change against the previous run, and the cash chart overlays it.
-5. Use **Compare strategies** to run every scenario (and your own plan) over many seeds.
-
-With **Pause for decisions**, the run stops on the day a decision arises, such as a protection demand, a guild notice or the licensing ruling. Choose an option and the season continues from that day.
+2. Move the **campaign clock**: **+1 day**, **+1 week** (a typical session), **+4 weeks**, or **Until something needs the party** (downtime: it runs up to 8 weeks and stops when a decision arises or something major happens). **Run a whole season** plays 13–52 weeks at once. The start is the placeholder date 1 Harvest 940 CY.
+3. Read the "Since last time" summary and the reports. **DM view** shows the hidden state and why each value changed; **Players** shows only what the party would learn.
+4. Answer decisions now, or before their deadline. Urgent ones stop the clock; unanswered ones fall back to the standing orders.
+5. Change the plan mid-season and click **Apply from day N** to continue under the new plan. Or restart the season and compare it with the previous run.
+6. Use **Compare strategies** to run every scenario (and your own plan) over many seeds, including how often each produces decisions and crises.
 
 ## Commands
 

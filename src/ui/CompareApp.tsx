@@ -149,6 +149,33 @@ export function CompareApp({ catalog }: { catalog: Catalog }) {
             </p>
           </div>
 
+          <div className="panel panel-pad">
+            <h3 style={{ marginBottom: 4 }}>Pacing — how often something happens</h3>
+            <p className="small muted" style={{ marginBottom: 8 }}>
+              Averages over {data.options.weeks} in-game weeks. Targets per 52 weeks: a sound business sees about 6–10 decisions, 10–15 notable report items and a few major moments, with no more than ~10 quiet weeks in a row; risky businesses roughly twice as busy, without the same crisis repeating more than three times.
+            </p>
+            <div className="table-wrap">
+              <table className="data">
+                <thead>
+                  <tr><th>Strategy</th><th>Player decisions</th><th>DM rulings</th><th>Notable events</th><th>Major events</th><th>Longest quiet stretch</th><th>Most repeats of one crisis</th></tr>
+                </thead>
+                <tbody>
+                  {sorted.map((s) => (
+                    <tr key={s.scenarioId}>
+                      <td>{s.label}</td>
+                      <td>{s.playerDecisions.mean.toFixed(1)}</td>
+                      <td>{s.dmDecisions.mean.toFixed(1)}</td>
+                      <td>{s.notableEvents.mean.toFixed(1)}</td>
+                      <td>{s.majorMoments.mean.toFixed(1)}</td>
+                      <td>{s.longestQuietWeeks.mean.toFixed(1)} weeks</td>
+                      <td>{s.maxStageRepeats.mean.toFixed(1)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           {custom && (
             <div className="panel panel-pad">
               <h3 style={{ marginBottom: 8 }}>Your plan, head to head</h3>

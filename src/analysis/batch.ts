@@ -35,6 +35,16 @@ export interface RunMetrics {
   suspendedDays: number;
   threadPeaks: Record<string, number>;
   endState: EndState;
+  /** Pacing (per run): decisions put to the players / DM, report-worthy and major events. */
+  playerDecisions: number;
+  dmDecisions: number;
+  notableEvents: number;
+  /** All major events, including scheduled rulings. */
+  majorMoments: number;
+  /** Longest run of consecutive weeks with nothing notable or major. */
+  longestQuietWeeks: number;
+  /** Most times any single thread stage was entered (loop detector). */
+  maxStageRepeats: number;
 }
 
 export function classifyEndState(state: WorldState): EndState {
@@ -80,6 +90,30 @@ export function metricsFor(scenarioId: string, seed: string, state: WorldState):
     suspendedDays: state.history.flatMap((h) => h.effects).reduce((a, e) => a + (e.kind === "suspend" ? e.days : 0), 0),
     threadPeaks: Object.fromEntries(Object.values(state.threads).map((t) => [t.id, t.peakStage])),
     endState: classifyEndState(state),
+    ...pacingMetrics(state),
+  };
+}
+
+export function pacingMetrics(state: WorldState) {
+  const decisions = state.events.filter((e) => e.decisionId);
+  const isDmDecision = (e: WorldState["events"][number]) => state.history.some((h) => h.cause.kind === "decision" && h.cause.refId === e.decisionId && (h.authority === "dm" || h.authority === "sandbox-assumption"));
+  const busy = new Set(state.events.filter((e) => e.severity !== "minor").map((e) => e.week));
+  let longest = 0;
+  let run = 0;
+  for (let w = 1; w <= state.weeks.length; w++) {
+    run = busy.has(w) ? 0 : run + 1;
+    longest = Math.max(longest, run);
+  }
+  const stageCounts = new Map<string, number>();
+  for (const e of state.events) if (e.threadId && e.stage !== undefined && e.eventId.includes(":stage-")) stageCounts.set(e.eventId, (stageCounts.get(e.eventId) ?? 0) + 1);
+  const dmDecisions = decisions.filter(isDmDecision).length;
+  return {
+    playerDecisions: decisions.length - dmDecisions,
+    dmDecisions,
+    notableEvents: state.events.filter((e) => e.severity === "notable").length,
+    majorMoments: state.events.filter((e) => e.severity === "major").length,
+    longestQuietWeeks: longest,
+    maxStageRepeats: Math.max(0, ...stageCounts.values()),
   };
 }
 
@@ -110,6 +144,12 @@ export interface ScenarioSummary {
   lossWeeks: Distribution;
   wasteRate: Distribution;
   adverseEvents: Distribution;
+  playerDecisions: Distribution;
+  dmDecisions: Distribution;
+  notableEvents: Distribution;
+  majorMoments: Distribution;
+  longestQuietWeeks: Distribution;
+  maxStageRepeats: Distribution;
   /** Share of runs ending with total profit below zero. */
   pNetLoss: number;
   /** Share of runs in which cash ever went negative. */
@@ -141,6 +181,12 @@ export function summarize(label: string, scenarioId: string, runs: RunMetrics[])
     lossWeeks: dist(runs.map((r) => r.lossWeeks)),
     wasteRate: dist(runs.map((r) => r.wasteRate)),
     adverseEvents: dist(runs.map((r) => r.adverseEvents)),
+    playerDecisions: dist(runs.map((r) => r.playerDecisions)),
+    dmDecisions: dist(runs.map((r) => r.dmDecisions)),
+    notableEvents: dist(runs.map((r) => r.notableEvents)),
+    majorMoments: dist(runs.map((r) => r.majorMoments)),
+    longestQuietWeeks: dist(runs.map((r) => r.longestQuietWeeks)),
+    maxStageRepeats: dist(runs.map((r) => r.maxStageRepeats)),
     pNetLoss: runs.filter((r) => r.totalProfitCp < 0).length / n,
     pCashNegative: runs.filter((r) => r.minCashCp < 0).length / n,
     threadReach,
