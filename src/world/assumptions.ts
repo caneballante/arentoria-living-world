@@ -49,7 +49,8 @@ export const assumptions: EconomicAssumptions = {
     showcaseNovelty: 1.12,
     fairPriceQualitySlope: 0.3,
   },
-  wholesale: { piesPerAccountPerDay: 30, priceFraction: 0.8, maxNewAccountsPerWeek: 1, lossPerShortfallWeek: 1, initialAccounts: 1 },
+  // nonCompliantContractFactor: where buyers need full compliance (Crown Ward contracts), a non-compliant supplier reaches this share of the usual accounts.
+  wholesale: { piesPerAccountPerDay: 30, priceFraction: 0.8, maxNewAccountsPerWeek: 1, lossPerShortfallWeek: 1, initialAccounts: 1, nonCompliantContractFactor: 0.25 },
   // Provisional: keep one week of running costs in the business; suppliers extend about a week of ingredients on credit.
   account: { operatingFloorWeeks: 1, supplierCreditWeeks: 1, arrearsIngredientPremium: 1.1, unpaidWageMoraleHit: 8 },
   initialHidden: { reputation: 50, loyalty: 0, visibility: 5, scrutiny: 5, guildRelation: 45, criminalAttention: 5, rivalHostility: 5, constructStrain: 0 },

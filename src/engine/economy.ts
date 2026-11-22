@@ -102,6 +102,11 @@ export function calendarMultiplier(n: NeighborhoodDef, date: CalendarDate): { va
   return { value: m * festival, festival };
 }
 
+/** District seasons (e.g. the Scholarium's summer recess); 1 where the district has none. */
+export function seasonMultiplier(n: NeighborhoodDef, date: CalendarDate): number {
+  return n.seasons?.multiplier[date.season] ?? 1;
+}
+
 export function qualityTierCost(world: WorldDefinition, quality: number): number {
   const tier = world.assumptions.qualityTiers.find((t) => t.tier === quality);
   if (!tier) throw new Error(`No quality tier ${quality}`);
@@ -155,13 +160,14 @@ export function expectedRetailDemand(
     potential: n.demand.baseDailyCustomers * ch.trafficShare,
     channelFit: n.channelFit[ch.type],
     calendar: cal.value,
+    season: seasonMultiplier(n, date),
     weather: weatherTraffic,
     hotFood: hotFoodFactor(world, state.weather.temperatureC),
     price: priceFactor(world, n, ch, plan.priceCp),
     quality: qualityFactor(n, plan.quality),
     reputation: a.reputationMin + (a.reputationMax - a.reputationMin) * (h.reputation / 100),
-    loyalty: 1 + a.loyaltyBoostMax * (h.loyalty / 100),
-    awareness: a.awarenessFloor + (1 - a.awarenessFloor) * (h.visibility / 100),
+    loyalty: 1 + a.loyaltyBoostMax * (n.regularsWeight ?? 1) * (h.loyalty / 100),
+    awareness: (n.awarenessFloor ?? a.awarenessFloor) + (1 - (n.awarenessFloor ?? a.awarenessFloor)) * (h.visibility / 100),
     competition: 1 - a.competitionImpact * competitionEff,
     novelty: plan.constructPublicity === "showcased" ? a.showcaseNovelty : 1,
     modifiers: modifierProduct(state, "demand", date.absoluteDay, ch.type),
@@ -173,11 +179,11 @@ export function expectedRetailDemand(
 export function wholesaleDemand(world: WorldDefinition, state: WorldState, n: NeighborhoodDef, date: CalendarDate): number {
   const cal = calendarMultiplier(n, date);
   // Inns and taverns buy steadily; festivals lift orders modestly, weather barely matters.
-  return Math.round(state.business.wholesaleAccounts * world.assumptions.wholesale.piesPerAccountPerDay * Math.sqrt(cal.festival));
+  return Math.round(state.business.wholesaleAccounts * world.assumptions.wholesale.piesPerAccountPerDay * Math.sqrt(cal.festival) * seasonMultiplier(n, date));
 }
 
 export function wholesalePrice(world: WorldDefinition, n: NeighborhoodDef, plan: BusinessPlan): number {
-  return Math.min(plan.priceCp, fairPrice(world, n, plan.quality)) * world.assumptions.wholesale.priceFraction;
+  return Math.min(plan.priceCp, fairPrice(world, n, plan.quality)) * (n.wholesale?.priceFraction ?? world.assumptions.wholesale.priceFraction);
 }
 
 export function dailyConstructCapacity(world: WorldDefinition, plan: BusinessPlan): number {

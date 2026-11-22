@@ -58,7 +58,7 @@ src/engine/        Pure simulation engine: no React, no I/O, no world content.
 src/world/         Arentoria content: canon facts, proposed worldbuilding, provisional numbers
   canon.ts           canon register (from the campaign brief)
   calendar.ts        PROPOSED 13×28+1 calendar and festivals
-  neighborhoods.ts   Commons, Grand Market, High March + sales channels (numbers provisional)
+  neighborhoods.ts   eight districts (Commons to Crown Ward) + sales channels (numbers provisional)
   assumptions.ts     every economic / behavioral constant (provisional, calibratable)
   actors.ts          canon factions + proposed rivals, trade groups, crews
   staff.ts           proposed hiring pool (hidden traits)

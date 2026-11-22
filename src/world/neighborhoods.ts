@@ -1,13 +1,15 @@
 /**
- * Modelled neighborhoods. The neighborhood NAMES are canon; every number and
- * characterization below is PROVISIONAL and exists so the simulation can run.
- * Replace descriptions with campaign-document facts as they arrive.
+ * Modelled neighborhoods. The neighborhood NAMES are canon. The one-line character of the
+ * newer districts comes from the DM's notes (22 Nov 2026); every number is PROVISIONAL.
+ * Relative sizes, wealth and food trade are informed by the DM City Index census (v20),
+ * which is reference material, not canon.
  */
 import { canon } from "../engine/provenance";
 import type { ChannelDef, NeighborhoodDef } from "../engine/types";
 import { provisional } from "../engine/provenance";
 
 const nameIsCanon = (note: string) => canon("Campaign brief: established neighborhoods", `Name is canon; ${note}`);
+const dmNotes = nameIsCanon("character from the DM's notes; numbers are provisional, informed by the City Index census (reference).");
 
 export const neighborhoods: Record<string, NeighborhoodDef> = {
   commons: {
@@ -75,7 +77,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
     name: "High March",
     provenance: nameIsCanon("characterization and numbers are provisional."),
     description:
-      "Modelled as a wealthy district: few but discerning customers who pay well for quality and service, prefer delivery to street carts, and see little street crime. (Provisional characterization.)",
+      "Wealthier customers: premium pies, higher prices, deliveries. Few but discerning buyers who pay well for quality and service, prefer delivery to street carts, and see little street crime.",
     demand: {
       baseDailyCustomers: 150,
       referencePriceCp: 16,
@@ -99,11 +101,185 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
     wholesaleAccountPotential: 5,
     rivalActorId: "lattimer-daughters",
     crewActorId: "velvet-gloves",
+    patronage: 1.5,
+  },
+  shades: {
+    id: "shades",
+    name: "the Shades",
+    provenance: dmNotes,
+    description:
+      "Price-sensitive customers and less formal commerce: low-cost pies, trusted local vendors. Plenty of people and very little money; strangers are ignored until the street knows them, then regulars stay loyal. Permits are rarely checked and crime is common.",
+    demand: {
+      baseDailyCustomers: 500,
+      referencePriceCp: 4,
+      priceSensitivity: 2.6,
+      qualityPreference: 1,
+      qualityWeight: 0.15,
+      qualityFloor: 1,
+      qualityFloorPenalty: 1,
+    },
+    competition: 0.45,
+    enforcement: 0.12,
+    crime: 0.75,
+    guildPresence: 0.15,
+    footfall: 0.9,
+    channelFit: { cart: 1.1, stall: 0.8, delivery: 0.2, wholesale: 0.6 },
+    marketDayMultiplier: 1.0,
+    restDayMultiplier: 1.05,
+    permitFeeCpPerWeek: 20,
+    stallFeeCpPerWeek: 30,
+    marketTaxRate: 0.01,
+    wholesaleAccountPotential: 4,
+    rivalActorId: "mother-gannets-cookshop",
+    crewActorId: "lowlamp-crew",
+    regularsWeight: 1.8,
+    awarenessFloor: 0.08,
+    wholesale: { buyers: "taverns and cookshops" },
+  },
+  stoneback: {
+    id: "stoneback",
+    name: "Stoneback",
+    provenance: dmNotes,
+    description:
+      "Craftspeople and industrial workers: filling pies, bulk orders. Crews buy at the yard gates on working days and the place is quiet on Restday. Workshops take standing orders and foremen order in bulk. Few food sellers compete here.",
+    demand: {
+      baseDailyCustomers: 430,
+      referencePriceCp: 5,
+      priceSensitivity: 1.8,
+      qualityPreference: 2,
+      qualityWeight: 0.18,
+      qualityFloor: 1,
+      qualityFloorPenalty: 0.9,
+    },
+    competition: 0.3,
+    enforcement: 0.35,
+    crime: 0.4,
+    guildPresence: 0.5,
+    footfall: 0.8,
+    channelFit: { cart: 1.2, stall: 0.7, delivery: 0.4, wholesale: 1.5 },
+    marketDayMultiplier: 1.0,
+    restDayMultiplier: 0.45,
+    permitFeeCpPerWeek: 40,
+    stallFeeCpPerWeek: 50,
+    marketTaxRate: 0.02,
+    wholesaleAccountPotential: 14,
+    rivalActorId: "old-brasks-dinner-pails",
+    crewActorId: "yard-gate-boys",
+    largeOrders: {
+      rate: 2.2,
+      sizeMultiplier: 1.4,
+      priceMultiplier: 0.95,
+      customers: ["a foundry foreman feeding the night shift", "a stonecutters' yard finishing a big job", "a wagonwright's crew working through a rush order", "a carters' hall feeding drivers before a convoy"],
+    },
+    wholesale: { buyers: "workshops and yards" },
+  },
+  scholarium: {
+    id: "scholarium",
+    name: "the Scholarium",
+    provenance: dmNotes,
+    description:
+      "Students, scholars and staff: inexpensive lunches, repeat customers. Students count every copper and charity kitchens feed the poorest, but a good stall gathers regulars who come back daily. Quiet on Restday and thin during the summer recess. Little crime.",
+    demand: {
+      baseDailyCustomers: 520,
+      referencePriceCp: 5,
+      priceSensitivity: 2.2,
+      qualityPreference: 2,
+      qualityWeight: 0.25,
+      qualityFloor: 1,
+      qualityFloorPenalty: 0.8,
+    },
+    competition: 0.55,
+    enforcement: 0.45,
+    crime: 0.2,
+    guildPresence: 0.3,
+    footfall: 1.0,
+    channelFit: { cart: 1.0, stall: 1.1, delivery: 0.5, wholesale: 0.8 },
+    marketDayMultiplier: 1.0,
+    restDayMultiplier: 0.6,
+    permitFeeCpPerWeek: 50,
+    stallFeeCpPerWeek: 70,
+    marketTaxRate: 0.02,
+    wholesaleAccountPotential: 6,
+    rivalActorId: "inkpot-pasty-shop",
+    crewActorId: "cloister-dippers",
+    regularsWeight: 2.0,
+    seasons: { multiplier: { summer: 0.6 }, reason: "Summer recess: most students have gone home" },
+    wholesale: { buyers: "college refectories" },
+  },
+  "outer-ward": {
+    id: "outer-ward",
+    name: "the Outer Ward",
+    provenance: dmNotes,
+    description:
+      "Mixed residential demand: neighborhood vendors and delivery routes. A large, poorer district of homes and lodging houses where a familiar seller does steady trade and runners on regular rounds reach households that never visit a market. Some informal trade and middling crime.",
+    demand: {
+      baseDailyCustomers: 640,
+      referencePriceCp: 5,
+      priceSensitivity: 2.2,
+      qualityPreference: 2,
+      qualityWeight: 0.2,
+      qualityFloor: 1,
+      qualityFloorPenalty: 1,
+    },
+    competition: 0.55,
+    enforcement: 0.25,
+    crime: 0.65,
+    guildPresence: 0.25,
+    footfall: 0.9,
+    channelFit: { cart: 0.9, stall: 0.7, delivery: 1.2, wholesale: 0.8 },
+    marketDayMultiplier: 1.0,
+    restDayMultiplier: 1.15,
+    permitFeeCpPerWeek: 30,
+    stallFeeCpPerWeek: 40,
+    marketTaxRate: 0.015,
+    wholesaleAccountPotential: 9,
+    rivalActorId: "widow-harls-hand-pies",
+    crewActorId: "gatehouse-gang",
+    regularsWeight: 1.5,
+    wholesale: { buyers: "lodging houses and taverns" },
+  },
+  "crown-ward": {
+    id: "crown-ward",
+    name: "the Crown Ward",
+    provenance: dmNotes,
+    description:
+      "Officials, wealthy households and institutions: catering, luxury orders and contracts. Few people buy from a cart, but offices and households pay well for fine pies delivered and catered. Ministries hold supply contracts only with fully compliant suppliers. Enforcement is strict, fees are high and street crime is rare. Offices close on Restday.",
+    demand: {
+      baseDailyCustomers: 260,
+      referencePriceCp: 12,
+      priceSensitivity: 1.3,
+      qualityPreference: 4,
+      qualityWeight: 0.5,
+      qualityFloor: 3,
+      qualityFloorPenalty: 0.4,
+    },
+    competition: 0.3,
+    enforcement: 0.9,
+    crime: 0.1,
+    guildPresence: 0.8,
+    footfall: 0.7,
+    channelFit: { cart: 0.35, stall: 0.7, delivery: 1.3, wholesale: 1.3 },
+    marketDayMultiplier: 0.95,
+    restDayMultiplier: 0.35,
+    permitFeeCpPerWeek: 200,
+    stallFeeCpPerWeek: 300,
+    marketTaxRate: 0.04,
+    wholesaleAccountPotential: 6,
+    rivalActorId: "gilded-crust-caterers",
+    crewActorId: "seal-court-fixers",
+    patronage: 1.6,
+    largeOrders: {
+      rate: 1.8,
+      sizeMultiplier: 0.8,
+      priceMultiplier: 1.2,
+      customers: ["a ministry steward hosting a reception", "a councilor's household planning a dinner", "a records office feeding clerks through an audit", "a charter office marking a signing"],
+    },
+    wholesale: { buyers: "offices and households on contract", priceFraction: 0.95, needsFullCompliance: true },
   },
 };
 
 /** Canon neighborhoods not yet modelled economically. */
-export const unmodelledNeighborhoods = ["Guildstrand", "Stoneback", "Scholarium", "Crown Ward", "the Shades", "Outer Ward"];
+export const unmodelledNeighborhoods = ["Guildstrand"];
 
 const C = provisional("Channel parameters are provisional.");
 

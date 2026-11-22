@@ -300,7 +300,10 @@ export function updateWholesaleAccounts(world: WorldDefinition, state: WorldStat
   const qualityOk = plan.quality >= n.demand.qualityPreference - 1 ? 1 : 0.4;
   const guildFactor = { none: 0.75 + 0.25 * (h.guildRelation / 50), associate: 1.1, member: 1.25 }[plan.guild];
   const supplyLimit = (plan.weeklyProduction / plan.operatingDays) * share / w.piesPerAccountPerDay;
-  const target = Math.min(n.wholesaleAccountPotential * repFactor * qualityOk * guildFactor, supplyLimit);
+  // Some buyers (ministries, institutions) only contract with fully compliant suppliers.
+  const complianceOk = n.wholesale?.needsFullCompliance && plan.compliance !== "full" ? w.nonCompliantContractFactor : 1;
+  const target = Math.min(n.wholesaleAccountPotential * repFactor * qualityOk * guildFactor * complianceOk, supplyLimit);
+  const buyers = n.wholesale?.buyers ?? "inns and taverns";
   const drivers: Driver[] = [];
   let next = current;
   if (stats.wholesaleShortDays >= 2) {
@@ -309,7 +312,7 @@ export function updateWholesaleAccounts(world: WorldDefinition, state: WorldStat
   } else if (target > current) {
     const gain = Math.min(w.maxNewAccountsPerWeek, (target - current) * 0.5);
     next += gain;
-    drivers.push({ label: "New inns and taverns signing on", value: gain });
+    drivers.push({ label: `New ${buyers} signing on`, value: gain });
   } else if (target < current - 0.5) {
     const loss = Math.min(1, (current - target) * 0.3);
     next -= loss;

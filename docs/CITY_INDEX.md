@@ -1,6 +1,6 @@
 # Arentoria DM City Index: integration notes
 
-The DM's City Index (`caneballante/arentoria`) documents the map, all 1,676 buildings, 10,000 residents (homes, jobs, households, wealth, faction ties, public notes, private pressures), 20 factions, and authored district prompts. **It is a resource, not canon.** Nothing has been built against it yet. These notes capture decisions and findings so far.
+The DM's City Index (`caneballante/arentoria`) documents the map, all 1,676 buildings, 10,000 residents (homes, jobs, households, wealth, faction ties, public notes, private pressures), 20 factions, and authored district prompts. **It is a resource, not canon.** The simulation does not read it. These notes capture decisions and findings so far.
 
 ## Status in the living world: "reference"
 
@@ -17,6 +17,8 @@ The DM's City Index (`caneballante/arentoria`) documents the map, all 1,676 buil
 
 ## Findings relevant to the simulation
 
+- **District sizes and wealth (census v20) informed the provisional district numbers** in `src/world/neighborhoods.ts` (Nov 2026). Residents / people working there / food and drink businesses: Commons 1,200 / 336 / 26; Grand Market 740 / 528 / 42; High March 660 / 13 / 0 (82% prosperous); the Shades 1,000 / 107 / 9 (mostly poor; 29% of work illicit, 16% informal); Stoneback 350 / 212 / 0; the Scholarium 950 / 456 / 17 (4 charitable kitchens); the Outer Ward 1,460 / 419 / 29 (22% informal work); the Crown Ward 240 / 394 / 3 (35 institutional buildings); Guildstrand 970 / 605 / 27. The district *character* comes from the DM's notes; the census only shaped relative crowd sizes, competition, enforcement and crime.
+
 - **Factions that match the brief's canon names:** Cloverpot Compact (FAC-002, criminal syndicate, territorial intimidation), The Deep Ledger (FAC-004, disciplined criminal fraternity, avoids public spectacle), Stonehome Heritage House (FAC-003), Merchants' Guild & Guild Wardens (FAC-005, inspections, blacklists, warehouse raids), Blanders School of Adventuring (FAC-015). Also relevant: City Guard and Watch (FAC-006), Office of Expeditionary Licenses (FAC-008, Vayne patronage), and Harrowell Agricultural Trust (FAC-010).
 - **Likely replacements for proposed stand-ins:** protection crews → Cloverpot Compact or Deep Ledger members active in the district; "Bakers' and Piemakers' Fellowship" → Merchants' Guild & Guild Wardens; rival pie shops → real bakeries (e.g. Commons: Honey Bun & Bread Bell, The Warm Oven, Oven Bakehouse); suppliers → real butchers (e.g. The Ox Head and The Iron Cleaver on Redbrick Row).
 - **Hiring pool:** real residents of the business's district with suitable roles and wealth.
@@ -25,6 +27,6 @@ The DM's City Index (`caneballante/arentoria`) documents the map, all 1,676 buil
 ## Open questions
 
 - Adopt, rename or reject the seven proposed small factions (SF-001…SF-007), then swap them into the simulation in place of the stand-ins.
-- Choose Grand Market and High March rival bakeries from the index.
+- Choose rival bakeries and crews from the index for every district. The five newer districts (Shades, Stoneback, Scholarium, Outer Ward, Crown Ward) use proposed stand-ins for now. Candidate food businesses include The Flour Crown (Crown Ward), the Shades' cookshops and taverns, and the Outer Ward's cookshops and bakeries. Stoneback has none in the index.
 - Where do the displaced AR-0603 residents live, if it ever matters?
 - Which index version to pin, and how to review re-imports (a diff before adopting changes).

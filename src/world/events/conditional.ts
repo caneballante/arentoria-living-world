@@ -217,7 +217,7 @@ const notablePraise: ConditionalEventDef = {
     const q = ctx.plan.quality;
     const base = q >= 4 ? 0.18 : q === 3 ? 0.05 : 0.01;
     const rep = clamp01((ctx.state.business.hidden.reputation - 60) / 30);
-    const place = ctx.neighborhood.id === "high-march" ? 1.5 : 1;
+    const place = ctx.neighborhood.patronage ?? 1;
     return {
       probability: base * rep * place,
       drivers: [
@@ -253,19 +253,22 @@ const largeOrder: ConditionalEventDef = {
     const rep = clamp01((h.reputation - 45) / 35);
     const vis = clamp01(h.visibility / 60);
     const guild = { none: 1, associate: 1.2, member: 1.4 }[ctx.plan.guild];
+    const local = ctx.neighborhood.largeOrders?.rate ?? 1;
     return {
-      probability: 0.2 * rep * vis * guild,
+      probability: Math.min(0.6, 0.2 * rep * vis * guild * local),
       drivers: [
         { label: "Reputation above 45", value: rep },
         { label: "Visibility", value: vis },
         { label: "Guild connections", value: guild },
+        ...(local !== 1 ? [{ label: `Who orders in bulk in ${ctx.neighborhood.name}`, value: local }] : []),
       ],
     };
   },
   resolve(ctx, rng) {
-    const qty = rng.int(15, 30) * 10;
-    const price = Math.max(1, Math.round(fairPrice(ctx.world, ctx.neighborhood, ctx.plan.quality) * 0.85 * 10) / 10);
-    const who = rng.pick(["an innkeeper hosting a wedding", "a guildhall banquet steward", "a temple kitchen preparing a feast day", "a caravan master provisioning a journey"]);
+    const lo = ctx.neighborhood.largeOrders;
+    const qty = Math.max(50, Math.round((rng.int(15, 30) * 10 * (lo?.sizeMultiplier ?? 1)) / 10) * 10);
+    const price = Math.max(1, Math.round(fairPrice(ctx.world, ctx.neighborhood, ctx.plan.quality) * 0.85 * (lo?.priceMultiplier ?? 1) * 10) / 10);
+    const who = rng.pick(lo?.customers ?? ["an innkeeper hosting a wedding", "a guildhall banquet steward", "a temple kitchen preparing a feast day", "a caravan master provisioning a journey"]);
     return {
       severity: "notable",
       playerText: `${who[0]!.toUpperCase()}${who.slice(1)} asks for ${qty} pies in three days at ${formatCp(price)} each.`,

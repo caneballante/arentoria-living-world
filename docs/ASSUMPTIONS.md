@@ -7,9 +7,9 @@ Every number in `src/world/` is provisional. This page lists what to calibrate f
 | # | Question for the table | Current value | Where |
 |---|---|---|---|
 | 1 | **How much should a successful pie business earn?** The canon anchor is rent of 14 gp/week. Should a well-run business cover the rent, double it, or be a minor side income? | Sound plans earn about 7–23 gp/week after costs | Demand (`baseDailyCustomers`, `referencePriceCp`) in `neighborhoods.ts`; ingredient costs in `assumptions.ts` |
-| 2 | **Price of a meat pie** by district. | Fair price: Commons 5 cp, Grand Market 6 cp, High March 16 cp (quality-adjusted ±30%/tier) | `referencePriceCp`, `fairPriceQualitySlope` |
+| 2 | **Price of a meat pie** by district. | Fair price: Shades 4 cp; Commons, Stoneback, Scholarium, Outer Ward 5 cp; Grand Market 6 cp; Crown Ward 12 cp; High March 16 cp (quality-adjusted ±30%/tier) | `referencePriceCp`, `fairPriceQualitySlope` |
 | 3 | **Construct output.** How many pies can three constructs bake in a day, and how far can they be pushed? This caps every strategy, and most good plans hit it. | 70/day each → 210/day; pushed ×1.3 with strain, breakdowns and fire risk (proposed mechanic) | `constructs` in `assumptions.ts`, `events/risk.ts` |
-| 4 | **Is luxury in High March meant to be the best strategy?** It currently earns about 2.2× the Commons plan at almost no risk. | High March: 150 buyers/day, quality weight 0.55, low crime | `neighborhoods.ts` (`high-march`) |
+| 4 | **Should the rich districts pay twice what the working districts do?** Luxury High March and Crown Ward catering each earn about 2.3× a sound plan in the Commons, Shades, Stoneback, Scholarium or Outer Ward, at almost no risk. | High March: 150 buyers/day; Crown Ward: 260/day, contracts at 95% of list | `neighborhoods.ts` |
 | 5 | **How dangerous is the Commons?** Over 52 weeks a busy, law-abiding Commons cart that refuses protection draws the Ninepenny Crew to a warning in ~93% of runs (one slow arc with ~12 weeks of warning signs; a guard prevents it). Too often? | crime 0.55, criminal attention tolerance 25, precautions −25% | `neighborhoods.ts`, `dynamics.criminal`, extortion thread in `events/threads.ts` |
 | 6 | **Licensing timeline.** When was the filing? Canon says approval in about six months. | Ruling on day 168 after the sim start (start of week 25) | `licensingDecisionAfterDays` |
 | 7 | **Wages and staff.** Is 2 sp/day right for a seller? How honest is the typical hire? | vendor 20 cp, runner 18 cp, guard 40 cp; skimming starts below honesty 50 | `marketWageCpPerDay`, `staff.ts`, `dynamics.skimming` |
@@ -18,6 +18,24 @@ Every number in `src/world/` is provisional. This page lists what to calibrate f
 | 10 | **Calendar.** Adopt or change the proposed 13×28+1 calendar, month and weekday names, festivals, and the current date. | Start 1 Harvest 940 CY (placeholder) | `world/calendar.ts` |
 | 11 | **Pace of events.** Is about one decision every 4–6 in-game weeks right for a well-run business? | ≥ 21 days between opportunity decisions; quiet spell 14 days after major events | `world/pacing.ts`, hazard rates in `world/events/` |
 | 12 | **The business account.** How much should the party keep in the business, and how much credit do suppliers give? | Floor = 1 week of running costs; credit = about 1 week of ingredients at +10% | `assumptions.account` |
+| 13 | **Districts.** Do the characters above match the city? Should the Shades and the Outer Ward be more or less dangerous? Should the Scholarium's recess be in summer? What is Guildstrand like? | See "The districts" | `neighborhoods.ts`, `actors.ts` |
+
+## The districts
+
+Eight districts are modelled. The names are canon. Each one's character comes from the DM's notes and is the first line of its description. Every number is provisional, with relative crowd sizes, competition and crime informed by the City Index census (see `docs/CITY_INDEX.md`). Guildstrand, where the party lives, is not modelled yet.
+
+| District | Character (DM) | What the simulation does with it |
+|---|---|---|
+| **The Commons** | Working district | Big, hungry crowds at 5 cp; many cheap rivals; lax enforcement; a protection crew that notices busy carts. |
+| **The Grand Market** | Commercial heart | The largest crowds and market days; strong guild; active enforcement; opportunistic thieves. |
+| **High March** | Wealthier customers: premium pies, higher prices, deliveries | Few buyers (150 a day) who pay for quality and prefer delivery; little crime; notable patrons talk (×1.5). |
+| **The Shades** | Price-sensitive customers and less formal commerce: low-cost pies, trusted local vendors | Fair price 4 cp and very price-sensitive. **Strangers are ignored at first** (a lower floor on awareness), then **regulars count for 1.8×** the usual. Permits are barely enforced and fees are tiny. Crime is high: the Lowlamp Crew asks every busy seller for a cut. |
+| **Stoneback** | Craftspeople and industrial workers: filling pies, bulk orders | Value matters more than quality. **Restday is dead** (×0.45). **Workshops take standing orders** (14 potential accounts) and **foremen order in bulk** (2.2× as often, 1.4× the size). Few rivals. |
+| **The Scholarium** | Students, scholars and staff: inexpensive lunches, repeat customers | Price-sensitive, with charity kitchens competing. **Regulars count for 2×.** **Summer recess** cuts demand to 60%. Quiet on Restday; little crime. |
+| **The Outer Ward** | Mixed residential demand: neighborhood vendors and delivery routes | **Delivery rounds suit it** (delivery fit 1.2), and people are home on Restday (×1.15). Regulars count for 1.5×. Middling crime: delivery rounds stay below the Gatehouse Gang's notice in most years; a cart draws more attention. |
+| **The Crown Ward** | Officials, wealthy households and institutions: catering, luxury orders and contracts | Fair price 12 cp at fine quality. **Catering orders** come 1.8× as often and pay 1.2×. **Supply contracts pay 95% of list price, but ministries contract only with fully compliant suppliers** (others reach a quarter of the accounts). Strict enforcement (0.9), high fees, offices closed on Restday, Council Day ×1.6, notable patrons ×1.6. Street crime is rare. |
+
+Each district has a proposed local rival and crew (stand-ins until the DM picks real ones from the City Index or the small-factions proposal).
 
 ## The business account
 
@@ -82,6 +100,11 @@ Measured over 52 weeks (40 seeds; 10th / 50th / 90th percentile of total profit)
 | Paying every fee & protection | 625 / 669 / 699 gp | 0% | 9.2 | 12.0 | 1.4 | Over-insured and under-producing |
 | Resilient wholesale | 574 / 595 / 628 gp | 0% | 9.0 | 10.9 | 1.5 | |
 | Festival-oriented | 373 / 388 / 412 gp | 0% | 8.9 | 11.2 | 1.4 | |
+| Cheap pies in the Shades | 404 / 431 / 464 gp | 0% | 8.3 | 12.9 | 1.5 | Negotiates with the Lowlamp Crew; refusing brings a warning every year |
+| Stoneback yards and workshops | 500 / 529 / 550 gp | 0% | 8.4 | 12.3 | 1.5 | Slow start while standing orders sign on, then ~13 gp/week |
+| Scholarium lunch stall | 502 / 536 / 559 gp | 0% | 7.8 | 11.1 | 1.6 | Lowest waste; the summer recess shows in the last weeks |
+| Outer Ward delivery rounds | 514 / 544 / 568 gp | 0% | 9.5 | 12.4 | 1.3 | |
+| Crown Ward catering and contracts | 1141 / 1286 / 1401 gp | 0% | 8.1 | 12.0 | 1.6 | Rich and calm, if fully compliant |
 | Careless Commons (control) | −1316 / −1300 / −1262 gp | 100% | 5.5 | 12.6 | 2.1 | |
 | Cheap pies in High March (control) | −997 / −990 / −980 gp | 100% | 4.1 | 12.6 | 2.3 | |
 
@@ -105,6 +128,7 @@ What this shows:
 - Production is a fixed weekly plan. Players learn from "sold out" and "threw away" reports and adjust it themselves.
 - Construct capacity is the only production constraint. Expansion beyond three constructs is not modelled yet.
 - One business, one neighborhood at a time. Multi-district operations come later.
+- Guildstrand (the party's own district) is not modelled yet.
 - When a showdown is flagged "settle at the table", the simulation freezes that situation and assumes nothing further; the DM records the outcome as an intervention.
 - Major factions are named but not yet modelled as actors with goals; local proposed actors carry the conflicts.
 - Weekday cycle runs through the intercalary day (design choice; easy to change).

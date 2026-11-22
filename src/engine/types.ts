@@ -62,6 +62,19 @@ export interface NeighborhoodDef {
   wholesaleAccountPotential: number;
   rivalActorId: string;
   crewActorId: string;
+  // --- Optional district character (defaults keep a neighborhood "ordinary") ---
+  /** How much regulars matter here: multiplies the loyalty boost to demand (default 1). */
+  regularsWeight?: number;
+  /** Share of demand a stranger gets before anyone has heard of them (default: assumptions.demand.awarenessFloor). */
+  awarenessFloor?: number;
+  /** Seasonal demand multipliers (e.g. a summer recess), with the reason shown to the DM. */
+  seasons?: { multiplier: Partial<Record<Season, number>>; reason: string };
+  /** How likely wealthy patrons are to talk about good pies (default 1). */
+  patronage?: number;
+  /** Who places large one-off orders here, how often (rate ×), how big (size ×) and how well they pay (price ×). */
+  largeOrders?: { rate: number; sizeMultiplier: number; priceMultiplier: number; customers: string[] };
+  /** Who takes standing (wholesale) orders here and on what terms. */
+  wholesale?: { buyers: string; priceFraction?: number; needsFullCompliance?: boolean };
 }
 
 export interface ChannelDef {
@@ -177,7 +190,15 @@ export interface EconomicAssumptions {
     showcaseNovelty: number;
     fairPriceQualitySlope: number;
   };
-  wholesale: { piesPerAccountPerDay: number; priceFraction: number; maxNewAccountsPerWeek: number; lossPerShortfallWeek: number; initialAccounts: number };
+  wholesale: {
+    piesPerAccountPerDay: number;
+    priceFraction: number;
+    maxNewAccountsPerWeek: number;
+    lossPerShortfallWeek: number;
+    initialAccounts: number;
+    /** Where buyers need full compliance, a non-compliant supplier reaches this share of the usual accounts. */
+    nonCompliantContractFactor: number;
+  };
   /** The business account: operating floor, supplier credit and what happens when it runs dry. */
   account: {
     /** Weeks of running costs the account should hold; "safe to withdraw" is anything above this. */

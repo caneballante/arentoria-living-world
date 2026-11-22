@@ -6,7 +6,7 @@ Done:
 
 - Proposed calendar (13×28 + Council Day), seasons, weekdays, market and rest days, festivals.
 - Persistent weather with temporal correlation, and seasonal ingredient and fuel prices.
-- Three modelled neighborhoods (Commons, Grand Market, High March) and four sales channels.
+- Eight modelled neighborhoods (Commons, Grand Market, High March, the Shades, Stoneback, the Scholarium, the Outer Ward, the Crown Ward), each with its own character, and four sales channels. Districts can weight regulars, ignore strangers, have seasons, place bulk or catering orders, and set contract terms. Only Guildstrand remains unmodelled.
 - A business plan with all twelve decisions plus standing orders (zod-validated).
 - Daily production and sales, weekly accounting, cash, owner draws and reinvestment.
 - Hidden state as stocks and flows with named drivers; derived resilience and vulnerability.
@@ -19,7 +19,7 @@ Done:
 - Risk and reward: a "pushed" construct workload (more output, strain, breakdowns, fire risk), showcase spectacles, strongbox robberies, consequences scaled to business size, escalating penalties for repeat offences, and a "careful expansion" scenario for like-for-like comparison.
 - A business account kept apart from the party's purses: dated statement, operating floor, safe-to-withdraw, DM-only withdrawals and deposits (server-enforced), real consequences when it runs dry, and an optional automatic payout for sandbox runs.
 - One-step launcher and a playtest plan (`docs/TEST_PLAN.md`).
-- 91 automated tests.
+- 101 automated tests.
 
 Next small steps (before Phase 2):
 

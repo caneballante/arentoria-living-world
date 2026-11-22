@@ -94,7 +94,7 @@ export const arentorCalendar: CalendarConfig = {
       day: 1,
       intercalary: "Council Day",
       durationDays: 1,
-      demandMultiplier: { "grand-market": 1.5, "high-march": 1.3, "*": 1.25 },
+      demandMultiplier: { "grand-market": 1.5, "high-march": 1.3, "crown-ward": 1.6, "*": 1.25 },
       description: "Intercalary civic festival marking the new Council Year (proposed).",
     },
   ],
