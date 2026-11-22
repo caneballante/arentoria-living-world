@@ -12,6 +12,7 @@ import { canonFacts } from "./canon";
 import { arentoriaClimate, arentoriaMarket } from "./climate";
 import { conditionalEvents } from "./events/conditional";
 import { festivalPitch, opportunityEvents } from "./events/opportunities";
+import { riskEvents } from "./events/risk";
 import { scheduledEvents } from "./events/scheduled";
 import { threads } from "./events/threads";
 import { channels, neighborhoods } from "./neighborhoods";
@@ -31,7 +32,7 @@ export const arentoria: WorldDefinition = {
   actors,
   canon: canonFacts,
   assumptions,
-  events: [...conditionalEvents, ...opportunityEvents],
+  events: [...conditionalEvents, ...opportunityEvents, ...riskEvents],
   threads,
   scheduled: [...scheduledEvents, festivalPitch],
   pacing,

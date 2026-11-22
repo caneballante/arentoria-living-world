@@ -180,9 +180,13 @@ export function wholesalePrice(world: WorldDefinition, n: NeighborhoodDef, plan:
   return Math.min(plan.priceCp, fairPrice(world, n, plan.quality)) * world.assumptions.wholesale.priceFraction;
 }
 
-export function productionCapacity(world: WorldDefinition, state: WorldState, day: number): number {
+export function dailyConstructCapacity(world: WorldDefinition, plan: BusinessPlan): number {
   const c = world.assumptions.constructs;
-  return Math.floor(c.count * c.piesPerDayEach * modifierProduct(state, "productionCap", day));
+  return c.count * c.piesPerDayEach * (plan.constructWorkload === "pushed" ? c.pushedCapacityMultiplier : 1);
+}
+
+export function productionCapacity(world: WorldDefinition, state: WorldState, day: number): number {
+  return Math.floor(dailyConstructCapacity(world, state.plan) * modifierProduct(state, "productionCap", day));
 }
 
 export function unitIngredientCost(world: WorldDefinition, state: WorldState, plan: BusinessPlan, priceIndex: number, day: number): number {

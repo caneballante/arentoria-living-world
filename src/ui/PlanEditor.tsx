@@ -55,7 +55,7 @@ export function PlanEditor({ catalog, plan, onChange }: { catalog: Catalog; plan
   const setChannel = (i: number, patch: Partial<Channel>) => set("channels", plan.channels.map((c, j) => (j === i ? { ...c, ...patch } : c)));
   const setHire = (i: number, patch: Partial<Hire>) => set("staff", plan.staff.map((s, j) => (j === i ? { ...s, ...patch } : s)));
   const neighborhood = catalog.neighborhoods.find((n) => n.id === plan.neighborhood);
-  const capacityWeek = catalog.constructs.capacityPerDay * plan.operatingDays;
+  const capacityWeek = Math.floor(catalog.constructs.capacityPerDay * (plan.constructWorkload === "pushed" ? catalog.constructs.pushedMultiplier : 1) * plan.operatingDays);
   const hiredIds = new Set(plan.staff.map((s) => s.candidateId));
   const orders = plan.standingOrders;
   const setOrder = <K extends keyof Plan["standingOrders"]>(k: K, v: Plan["standingOrders"][K]) => set("standingOrders", { ...orders, [k]: v });
@@ -83,6 +83,16 @@ export function PlanEditor({ catalog, plan, onChange }: { catalog: Catalog; plan
           <span>Pies per week: <strong className="num">{plan.weeklyProduction}</strong> <span className="hint">(constructs can make ~{capacityWeek} over {plan.operatingDays} days)</span></span>
           <input type="range" min={0} max={Math.max(capacityWeek, plan.weeklyProduction)} step={10} value={plan.weeklyProduction} onChange={(e) => set("weeklyProduction", Number(e.target.value))} />
         </label>
+        <Select
+          label="Construct workload"
+          value={plan.constructWorkload ?? "steady"}
+          options={[
+            { value: "steady", label: `Steady — up to ~${catalog.constructs.capacityPerDay}/day` },
+            { value: "pushed", label: `Pushed — up to ~${Math.floor(catalog.constructs.capacityPerDay * catalog.constructs.pushedMultiplier)}/day, with strain` },
+          ]}
+          onChange={(v) => set("constructWorkload", v)}
+          hint="Pushing is a gamble: more pies, rushed baking, breakdowns — and at high strain, a chance of fire."
+        />
         <div className="grid-2">
           <Select label="Trading days / week" value={plan.operatingDays} options={[1, 2, 3, 4, 5, 6, 7].map((d) => ({ value: d, label: `${d} day${d > 1 ? "s" : ""}` }))} onChange={(v) => set("operatingDays", v)} />
           <NumberField label="Festival-day output ×" value={plan.festivalProductionMultiplier ?? 1} min={1} max={3} step={0.25} onChange={(v) => set("festivalProductionMultiplier", v)} />

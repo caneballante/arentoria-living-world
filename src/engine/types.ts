@@ -149,7 +149,7 @@ export interface MarketConfig {
 
 export interface EconomicAssumptions {
   provenance: Provenance;
-  constructs: { count: number; piesPerDayEach: number; upkeepCpPerWeek: number };
+  constructs: { count: number; piesPerDayEach: number; upkeepCpPerWeek: number; pushedCapacityMultiplier: number };
   qualityTiers: QualityTier[];
   fuelCostPerPieCp: number;
   packagingCostPerDeliveredPieCp: number;
@@ -196,6 +196,7 @@ export interface DynamicsAssumptions {
   staff: { moraleAdjustRate: number; wageSensitivity: number; overworkPenalty: number; learningPerWeek: number; competenceHeadroom: number; quitMorale: number; quitAfterWeeks: number };
   skimming: { honestyThreshold: number; baseRate: number; oversight: Record<"hands-off" | "weekly" | "frequent", number> };
   absence: { base: number; unreliability: number; lowMorale: number };
+  constructs: { strainPerPushedWeek: number; recoveryRate: number; pushedReputationPenalty: number };
 }
 
 export interface WorldDefinition {
@@ -444,6 +445,8 @@ export interface HiddenState {
   guildRelation: number;
   criminalAttention: number;
   rivalHostility: number;
+  /** Wear on the magical chefs from being pushed past steady work (0 = rested). */
+  constructStrain: number;
 }
 
 export interface StaffMember {

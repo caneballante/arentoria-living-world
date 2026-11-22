@@ -24,6 +24,8 @@ export const PlanSchema = z
     operatingDays: z.number().int().min(1).max(7),
     /** Extra production multiplier on festival days (festival-oriented businesses). */
     festivalProductionMultiplier: z.number().min(1).max(3).default(1),
+    /** Run the constructs past steady work: more output, more strain and breakdowns. */
+    constructWorkload: z.enum(["steady", "pushed"]).default("steady"),
     /** 4. Quality and pricing */
     quality: z.number().int().min(1).max(5),
     priceCp: z.number().finite().min(1).max(200),

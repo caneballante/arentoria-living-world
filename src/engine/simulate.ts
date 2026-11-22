@@ -25,7 +25,7 @@
 
 import { dateFromDay, type CalendarDate } from "./calendar";
 import { computeDerived, updateHidden, updateStaff, updateWholesaleAccounts, weekStats } from "./dynamics";
-import { emptyLedger, hasActiveCondition, ledgerCosts, ledgerIncome, runOperations, weeklyFixedCosts } from "./economy";
+import { dailyConstructCapacity, emptyLedger, hasActiveCondition, ledgerCosts, ledgerIncome, runOperations, weeklyFixedCosts } from "./economy";
 import { applyChange, applyEffect, hireStaff, nextId } from "./effects";
 import { clamp, clamp01, round } from "./math";
 import { parsePlan, type BusinessPlan, type BusinessPlanInput } from "./plan";
@@ -123,7 +123,7 @@ export function checkPlan(world: WorldDefinition, plan: BusinessPlan): PlanCheck
     const role = world.channels[c.type].staffRole;
     if (!plan.staff.some((s) => s.role === role)) warnings.push(`${world.channels[c.type].label} needs a ${role}, but none is hired — its pies will go unsold.`);
   }
-  const cap = world.assumptions.constructs.count * world.assumptions.constructs.piesPerDayEach * plan.operatingDays;
+  const cap = Math.floor(dailyConstructCapacity(world, plan) * plan.operatingDays);
   if (plan.weeklyProduction > cap) warnings.push(`Weekly production ${plan.weeklyProduction} exceeds the constructs' capacity of about ${cap} over ${plan.operatingDays} days; output will be capped.`);
   if (plan.weeklyProduction === 0) warnings.push("Weekly production is zero.");
   return { errors, warnings };

@@ -13,7 +13,8 @@ import type { EconomicAssumptions } from "../engine/types";
 
 export const assumptions: EconomicAssumptions = {
   provenance: provisional("Initial calibration guesses (v0.1)."),
-  constructs: { count: 3, piesPerDayEach: 70, upkeepCpPerWeek: 0 },
+  // Count is canon; output, upkeep and the "pushed" workload are provisional/proposed.
+  constructs: { count: 3, piesPerDayEach: 70, upkeepCpPerWeek: 0, pushedCapacityMultiplier: 1.3 },
   qualityTiers: [
     { tier: 1, label: "Scrap & gristle", ingredientCostCp: 1.0 },
     { tier: 2, label: "Plain & honest", ingredientCostCp: 1.8 },
@@ -49,7 +50,7 @@ export const assumptions: EconomicAssumptions = {
     fairPriceQualitySlope: 0.3,
   },
   wholesale: { piesPerAccountPerDay: 30, priceFraction: 0.8, maxNewAccountsPerWeek: 1, lossPerShortfallWeek: 1, initialAccounts: 1 },
-  initialHidden: { reputation: 50, loyalty: 0, visibility: 5, scrutiny: 5, guildRelation: 45, criminalAttention: 5, rivalHostility: 5 },
+  initialHidden: { reputation: 50, loyalty: 0, visibility: 5, scrutiny: 5, guildRelation: 45, criminalAttention: 5, rivalHostility: 5, constructStrain: 0 },
   // Canon: approval expected six months after filing. Assumes filing happened ~2 weeks before the
   // simulation start (unresolved), so the ruling lands at the start of week 25.
   licensingDecisionAfterDays: 168,
@@ -64,5 +65,7 @@ export const assumptions: EconomicAssumptions = {
     staff: { moraleAdjustRate: 0.3, wageSensitivity: 60, overworkPenalty: 10, learningPerWeek: 1.2, competenceHeadroom: 15, quitMorale: 22, quitAfterWeeks: 2 },
     skimming: { honestyThreshold: 50, baseRate: 0.25, oversight: { "hands-off": 1, weekly: 0.45, frequent: 0.15 } },
     absence: { base: 0.01, unreliability: 0.05, lowMorale: 0.03 },
+    // Proposed: pushing the constructs builds strain (equilibrium ≈ perWeek / recoveryRate) and rushes the baking.
+    constructs: { strainPerPushedWeek: 10, recoveryRate: 0.25, pushedReputationPenalty: 3 },
   },
 };

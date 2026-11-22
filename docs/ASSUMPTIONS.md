@@ -8,7 +8,7 @@ Every number in `src/world/` is provisional. This page lists what to calibrate f
 |---|---|---|---|
 | 1 | **How much should a successful pie business earn?** The canon anchor is rent of 14 gp/week. Should a well-run business cover the rent, double it, or be a minor side income? | Sound plans earn about 7–23 gp/week after costs | Demand (`baseDailyCustomers`, `referencePriceCp`) in `neighborhoods.ts`; ingredient costs in `assumptions.ts` |
 | 2 | **Price of a meat pie** by district. | Fair price: Commons 5 cp, Grand Market 6 cp, High March 16 cp (quality-adjusted ±30%/tier) | `referencePriceCp`, `fairPriceQualitySlope` |
-| 3 | **Construct output.** How many pies can three constructs bake in a day? This caps every strategy, and most good plans hit it. | 70/day each → 210/day | `constructs.piesPerDayEach` |
+| 3 | **Construct output.** How many pies can three constructs bake in a day, and how far can they be pushed? This caps every strategy, and most good plans hit it. | 70/day each → 210/day; pushed ×1.3 with strain, breakdowns and fire risk (proposed mechanic) | `constructs` in `assumptions.ts`, `events/risk.ts` |
 | 4 | **Is luxury in High March meant to be the best strategy?** It currently earns about 2.2× the Commons plan at almost no risk. | High March: 150 buyers/day, quality weight 0.55, low crime | `neighborhoods.ts` (`high-march`) |
 | 5 | **How dangerous is the Commons?** Over 52 weeks a busy, law-abiding Commons cart that refuses protection draws the Ninepenny Crew to a warning in ~93% of runs (one slow arc with ~12 weeks of warning signs; a guard prevents it). Too often? | crime 0.55, criminal attention tolerance 25, precautions −25% | `neighborhoods.ts`, `dynamics.criminal`, extortion thread in `events/threads.ts` |
 | 6 | **Licensing timeline.** When was the filing? Canon says approval in about six months. | Ruling on day 168 after the sim start (start of week 25) | `licensingDecisionAfterDays` |
@@ -40,28 +40,45 @@ Mechanisms (all in `src/world/pacing.ts` and the event library, all explainable)
 - **Response windows**: most decisions can wait 1–14 days. Urgent ones (a crew at the door, an inspection ruling) stop the clock at once. Unanswered decisions fall back to the standing order at their deadline.
 - **Good-news decisions**: raise requests, staff poaching, festival pitches, exclusive supplier deals, rival truces, charity requests, guild invitations, large orders and a caravan commission, so quiet, well-run businesses still have choices to make.
 
+## Risk and reward
+
+Bold choices should be **gambles**, with a wider spread of outcomes in both directions. Careful plans should be the narrow, dependable middle. Two kinds of risk behave differently, by design:
+
+- **Bold** (pushing the constructs, showcasing the magical chefs, betting on volume) has real upside and real tails. **Pushing** gives +30% output, but builds construct strain (visible to players as "running hot" warnings) and rushes the baking (a small reputation drag). Strain causes breakdowns, and at high strain a major breakdown can become a **kitchen fire** (closed 4–7 weeks, 150–350 gp of repairs), which happens in roughly one pushed year in six. **Showcasing** draws crowds (occasional "spectacle" weeks, demand ×1.6) but also official attention while the license is pending.
+- **Reckless** (skipping permits, guild and security, cheap unsupervised staff) saves a little and invites a lot. Consequences scale with the business: a crew's warning costs 25–45% of a week's takings, an unguarded showdown costs a full week's takings plus your best seller, and repeat inspection offences double and triple the penalties. A guild complaint can suspend a non-member's permit, and a strongbox robbery takes most of a week's takings. Reckless play generates stories rather than profit.
+
+Measured over 52 weeks (40 seeds; 10th / 50th / 90th percentile of total profit):
+
+| Plan | Bad year | Typical | Good year | Notes |
+|---|---|---|---|---|
+| Careful Grand Market expansion (steady) | 1166 gp | 1199 gp | 1235 gp | narrow and dependable |
+| Same plan, constructs **pushed** | ~820 gp | ~1380 gp | ~1465 gp | fire in ~1 year in 6 |
+| Low-price Commons, steady | 372 gp | 404 gp | 448 gp | |
+| Low-price Commons, **pushed** | ~90 gp | ~460 gp | ~565 gp | net loss in 3% of years, 7% of 26-week seasons |
+
 ## Observed behavior (30 seeds each, current calibration)
 
-52 weeks from 1 Harvest 940:
+52 weeks from 1 Harvest 940 (10th / median / 90th percentile profit):
 
-| Strategy | Median profit | P(net loss) | Player decisions | Notable | Major | Longest quiet | Notes |
-|---|---|---|---|---|---|---|---|
-| Conservative Commons cart | 589 gp | 0% | 9.2 | 11.6 | 2.7 | 8.3 wks | Meets the Ninepenny Crew in ~93% of years (one slow arc, ~12 weeks of warning) |
-| Aggressive Grand Market | 636 gp | 0% (cash < 0 in 30%) | 10.8 | 19.9 | 7.4 | 5.2 wks | Guild complaint, inspections, extortion and a rival feud every year |
-| Luxury High March | 1309 gp | 0% | 8.1 | 14.2 | 1.4 | 8.4 wks | Thriving and calm |
-| Low-price, high-volume | 555 gp | 0% | 13.5 | 23.3 | 7.0 | 4.7 wks | Constant rival trouble while it keeps undercutting |
-| Paying every fee & protection | 669 gp | 0% | 9.2 | 12.0 | 1.4 | 8.3 wks | |
-| Resilient wholesale | 600 gp | 0% | 9.0 | 10.9 | 1.4 | 8.7 wks | |
-| Festival-oriented | 388 gp | 0% | 8.9 | 11.2 | 1.4 | 8.7 wks | |
-| Careless Commons (control) | −1297 gp | 100% | 5.5 | 12.4 | 2.1 | 8.7 wks | |
-| Cheap pies in High March (control) | −989 gp | 100% | 4.1 | 12.5 | 2.3 | 8.0 wks | |
+| Strategy | Profit p10 / median / p90 | P(net loss) | Decisions | Notable | Major | Notes |
+|---|---|---|---|---|---|---|
+| Conservative Commons cart | 556 / 573 / 613 gp | 0% | 9.1 | 11.6 | 2.7 | Meets the Ninepenny Crew in ~90% of years (one slow arc, ~12 weeks of warning) |
+| Careful Grand Market expansion | 1154 / 1199 / 1229 gp | 0% | 8.8 | 11.8 | 1.5 | Same ambition as "aggressive", done by the book |
+| Aggressive Grand Market expansion | 438 / 832 / 997 gp | 0% (cash < 0 in every run) | 10.6 | 20.6 | 9.2 | Pushed, showcased, reckless: wide spread, ends "failing" in 27% |
+| Luxury High March | 1114 / 1309 / 1383 gp | 0% | 8.1 | 14.2 | 1.4 | Thriving and calm |
+| Low-price, high-volume (pushed) | 93 / 460 / 567 gp | 3% | 13.2 | 22.4 | 8.8 | Constant rival trouble while it keeps undercutting |
+| Paying every fee & protection | 625 / 669 / 699 gp | 0% | 9.2 | 12.0 | 1.4 | Over-insured and under-producing |
+| Resilient wholesale | 574 / 595 / 628 gp | 0% | 9.0 | 10.9 | 1.5 | |
+| Festival-oriented | 373 / 388 / 412 gp | 0% | 8.9 | 11.2 | 1.4 | |
+| Careless Commons (control) | −1316 / −1300 / −1262 gp | 100% | 5.5 | 12.6 | 2.1 | |
+| Cheap pies in High March (control) | −997 / −990 / −980 gp | 100% | 4.1 | 12.6 | 2.3 | |
 
 What this shows:
 
 - **Good decisions reliably beat poor ones.** Every sound plan beats both controls in 100% of paired seeds.
-- **Risk is paid for in trouble, not ruin.** Since threats now resolve instead of looping, the risky plans earn about as much as careful ones over a year. They do it with two to three times the incidents, cash crunches, showdowns to play at the table, and a rival or crew that never quite goes away. *Design question:* should risky plans also be clearly less profitable? Raising fines, extortion damage or showdown costs would do it.
-- **Not all success attracts hostility.** Quiet, compliant, guild-connected businesses (including the most profitable one) see little escalation.
-- **Pricing is the biggest lever.** In the sensitivity sweep, the wholesale plan went from 98 gp to 626 gp over 52 weeks by moving price from 6 to 7 cp and production toward the stall.
+- **Bold is a gamble; reckless is a bad bet.** Pushing raises the typical and good years and deepens the bad ones. Cutting corners loses to doing the same thing carefully in every percentile.
+- **Not all success attracts hostility.** Quiet, compliant, guild-connected businesses (including the most profitable ones) see little escalation.
+- **Pricing and volume are the biggest levers.** The Grand Market sells out at 6–7 cp, so pricing to demand and producing enough matter more than anything else.
 
 ## Calibration workflow
 

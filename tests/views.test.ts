@@ -4,7 +4,7 @@ import { buildAllReports } from "../src/narrative/weekly-report";
 import { buildDmView, buildPlayerView } from "../src/views";
 import { planOf, run, START, world } from "./helpers";
 
-const HIDDEN_KEYS = ["reputation", "loyalty", "visibility", "scrutiny", "guildRelation", "criminalAttention", "rivalHostility", "hidden", "drivers", "dmText", "probability", "skimmed", "skimmedCp", "traits", "honesty", "threads", "basis", "effects", "morale", "competence"];
+const HIDDEN_KEYS = ["reputation", "loyalty", "visibility", "scrutiny", "guildRelation", "criminalAttention", "rivalHostility", "constructStrain", "hidden", "drivers", "dmText", "probability", "skimmed", "skimmedCp", "traits", "honesty", "threads", "basis", "effects", "morale", "competence"];
 
 function keysDeep(v: unknown, out = new Set<string>()): Set<string> {
   if (Array.isArray(v)) v.forEach((x) => keysDeep(x, out));

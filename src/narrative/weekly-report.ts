@@ -38,6 +38,7 @@ const HIDDEN_LABELS: Record<HiddenVar, string> = {
   guildRelation: "Guild relationship",
   criminalAttention: "Criminal attention",
   rivalHostility: "Rival hostility",
+  constructStrain: "Construct strain",
 };
 
 export const hiddenLabel = (v: HiddenVar) => HIDDEN_LABELS[v];
@@ -131,6 +132,10 @@ export function buildWeeklyReport(world: WorldDefinition, state: WorldState, w: 
   else if (wet === 0) add("weather", "good", "Dry weather all week; the streets were busy.", "No wet days.");
   if (w.weather.avgTempC < 6) add("weather", "good", "Cold enough that hot pies practically sold themselves.", `Avg ${w.weather.avgTempC}°C boosts hot-food appeal.`);
   for (const f of w.festivals) add("weather", "good", `${f} brought crowds into the streets.`, "Festival demand multiplier (proposed calendar).");
+
+  // --- The constructs (the party can see their own chefs straining) ---
+  if (h1.constructStrain >= 30) add("operations", "bad", "The constructs are running hot: one judders between batches and the kitchen smells of scorched brass.", `Construct strain ${round(h1.constructStrain, 0)} — serious breakdowns (even a fire) are now possible.`);
+  else if (h1.constructStrain >= 18 && h0.constructStrain < 18) add("operations", "neutral", "The constructs are working flat out; the kitchen never really stops now.", `Construct strain ${round(h1.constructStrain, 0)}.`);
 
   // --- Staff observations ---
   for (const s of w.staff) {

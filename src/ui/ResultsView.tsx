@@ -116,6 +116,7 @@ const HIDDEN_ORDER: { key: HiddenVar; label: string }[] = [
   { key: "guildRelation", label: "Guild relationship" },
   { key: "criminalAttention", label: "Criminal attention" },
   { key: "rivalHostility", label: "Rival hostility" },
+  { key: "constructStrain", label: "Construct strain" },
 ];
 
 type AnyPending = { id: string; prompt: string; dueDate: string; dueNow: boolean; authority?: string; options: { id: string; label: string; description: string }[]; optionEffects?: Record<string, string[]> };

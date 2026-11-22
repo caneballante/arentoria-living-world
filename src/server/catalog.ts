@@ -18,7 +18,7 @@ export interface Catalog {
   qualityTiers: { tier: number; label: string; costHint: string }[];
   guild: { associate: string; member: string };
   marketWages: Record<string, number>;
-  constructs: { count: number; capacityPerDay: number };
+  constructs: { count: number; capacityPerDay: number; pushedMultiplier: number };
   canon: { id: string; statement: string }[];
 }
 
@@ -39,7 +39,7 @@ export function publicCatalog(): Catalog {
       member: `${formatCp(a.guild.memberInitiationCp)} to join, ${formatCp(a.guild.memberDuesCpPerWeek)}/week`,
     },
     marketWages: a.marketWageCpPerDay,
-    constructs: { count: a.constructs.count, capacityPerDay: a.constructs.count * a.constructs.piesPerDayEach },
+    constructs: { count: a.constructs.count, capacityPerDay: a.constructs.count * a.constructs.piesPerDayEach, pushedMultiplier: a.constructs.pushedCapacityMultiplier },
     canon: w.canon.map((c) => ({ id: c.id, statement: c.statement })),
   };
 }

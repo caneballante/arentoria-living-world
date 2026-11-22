@@ -16,13 +16,14 @@ Done:
 - Seeded batch comparison across nine strategies at 26/52 weeks; CLI and web UI.
 - Campaign-clock controls (day/week/month/"until something needs the party"), response windows on decisions, plan revisions applied mid-season, "since last time" digests.
 - Pacing tuned per in-game time: opportunity and dilemma decisions, decision spacing, quiet spells after major events, threats that resolve instead of looping, a pacing table in strategy comparison.
+- Risk and reward: a "pushed" construct workload (more output, strain, breakdowns, fire risk), showcase spectacles, strongbox robberies, consequences scaled to business size, escalating penalties for repeat offences, and a "careful expansion" scenario for like-for-like comparison.
 - One-step launcher and a playtest plan (`docs/TEST_PLAN.md`).
-- 77 automated tests.
+- 81 automated tests.
 
 Next small steps (before Phase 2):
 
 - Calibrate with the DM using the questions in `docs/ASSUMPTIONS.md`, including pacing.
-- Decide whether risky strategies should also be clearly less profitable, or pay only in trouble (see ASSUMPTIONS, "Observed behavior").
+- Decide whether reckless play (skipping permits, guild and security) should ever pay. Options include crew "favors" or a grey market for cheap ingredients (see ASSUMPTIONS, "Risk and reward").
 - Add a one-factor sensitivity view ("what if only the price changed?") to the compare page.
 
 ## Phase 2: world state and interventions

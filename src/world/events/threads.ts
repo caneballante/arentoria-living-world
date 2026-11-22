@@ -118,7 +118,8 @@ export const extortion: ThreadDef = {
       repeatCooldownDays: 28,
       onEnter(ctx, rng) {
         const crew = ctx.actorName(ctx.neighborhood.crewActorId);
-        const damage = 150 + rng.int(0, 10) * 10;
+        // Scaled to the business: a warning has to hurt whatever its size.
+        const damage = Math.max(150, Math.round((avgWeeklyRevenue(ctx) * rng.range(0.25, 0.45)) / 10) * 10);
         return {
           severity: "major",
           playerText: `Overnight someone smashed up our gear and fouled the stock — about ${formatCp(damage)} of damage. Today's sales suffered and the staff are shaken.`,
@@ -179,8 +180,9 @@ export const extortion: ThreadDef = {
                   label: "Refuse — this gets settled in person",
                   description: "Without real security they'll hit us hard first; the showdown happens at the table.",
                   effects: [
-                    { kind: "cash", amountCp: -400, category: "losses", note: "Smashed stock and stolen takings" },
-                    { kind: "modifier", id: "crew-intimidation", label: "Customers avoiding trouble", target: "demand", multiplier: 0.7, durationDays: 14 },
+                    { kind: "cash", amountCp: -Math.max(400, Math.round(avgWeeklyRevenue(ctx) / 10) * 10), category: "losses", note: "Smashed stock and stolen takings" },
+                    { kind: "modifier", id: "crew-intimidation", label: "Customers avoiding trouble", target: "demand", multiplier: 0.7, durationDays: 28 },
+                    ...(staff ? [{ kind: "plan" as const, patch: { staff: ctx.plan.staff.filter((s) => s.candidateId !== staff.id) }, note: `${staff.name} quit after the attack` }] : []),
                     { kind: "adjust", variable: "reputation", delta: -3 },
                     ...moraleHit(ctx, -15),
                     { kind: "thread", threadId: "extortion", freezeDays: 56 },
@@ -307,10 +309,10 @@ export const guildPressure: ThreadDef = {
         return {
           severity: "notable",
           playerText: "Two of our suppliers have suddenly found themselves 'fully committed', and prices from the rest have crept up.",
-          dmText: "Fellowship obstruction: supply-shortage risk ×2.5 and ingredient cost ×1.08 for four weeks.",
+          dmText: "Fellowship obstruction: supply-shortage risk ×2.5 and ingredient cost ×1.12 for six weeks.",
           effects: [
-            { kind: "addCondition", id: "guild-obstruction", label: "Suppliers obstructed by the Fellowship", durationDays: 28, visibleToPlayers: false },
-            { kind: "modifier", id: "guild-obstruction-cost", label: "Fellowship-influenced supplier prices", target: "ingredientCost", multiplier: 1.08, durationDays: 28 },
+            { kind: "addCondition", id: "guild-obstruction", label: "Suppliers obstructed by the Fellowship", durationDays: 42, visibleToPlayers: false },
+            { kind: "modifier", id: "guild-obstruction-cost", label: "Fellowship-influenced supplier prices", target: "ingredientCost", multiplier: 1.12, durationDays: 42 },
             { kind: "adjust", variable: "guildRelation", delta: -5 },
           ],
         };
@@ -322,16 +324,19 @@ export const guildPressure: ThreadDef = {
       threshold: 20,
       major: true,
       repeatCooldownDays: 84,
-      onEnter() {
+      onEnter(ctx, rng) {
+        // Where the guild is strong, its complaint can get a non-member's permit suspended pending a hearing.
+        const suspendDays = ctx.plan.guild === "none" && ctx.neighborhood.guildPresence >= 0.6 ? rng.int(7, 14) : 0;
         return {
           severity: "major",
-          playerText: "The Fellowship has lodged a formal complaint with the city about our 'irregular trading'. Expect officials.",
-          dmText: "Complaint: scrutiny +20 and the inspection thread advances.",
+          playerText: `The Fellowship has lodged a formal complaint with the city about our 'irregular trading'.${suspendDays ? ` Our permit is suspended for ${suspendDays} days pending a hearing.` : " Expect officials."}`,
+          dmText: `Complaint: scrutiny +20 and the inspection thread advances${suspendDays ? `; permit suspended ${suspendDays} days (guild presence ${ctx.neighborhood.guildPresence})` : ""}.`,
           sessionHook: "A hearing with a guild magistrate or Council clerk; Galen Vale could represent the party.",
           effects: [
             { kind: "adjust", variable: "scrutiny", delta: 20 },
             { kind: "thread", threadId: "inspection", progressDelta: 6 },
             { kind: "adjust", variable: "guildRelation", delta: -5 },
+            ...(suspendDays ? [{ kind: "suspend" as const, days: suspendDays, reason: "Permit suspended after a guild complaint" }] : []),
           ],
         };
       },
@@ -409,14 +414,17 @@ export const inspection: ThreadDef = {
             ],
           };
         }
-        const fine = violations.reduce((a, v) => a + v.fine, 0);
-        const suspend = Math.max(...violations.map((v) => v.suspendDays));
+        // Repeat offenders pay more: each prior penalty this year doubles, triples… the standard penalty.
+        const priors = Number(ctx.state.conditions.find((c) => c.id === "inspection-record")?.data?.count ?? 0);
+        const fine = violations.reduce((a, v) => a + v.fine, 0) * (1 + priors);
+        const suspend = Math.max(...violations.map((v) => v.suspendDays)) * (1 + priors) + (priors >= 2 ? 7 : 0);
+        const record: Effect = { kind: "addCondition", id: "inspection-record", label: "Prior inspection penalties", data: { count: priors + 1 }, durationDays: 365, visibleToPlayers: true };
         const orders = violations.flatMap((v) => (v.order ? [v.order] : []));
         const found = violations.map((v) => v.text).join("; ");
         return {
           severity: "major",
           playerText: `Inspectors from the licensing office found problems: ${found}.`,
-          dmText: `Inspection failed (${violations.length} violation(s)). Standard penalty: ${formatCp(fine)} fine${suspend ? `, ${suspend}-day suspension` : ""}${orders.length ? ", correction orders" : ""}. The DM rules on the outcome.`,
+          dmText: `Inspection failed (${violations.length} violation(s)${priors ? `, ${priors} prior penalt${priors === 1 ? "y" : "ies"} this year` : ""}). Standard penalty: ${formatCp(fine)} fine${suspend ? `, ${suspend}-day suspension` : ""}${orders.length ? ", correction orders" : ""}. The DM rules on the outcome.`,
           sessionHook: "Galen Vale could contest the findings; an inspector might be persuadable (or bribable).",
           effects: [{ kind: "adjust", variable: "reputation", delta: -3 }],
           decision: {
@@ -433,7 +441,8 @@ export const inspection: ThreadDef = {
                   { kind: "cash", amountCp: -fine, category: "fines", note: "Inspection fine" },
                   ...(suspend ? [{ kind: "suspend" as const, days: suspend, reason: "Failed inspection" }] : []),
                   ...orders,
-                  { kind: "reveal", topic: "legal", text: `Fined ${formatCp(fine)}${suspend ? ` and suspended for ${suspend} days` : ""} after an inspection.` },
+                  { kind: "reveal", topic: "legal", text: `Fined ${formatCp(fine)}${suspend ? ` and suspended for ${suspend} days` : ""} after an inspection${priors ? " — penalties are rising for repeat offences" : ""}.` },
+                  record,
                   { kind: "adjust", variable: "scrutiny", delta: -8 },
                   { kind: "thread", threadId: "inspection", setProgress: 3, setStage: 0 },
                 ],
@@ -562,7 +571,7 @@ export const rivalResponse: ThreadDef = {
           dmText: `${rival} resort to sabotage.`,
           sessionHook: `Catch ${rival}'s saboteur in the act?`,
           effects: [
-            { kind: "cash", amountCp: -200, category: "losses", note: "Sabotage" },
+            { kind: "cash", amountCp: -Math.max(200, Math.round((avgWeeklyRevenue(ctx) * 0.5) / 10) * 10), category: "losses", note: "Sabotage" },
             { kind: "adjust", variable: "reputation", delta: -3 },
             { kind: "adjust", variable: "rivalHostility", delta: -10 },
           ],

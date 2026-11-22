@@ -149,8 +149,10 @@ export function updateHidden(world: WorldDefinition, state: WorldState, stats: W
     const valueTerm = clamp(k.valueWeight * (fair / plan.priceCp - 1), -k.valueCap, k.valueCap);
     const serviceTerm = stats.sold > 0 ? k.serviceWeight * (derived.staffCompetence - 50) : 0;
     const stockoutTerm = -k.stockoutPenalty * stockoutShare;
+    const rushed = plan.constructWorkload === "pushed" && stats.operatingDays > 0 ? -d.constructs.pushedReputationPenalty : 0;
     const list: Driver[] = [
       { label: "Drift toward neutral", value: r * (50 - h.reputation) },
+      { label: "Rushed baking (constructs pushed)", value: r * rushed },
       { label: "Quality vs. local expectations", value: r * qTerm },
       { label: "Value for money", value: r * valueTerm },
       { label: "Service (staff competence)", value: r * serviceTerm },
@@ -247,6 +249,16 @@ export function updateHidden(world: WorldDefinition, state: WorldState, stats: W
       { label: "Customers taken from local sellers", value: k.shareWeight * n.competition * share * damp },
       { label: "Undercutting local prices", value: k.undercutWeight * n.competition * undercut * Math.min(1, share * 5) * damp },
       { label: "Grudges cooling", value: -k.decay * h.rivalHostility },
+    ];
+  }
+
+  // --- Construct strain: builds while pushed, recovers with steady work and rest. ---
+  {
+    const k = d.constructs;
+    const pushed = plan.constructWorkload === "pushed" && stats.operatingDays > 0;
+    drivers.constructStrain = [
+      { label: "Pushed past steady work", value: pushed ? k.strainPerPushedWeek * (stats.operatingDays / 7) : 0 },
+      { label: "Rest and maintenance", value: -k.recoveryRate * h.constructStrain },
     ];
   }
 
