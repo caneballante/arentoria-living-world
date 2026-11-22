@@ -26,9 +26,11 @@ import type {
   ChannelDef,
   Cp,
   DayRecord,
+  DayShortfall,
   LedgerCategory,
   ModifierTarget,
   NeighborhoodDef,
+  SalesLimit,
   StaffMember,
   WeekLedger,
   WorldDefinition,
@@ -222,6 +224,56 @@ export function assignStaff(
   return byChannel;
 }
 
+/** The day's `reason` when suppliers refuse to deliver until the bills are paid. */
+export const SUPPLIERS_CUT_OFF_REASON = "suppliers won't deliver until the bills are paid";
+
+/** What capped one outlet's sales, given sold = min(allocated, demand, capacity). */
+export function salesLimit(c: Pick<ChannelDayResult, "allocated" | "demand" | "sold">): SalesLimit {
+  if (c.sold >= c.demand) return "demand";
+  return c.sold >= c.allocated ? "stock" : "hands";
+}
+
+/** Did this outlet leave a notable number of customers without a pie (for any reason)? */
+function turnedCustomersAway(world: WorldDefinition, c: Pick<ChannelDayResult, "demand" | "sold">): boolean {
+  const k = world.assumptions.turnedAway;
+  return c.demand - c.sold >= Math.max(k.minCustomers, c.demand * k.minShareOfDemand);
+}
+
+/**
+ * Why customers went without on one trading day: the whole bake was gone, an outlet's
+ * share ran out while pies sat at another outlet, or an outlet had pies but too few hands.
+ * Uses only the day's raw channel numbers, so it also classifies records saved before
+ * this breakdown existed. Wholesale never "turns customers away", but its leftover pies
+ * count as pies left elsewhere.
+ */
+export function dayShortfall(world: WorldDefinition, d: Pick<DayRecord, "produced" | "channels">): DayShortfall {
+  const ranOut: ChannelType[] = [];
+  const shortHanded: ChannelType[] = [];
+  const leftover: Partial<Record<ChannelType, number>> = {};
+  const turnedAway = { stock: 0, hands: 0 };
+  let piesLeft = 0;
+  for (const c of d.channels) {
+    const left = c.allocated - c.sold;
+    piesLeft += left;
+    if (left > 0) leftover[c.channel] = (leftover[c.channel] ?? 0) + left;
+    if (c.channel === "wholesale" || !turnedCustomersAway(world, c)) continue;
+    // An outlet that turned customers away was capped by its stock or by its hands, never by demand.
+    const cause = salesLimit(c) === "stock" ? "stock" : "hands";
+    const list = cause === "stock" ? ranOut : shortHanded;
+    if (!list.includes(c.channel)) list.push(c.channel);
+    turnedAway[cause] += c.demand - c.sold;
+  }
+  // An outlet that ran out has nothing left itself, so `piesLeft` is what sat at the other outlets.
+  const stock = !ranOut.length
+    ? undefined
+    : d.produced <= 0
+      ? "no-bake"
+      : piesLeft < world.assumptions.turnedAway.leftoverMinPies
+        ? "sold-out"
+        : "allocation";
+  return { stock, ranOut, shortHanded, leftover, turnedAway };
+}
+
 export interface DayOperationsResult {
   record: DayRecord;
   ledger: Partial<Record<LedgerCategory, number>>;
@@ -313,7 +365,8 @@ export function runOperations(world: WorldDefinition, state: WorldState, date: C
       sold,
       priceCp,
       revenueCp,
-      stockout: demand - sold >= Math.max(8, demand * 0.15),
+      unmet: demand - sold,
+      limitedBy: salesLimit({ allocated, demand, sold }),
       factors,
     });
   });
@@ -333,7 +386,7 @@ export function runOperations(world: WorldDefinition, state: WorldState, date: C
     record: {
       ...baseRecord,
       operating: true,
-      reason: cutOff ? "suppliers won't deliver until the bills are paid" : undefined,
+      reason: cutOff ? SUPPLIERS_CUT_OFF_REASON : undefined,
       produced,
       sold,
       waste: produced - sold,
@@ -343,6 +396,7 @@ export function runOperations(world: WorldDefinition, state: WorldState, date: C
       skimmedCp,
       absentStaff: [...absent],
       shortage,
+      shortfall: dayShortfall(world, { produced, channels }),
     },
     ledger: {
       revenue: revenueReported,

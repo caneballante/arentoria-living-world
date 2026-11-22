@@ -24,6 +24,10 @@ export const assumptions: EconomicAssumptions = {
   ],
   fuelCostPerPieCp: 0.3,
   packagingCostPerDeliveredPieCp: 0.3,
+  // Provisional: an outlet "turned customers away" when it left ≥ 8 and ≥ 15% of its demand
+  // without a pie. It only counts as a true sell-out when fewer than 8 pies were left anywhere;
+  // otherwise the outlet's share ran out while pies sat at another outlet.
+  turnedAway: { minCustomers: 8, minShareOfDemand: 0.15, leftoverMinPies: 8 },
   // Canon rent is 14 gp/week; assume the business is charged a quarter of it for kitchen use.
   kitchenRentShareCpPerWeek: 350,
   marketWageCpPerDay: { vendor: 20, runner: 18, guard: 40 },

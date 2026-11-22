@@ -9,9 +9,11 @@
  *  - Deterministic: wording varies by seed/week, never by wall-clock time.
  */
 import { dateFromDay, formatShortDate } from "../engine/calendar";
+import { TURNED_AWAY_DRIVER } from "../engine/dynamics";
 import { formatCp, round } from "../engine/math";
+import type { ChannelType } from "../engine/plan";
 import { rngFor, type Rng } from "../engine/rng";
-import type { Driver, EventRecord, HiddenVar, WeekRecord, WorldDefinition, WorldState } from "../engine/types";
+import type { Driver, EventRecord, HiddenVar, WeekRecord, WeekShortfall, WorldDefinition, WorldState } from "../engine/types";
 
 export type ReportSection = "summary" | "operations" | "customers" | "staff" | "street" | "events" | "weather";
 
@@ -53,6 +55,89 @@ function weekDateRange(world: WorldDefinition, w: WeekRecord): string {
   return `${formatShortDate(dateFromDay(world.calendar, w.startDay))} – ${formatShortDate(dateFromDay(world.calendar, w.endDay))}`;
 }
 
+/** How players refer to each outlet in reports. */
+const OUTLET_NAMES: Record<ChannelType, string> = {
+  cart: "the cart",
+  stall: "the stall",
+  delivery: "the delivery round",
+  wholesale: "the batch kept for the inns",
+};
+
+function joinAnd(items: string[]): string {
+  return items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+const outletsIn = (m: Partial<Record<ChannelType, number>>) => (Object.keys(m) as ChannelType[]).filter((c) => (m[c] ?? 0) > 0);
+const outletList = (m: Partial<Record<ChannelType, number>>) => joinAnd(outletsIn(m).map((c) => OUTLET_NAMES[c]));
+const perOutlet = (m: Partial<Record<ChannelType, number>>, unit: string) => outletsIn(m).map((c) => `${OUTLET_NAMES[c]}: ${m[c]} ${unit}`).join("; ");
+
+type ShortfallLine = { tone: ReportLine["tone"]; text: string; basis: string };
+
+/**
+ * One line per real cause of customers going without, so a week with pies left over
+ * never claims to have sold out.
+ */
+function shortfallLines(world: WorldDefinition, sf: WeekShortfall): ShortfallLine[] {
+  const lines: ShortfallLine[] = [];
+  const k = world.assumptions.turnedAway;
+  const t = sf.turnedAway;
+  if (sf.noBakeDays > 0) {
+    const other = sf.noBakeDays - sf.cutOffDays;
+    const why = [
+      sf.cutOffDays > 0 ? `suppliers refused to deliver until the bills were paid (${sf.cutOffDays} day(s))` : "",
+      other > 0 ? `production capacity or planned output was zero, e.g. the kitchen out of action (${other} day(s))` : "",
+    ].filter(Boolean);
+    lines.push({
+      tone: "bad",
+      text: `Nothing came out of the kitchen on ${sf.noBakeDays} trading day(s), so customers went away empty-handed.`,
+      basis: `No pies were baked while the outlets were open: ${why.join("; ")}. About ${t.noBake} customers went without.`,
+    });
+  }
+  if (sf.soldOutDays > 0) {
+    lines.push({
+      tone: "neutral",
+      text: `Sold out early on ${sf.soldOutDays} day(s); customers were turned away.`,
+      basis: `The whole bake was gone on those days (fewer than ${k.leftoverMinPies} pies left anywhere) and about ${t.soldOut} customers still went without. More production would capture it.`,
+    });
+  }
+  if (sf.allocationDays > 0) {
+    const ranOut = outletsIn(sf.ranOutAt);
+    const leftAt = outletsIn(sf.leftOverAt);
+    // If an outlet both ran out and had leftovers (on different days, or two of the same kind), don't name names.
+    const text = ranOut.some((c) => leftAt.includes(c))
+      ? `On ${sf.allocationDays} day(s) one outlet ran out early while another had pies left over.`
+      : `${capitalize(outletList(sf.ranOutAt))} ran out early on ${sf.allocationDays} day(s) while ${outletList(sf.leftOverAt)} had pies left over.`;
+    lines.push({
+      tone: "neutral",
+      text,
+      basis: `Each outlet sells only its own share of the bake. Outlets that sold their whole share (${perOutlet(sf.ranOutAt, "day(s)")}) turned away about ${t.allocation} customers, while pies sat unsold elsewhere on those days (${perOutlet(sf.leftOverAt, "pies")}). Shifting outlet shares would capture some of it.`,
+    });
+  }
+  if (sf.shortHandedDays > 0) {
+    lines.push({
+      tone: "neutral",
+      text: `Too few hands at ${outletList(sf.shortHandedAt)}: customers gave up waiting on ${sf.shortHandedDays} day(s).`,
+      basis: `Selling capacity (sellers on duty × throughput × competence) capped sales while pies were still on hand (${perOutlet(sf.shortHandedAt, "day(s)")}); about ${t.shortHanded} customers went unserved. Another seller, more experienced ones, or fewer absences would capture it.`,
+    });
+  }
+  return lines;
+}
+
+/** What regulars grumble about when turned-away customers are what hurt reputation. */
+function turnedAwayGrumble(sf: WeekShortfall | undefined): string {
+  if (!sf) return "Regulars grumble that they can't count on getting a pie from us.";
+  const t = sf.turnedAway;
+  const worst = Math.max(t.noBake, t.soldOut, t.allocation, t.shortHanded);
+  if (worst === t.noBake) return "Regulars grumble that they keep turning up to find nothing to sell.";
+  if (worst === t.soldOut) return "Regulars grumble that we're always sold out by the evening rush.";
+  if (worst === t.allocation) {
+    const ranOut = outletsIn(sf.ranOutAt);
+    return ranOut.length === 1 ? `Regulars at ${OUTLET_NAMES[ranOut[0]!]} grumble that it's often out of pies by the evening rush.` : "Regulars grumble that their usual spot is often out of pies by the evening rush.";
+  }
+  return "Regulars grumble about the long wait to be served.";
+}
+
 function observes(rng: Rng, loyalty: number): boolean {
   // Loyal staff are more forthcoming with what they notice.
   return rng.next() < 0.45 + loyalty / 200;
@@ -85,7 +170,8 @@ export function buildWeeklyReport(world: WorldDefinition, state: WorldState, w: 
     add("operations", "neutral", `${w.waste} pies went unsold.`, `Waste ${Math.round(wasteShare * 100)}%.`);
   }
   if (w.stockoutDays >= 2) {
-    add("operations", "neutral", `Sold out early on ${w.stockoutDays} day(s); customers were turned away.`, "Demand exceeded stock or selling capacity on those days. More production or staff would capture it.");
+    if (w.shortfall) for (const l of shortfallLines(world, w.shortfall)) add("operations", l.tone, l.text, l.basis);
+    else add("operations", "neutral", `Customers were turned away on ${w.stockoutDays} day(s).`, "Demand exceeded an outlet's stock or selling capacity on those days (this week was saved before the cause was recorded).");
   }
   if (w.operatingDays === 0) add("operations", "bad", "We did not trade this week.", "Business suspended or closed.");
 
@@ -103,8 +189,8 @@ export function buildWeeklyReport(world: WorldDefinition, state: WorldState, w: 
             : "A customer remarked that the pies were plain for the money."
           : d?.label === "Service (staff competence)"
             ? "Someone complained their pie was cold and the service slow."
-            : d?.label === "Sold out / unreliable"
-              ? "Regulars grumble that we're always sold out by the evening rush."
+            : d?.label === TURNED_AWAY_DRIVER
+              ? turnedAwayGrumble(w.shortfall)
               : "Fewer familiar faces than last week.";
     add("customers", "bad", text, `Reputation ${fmtDelta(h0.reputation, h1.reputation)}; largest negative driver: ${d ? `${d.label} (${round(d.value, 2)})` : "events"}.`);
   } else if (repDelta >= 1.5) {

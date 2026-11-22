@@ -102,7 +102,8 @@ What this shows:
 ## Known simplifications (deliberate for Phase 1)
 
 - Pies are sold the day they are baked. Unsold pies are waste; there is no day-old discount.
-- Production is a fixed weekly plan. Players learn from "sold out" and "threw away" reports and adjust it themselves.
+- Production is a fixed weekly plan. Players learn from the reports and adjust it themselves. The reports separate the causes of customers being turned away: the whole bake sold out, one outlet ran out while another had pies left over, too few hands to serve, or nothing baked. Thresholds are in `assumptions.turnedAway`.
+- Each outlet sells only its own share of the day's bake. Pies are not moved between outlets during the day, so the stall can run out while the cart throws pies away.
 - Construct capacity is the only production constraint. Expansion beyond three constructs is not modelled yet.
 - One business, one neighborhood at a time. Multi-district operations come later.
 - When a showdown is flagged "settle at the table", the simulation freezes that situation and assumes nothing further; the DM records the outcome as an intervention.

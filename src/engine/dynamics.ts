@@ -6,10 +6,10 @@
  * DM view can always answer "why did this move?".
  */
 
-import { hasActiveCondition } from "./economy";
+import { dayShortfall, hasActiveCondition, SUPPLIERS_CUT_OFF_REASON } from "./economy";
 import { clamp, clamp01, clamp100, mean } from "./math";
 import type { BusinessPlan } from "./plan";
-import type { DerivedMetrics, Driver, HiddenState, HiddenVar, StaffMember, WeekAccumulator, WorldDefinition, WorldState } from "./types";
+import type { DerivedMetrics, Driver, HiddenState, HiddenVar, StaffMember, WeekAccumulator, WeekShortfall, WorldDefinition, WorldState } from "./types";
 
 export interface WeekStats {
   produced: number;
@@ -18,7 +18,10 @@ export interface WeekStats {
   cashSold: number;
   waste: number;
   operatingDays: number;
-  stockoutDays: number;
+  /** Days at least one retail outlet turned customers away, whatever the cause (drives reliability). */
+  turnedAwayDays: number;
+  /** The same days, split by cause, for reports. */
+  shortfall: WeekShortfall;
   wholesaleDemand: number;
   wholesaleSold: number;
   wholesaleShortDays: number;
@@ -34,17 +37,48 @@ export function weekStats(world: WorldDefinition, acc: WeekAccumulator): WeekSta
     cashSold = 0,
     waste = 0,
     operatingDays = 0,
-    stockoutDays = 0,
+    turnedAwayDays = 0,
     wholesaleDemand = 0,
     wholesaleSold = 0,
     wholesaleShortDays = 0;
   const utils: number[] = [];
+  const shortfall: WeekShortfall = {
+    noBakeDays: 0,
+    cutOffDays: 0,
+    soldOutDays: 0,
+    allocationDays: 0,
+    shortHandedDays: 0,
+    turnedAway: { noBake: 0, soldOut: 0, allocation: 0, shortHanded: 0 },
+    ranOutAt: {},
+    leftOverAt: {},
+    shortHandedAt: {},
+  };
+  const tally = <K extends string>(m: Partial<Record<K, number>>, k: K, n = 1) => (m[k] = (m[k] ?? 0) + n);
   for (const d of acc.days) {
     produced += d.produced;
     sold += d.sold;
     waste += d.waste;
     if (d.operating) operatingDays++;
-    if (d.channels.some((c) => c.stockout && c.channel !== "wholesale")) stockoutDays++;
+    const s = d.shortfall ?? dayShortfall(world, d);
+    if (s.ranOut.length || s.shortHanded.length) turnedAwayDays++;
+    if (s.stock === "no-bake") {
+      shortfall.noBakeDays++;
+      if (d.reason === SUPPLIERS_CUT_OFF_REASON) shortfall.cutOffDays++;
+      shortfall.turnedAway.noBake += s.turnedAway.stock;
+    } else if (s.stock === "sold-out") {
+      shortfall.soldOutDays++;
+      shortfall.turnedAway.soldOut += s.turnedAway.stock;
+    } else if (s.stock === "allocation") {
+      shortfall.allocationDays++;
+      shortfall.turnedAway.allocation += s.turnedAway.stock;
+      for (const c of s.ranOut) tally(shortfall.ranOutAt, c);
+      for (const [c, n] of Object.entries(s.leftover) as [keyof typeof s.leftover, number][]) tally(shortfall.leftOverAt, c, n);
+    }
+    if (s.shortHanded.length) {
+      shortfall.shortHandedDays++;
+      shortfall.turnedAway.shortHanded += s.turnedAway.hands;
+      for (const c of s.shortHanded) tally(shortfall.shortHandedAt, c);
+    }
     for (const c of d.channels) {
       if (c.channel === "wholesale") {
         wholesaleDemand += c.demand;
@@ -62,7 +96,8 @@ export function weekStats(world: WorldDefinition, acc: WeekAccumulator): WeekSta
     cashSold,
     waste,
     operatingDays,
-    stockoutDays,
+    turnedAwayDays,
+    shortfall,
     wholesaleDemand,
     wholesaleSold,
     wholesaleShortDays,
@@ -124,6 +159,9 @@ export function computeDerived(world: WorldDefinition, state: WorldState, weekly
   };
 }
 
+/** Reputation driver for customers who went without a pie (any cause; see WeekRecord.shortfall). */
+export const TURNED_AWAY_DRIVER = "Customers turned away";
+
 export interface HiddenUpdate {
   next: HiddenState;
   drivers: Partial<Record<HiddenVar, Driver[]>>;
@@ -137,7 +175,8 @@ export function updateHidden(world: WorldDefinition, state: WorldState, stats: W
   const h = state.business.hidden;
   const drivers: Partial<Record<HiddenVar, Driver[]>> = {};
   const opDays = Math.max(1, stats.operatingDays);
-  const stockoutShare = stats.stockoutDays / opDays;
+  // Customers turned away for any reason (no pies at their outlet, or no one free to serve them).
+  const turnedAwayShare = stats.turnedAwayDays / opDays;
 
   // --- Reputation: moves toward the experience customers actually have. ---
   {
@@ -148,7 +187,7 @@ export function updateHidden(world: WorldDefinition, state: WorldState, stats: W
     const fair = Math.max(1, n.demand.referencePriceCp * (1 + world.assumptions.demand.fairPriceQualitySlope * (plan.quality - n.demand.qualityPreference)));
     const valueTerm = clamp(k.valueWeight * (fair / plan.priceCp - 1), -k.valueCap, k.valueCap);
     const serviceTerm = stats.sold > 0 ? k.serviceWeight * (derived.staffCompetence - 50) : 0;
-    const stockoutTerm = -k.stockoutPenalty * stockoutShare;
+    const turnedAwayTerm = -k.stockoutPenalty * turnedAwayShare;
     const rushed = plan.constructWorkload === "pushed" && stats.operatingDays > 0 ? -d.constructs.pushedReputationPenalty : 0;
     const list: Driver[] = [
       { label: "Drift toward neutral", value: r * (50 - h.reputation) },
@@ -156,7 +195,7 @@ export function updateHidden(world: WorldDefinition, state: WorldState, stats: W
       { label: "Quality vs. local expectations", value: r * qTerm },
       { label: "Value for money", value: r * valueTerm },
       { label: "Service (staff competence)", value: r * serviceTerm },
-      { label: "Sold out / unreliable", value: r * stockoutTerm },
+      { label: TURNED_AWAY_DRIVER, value: r * turnedAwayTerm },
     ];
     drivers.reputation = list;
   }
@@ -183,7 +222,7 @@ export function updateHidden(world: WorldDefinition, state: WorldState, stats: W
   {
     const k = d.loyalty;
     const exposure = clamp01(stats.sold / d.reputation.minExposurePies);
-    const target = clamp100((h.reputation - 40) * 1.6) * (1 - 0.5 * stockoutShare);
+    const target = clamp100((h.reputation - 40) * 1.6) * (1 - 0.5 * turnedAwayShare);
     drivers.loyalty = [{ label: "Regulars responding to reputation and reliability", value: k.adjustRate * exposure * (target - h.loyalty) }];
   }
 

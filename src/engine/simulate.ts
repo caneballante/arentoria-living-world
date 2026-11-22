@@ -25,7 +25,7 @@
 
 import { dateFromDay, type CalendarDate } from "./calendar";
 import { computeDerived, updateHidden, updateStaff, updateWholesaleAccounts, weekStats } from "./dynamics";
-import { dailyConstructCapacity, emptyLedger, hasActiveCondition, ledgerCosts, ledgerIncome, runOperations, weeklyFixedCosts } from "./economy";
+import { dailyConstructCapacity, emptyLedger, hasActiveCondition, ledgerCosts, ledgerIncome, runOperations, SUPPLIERS_CUT_OFF_REASON, weeklyFixedCosts } from "./economy";
 import { applyChange, applyEffect, hireStaff, nextId } from "./effects";
 import { clamp, clamp01, formatCp, round } from "./math";
 import { parsePlan, type BusinessPlan, type BusinessPlanInput } from "./plan";
@@ -501,7 +501,7 @@ function closeWeek(world: WorldDefinition, state: WorldState, date: CalendarDate
   b.consecutiveLossWeeks = profit < 0 ? b.consecutiveLossWeeks + 1 : 0;
   b.reinvestAdvertisingCp = profit > 0 ? Math.round(profit * state.plan.finance.reinvestAdvertisingShare) : 0;
   // Sandbox assumption: once suppliers have cut the business off, the party settles the debts at week's end.
-  if (state.sandbox.partyTopUps === "when-cut-off" && acc.days.some((d) => d.reason === "suppliers won't deliver until the bills are paid") && b.cashCp < 0) {
+  if (state.sandbox.partyTopUps === "when-cut-off" && acc.days.some((d) => d.reason === SUPPLIERS_CUT_OFF_REASON) && b.cashCp < 0) {
     applyChange(world, state, {
       day: date.absoluteDay,
       authority: "sandbox-assumption",
@@ -545,7 +545,8 @@ function closeWeek(world: WorldDefinition, state: WorldState, date: CalendarDate
     produced: stats.produced,
     sold: stats.sold,
     waste: stats.waste,
-    stockoutDays: stats.stockoutDays,
+    stockoutDays: stats.turnedAwayDays,
+    shortfall: stats.shortfall,
     operatingDays: stats.operatingDays,
     channelSold,
     ledger: { ...acc.ledger },

@@ -153,6 +153,18 @@ export interface EconomicAssumptions {
   qualityTiers: QualityTier[];
   fuelCostPerPieCp: number;
   packagingCostPerDeliveredPieCp: number;
+  /** When an outlet counts as turning customers away, and how the cause is told apart. */
+  turnedAway: {
+    /** An outlet turned customers away when it left at least this many without a pie… */
+    minCustomers: number;
+    /** …and at least this share of its demand. */
+    minShareOfDemand: number;
+    /**
+     * Pies left at day's end (all outlets) from which an outlet running out counts as an
+     * allocation mismatch ("pies were left elsewhere"); below it, the day sold out.
+     */
+    leftoverMinPies: number;
+  };
   kitchenRentShareCpPerWeek: number;
   marketWageCpPerDay: Record<StaffRole, number>;
   guild: { associateDuesCpPerWeek: number; memberDuesCpPerWeek: number; memberInitiationCp: number; associateInitiationCp: number };
@@ -568,9 +580,65 @@ export interface ChannelDayResult {
   sold: number;
   priceCp: number;
   revenueCp: number;
-  stockout: boolean;
+  /** Customers this outlet could not serve (demand − sold). */
+  unmet: number;
+  /** What capped sales: customer demand, the outlet's share of the bake, or its sellers. */
+  limitedBy: SalesLimit;
   /** Multipliers applied, for explanation. */
   factors: Record<string, number>;
+}
+
+/**
+ * What capped one outlet's sales on one day (sold = min(allocated, demand, capacity)):
+ *  - "demand": everyone who wanted a pie got one;
+ *  - "stock": the outlet sold every pie it was given;
+ *  - "hands": the outlet still had pies but its sellers could not serve everyone.
+ */
+export type SalesLimit = "demand" | "stock" | "hands";
+
+/**
+ * Why customers went without a pie on one trading day (retail outlets only; wholesale
+ * shortfalls cost accounts instead). Only outlets that turned away a notable number of
+ * customers count (`assumptions.turnedAway`).
+ */
+export interface DayShortfall {
+  /**
+   * Why the outlets in `ranOut` ran out:
+   *  - "no-bake": nothing was baked at all (kitchen out of action, suppliers not delivering);
+   *  - "sold-out": the whole day's bake was gone (fewer than `leftoverMinPies` left anywhere);
+   *  - "allocation": the outlet's share ran out while pies were left at another outlet.
+   */
+  stock?: "no-bake" | "sold-out" | "allocation";
+  /** Retail outlets that sold every pie they were given and still turned customers away. */
+  ranOut: ChannelType[];
+  /** Retail outlets that still had pies but too few hands to serve everyone. */
+  shortHanded: ChannelType[];
+  /** Pies left unsold at each outlet at day's end (wholesale included). */
+  leftover: Partial<Record<ChannelType, number>>;
+  /** Customers turned away at outlets that ran out (`stock`) and at short-handed outlets (`hands`). */
+  turnedAway: { stock: number; hands: number };
+}
+
+/** A week's turned-away days, split by cause. Days can count under both a stock cause and `shortHandedDays`. */
+export interface WeekShortfall {
+  /** Days the outlets opened but nothing had been baked. */
+  noBakeDays: number;
+  /** Of `noBakeDays`, days the suppliers refused to deliver. */
+  cutOffDays: number;
+  /** Days the whole bake sold out and customers were still coming. */
+  soldOutDays: number;
+  /** Days an outlet ran out of its share while pies were left at another outlet. */
+  allocationDays: number;
+  /** Days an outlet still had pies but too few hands to serve everyone. */
+  shortHandedDays: number;
+  /** Customers turned away over the week, by cause. */
+  turnedAway: { noBake: number; soldOut: number; allocation: number; shortHanded: number };
+  /** On allocation days: how many days each outlet ran out… */
+  ranOutAt: Partial<Record<ChannelType, number>>;
+  /** …and how many pies each outlet was left holding. */
+  leftOverAt: Partial<Record<ChannelType, number>>;
+  /** Days each outlet was short-handed. */
+  shortHandedAt: Partial<Record<ChannelType, number>>;
 }
 
 export interface DayRecord {
@@ -589,6 +657,8 @@ export interface DayRecord {
   absentStaff: string[];
   shortage: boolean;
   priceIndex: number;
+  /** Why customers went without today (operating days; absent on records saved before it existed). */
+  shortfall?: DayShortfall;
 }
 
 export type WeekLedger = Record<LedgerCategory, number>;
@@ -626,7 +696,13 @@ export interface WeekRecord {
   produced: number;
   sold: number;
   waste: number;
+  /**
+   * Days at least one retail outlet turned customers away, for any reason (stock ran out,
+   * an outlet's share ran out, or too few hands). See `shortfall` for the cause.
+   */
   stockoutDays: number;
+  /** `stockoutDays` split by cause (absent on weeks saved before it existed). */
+  shortfall?: WeekShortfall;
   operatingDays: number;
   channelSold: Partial<Record<ChannelType, number>>;
   ledger: WeekLedger;
