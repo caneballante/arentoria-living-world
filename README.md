@@ -1,0 +1,85 @@
+# Arentoria Living World
+
+A persistent, simulation-driven companion to a tabletop D&D campaign set in Arentoria, capital of Arentor (autumn, 940 CY). It models the city's calendar, weather, economy, factions and developing situations so that player decisions between sessions have economic, political and narrative consequences.
+
+**Status: Phase 1 — working simulation prototype.** The first playable system is the party's meat-pie business, run by three magical chef constructs. Everything runs in a **sandbox**: results are provisional and never change campaign canon.
+
+## Quick start
+
+Requires Node.js 22.12+.
+
+```bash
+npm install
+npm run dev          # http://localhost:3000
+```
+
+Then, in the browser:
+
+1. Pick a starting scenario (or build a plan) in the left panel. It covers all twelve business decisions plus standing orders.
+2. Click **Run the season** (26 weeks from the placeholder date 1 Harvest 940 CY).
+3. Read the results. **DM view** shows the hidden state and why each value changed; **Players** shows only what the party would learn.
+4. Change one thing, then click **Run again**. The tiles show the change against the previous run, and the cash chart overlays it.
+5. Use **Compare strategies** to run every scenario (and your own plan) over many seeds.
+
+With **Pause for decisions**, the run stops on the day a decision arises, such as a protection demand, a guild notice or the licensing ruling. Choose an option and the season continues from that day.
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Web app (sandbox, strategy comparison, canon & assumptions register) |
+| `npm test` | All automated tests (Vitest) |
+| `npm run typecheck` | TypeScript, strict |
+| `npm run build` | Production build (Vercel-compatible) |
+| `npm run sim -- --scenario commons-compliant --seed autumn-940 --weeks 26 --view dm` | One season in the terminal: weekly table, events, threads, "why" explanation, audit trail, reports |
+| `npm run sim -- --list` | List the strategy scenarios |
+| `npm run sim -- --plan my-plan.json --view player` | Run a plan exported from the web UI ("Export JSON") |
+| `npm run compare -- --runs 30 --weeks 26,52` | Seeded batch comparison of all strategies (profit ranges, losses, escalation, end states, paired win rates) |
+
+## Repository layout
+
+```
+src/engine/        Pure simulation engine: no React, no I/O, no world content.
+  rng.ts             seeded, splittable random streams (cyrb128 + sfc32)
+  calendar.ts        generic calendar (dates, weekdays, seasons, festivals)
+  weather.ts         persistent weather + seasonal ingredient prices
+  plan.ts            business plan schema (zod)
+  economy.ts         demand, production, sales, costs
+  dynamics.ts        weekly stock-and-flow updates for hidden state, with named drivers
+  effects.ts         the effect vocabulary shared by events, decisions and DM interventions
+  simulate.ts        day/week runner, threads, events, pauses, decisions, interventions, snapshots
+src/world/         Arentoria content: canon facts, proposed worldbuilding, provisional numbers
+  canon.ts           canon register (from the campaign brief)
+  calendar.ts        PROPOSED 13×28+1 calendar and festivals
+  neighborhoods.ts   Commons, Grand Market, High March + sales channels (numbers provisional)
+  assumptions.ts     every economic / behavioral constant (provisional, calibratable)
+  actors.ts          canon factions + proposed rivals, trade groups, crews
+  staff.ts           proposed hiring pool (hidden traits)
+  events/            conditional events, threads (progress clocks), scheduled events
+  scenarios.ts       strategy test cases
+src/narrative/     Weekly reports derived from simulated conditions (each line has a DM-only basis)
+src/views/         Player and DM projections — the only shapes that leave the server
+src/analysis/      Seeded batch runs, metrics, paired comparisons
+src/persistence/   Repository boundary (in-memory now; Postgres/Supabase in Phase 2)
+src/server/        Public catalog, role resolution
+src/app/, src/ui/  Next.js App Router pages, API routes and client components
+scripts/           CLI runners
+tests/             Vitest suites
+db/                Draft Phase 2 SQL schema (not applied)
+docs/              Architecture, roadmap, assumptions, related projects
+```
+
+## Canon, proposals and simulation
+
+Every world item carries provenance: **canon** (from the campaign), **proposed** (drafted worldbuilding), **provisional** (a tunable number) or **simulated** (engine output). The calendar, festivals, month names, rivals, crews, the Fellowship, the licensing office and all staff candidates are *proposed*. All numbers are *provisional*. Simulated events are never promoted to canon automatically. The **Canon & assumptions** page in the app lists everything with its label.
+
+## Key documents
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): architecture, determinism, pauses and replay, permissions, the intervention layer
+- [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md): what to calibrate first, with current values and observed outcomes
+- [docs/ROADMAP.md](docs/ROADMAP.md): phases 1–5 and next steps
+- [docs/RELATED_PROJECTS.md](docs/RELATED_PROJECTS.md): what was reused from `systemic-risk-model` and `puget-sound-evidence-explorer`
+
+## Deployment
+
+The app is a standard Next.js project and deploys to Vercel as-is (API routes run as serverless functions). Nothing has been deployed. Phase 1 has no accounts. If the environment variable `ARENTORIA_DM_TOKEN` is set, only requests with a matching `x-dm-token` header receive the DM view; everyone else gets the player view.
