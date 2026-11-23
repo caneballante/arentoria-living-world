@@ -163,6 +163,8 @@ export interface MarketConfig {
 export interface EconomicAssumptions {
   provenance: Provenance;
   constructs: { count: number; piesPerDayEach: number; upkeepCpPerWeek: number; pushedCapacityMultiplier: number };
+  /** Repair cost ranges (cp) when the constructs break down or the kitchen burns. */
+  repairs: { minorBreakdownCp: [number, number]; artificerCp: [number, number]; kitchenFireCp: [number, number] };
   qualityTiers: QualityTier[];
   fuelCostPerPieCp: number;
   packagingCostPerDeliveredPieCp: number;

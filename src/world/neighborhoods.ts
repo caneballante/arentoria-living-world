@@ -1,6 +1,9 @@
 /**
  * Modelled neighborhoods. The neighborhood NAMES are canon. The one-line character of the
  * newer districts comes from the DM's notes (22 Nov 2026); every number is PROVISIONAL.
+ * Prices were doubled on 23 Nov 2026 at the DM's request so the business can earn real
+ * money (a starting cart about 20 gp a week). A Commons pie now costs about 1 sp, still
+ * below a 5e "modest meal" (3 sp).
  * Relative sizes, wealth and food trade are informed by the DM City Index census (v20),
  * which is reference material, not canon.
  */
@@ -20,7 +23,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
       "Modelled as a crowded working district: lots of hungry passers-by, tight purses, many cheap food sellers and lax but present enforcement. (Provisional characterization.)",
     demand: {
       baseDailyCustomers: 600,
-      referencePriceCp: 5,
+      referencePriceCp: 10,
       priceSensitivity: 2.0,
       qualityPreference: 2,
       qualityWeight: 0.22,
@@ -50,7 +53,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
       "Modelled as the city's commercial heart: the largest crowds, busy market days, strong Merchants' Guild presence, active market enforcement and opportunistic thieves. (Provisional characterization.)",
     demand: {
       baseDailyCustomers: 950,
-      referencePriceCp: 6,
+      referencePriceCp: 12,
       priceSensitivity: 1.6,
       qualityPreference: 3,
       qualityWeight: 0.35,
@@ -80,7 +83,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
       "Wealthier customers: premium pies, higher prices, deliveries. Few but discerning buyers who pay well for quality and service, prefer delivery to street carts, and see little street crime.",
     demand: {
       baseDailyCustomers: 150,
-      referencePriceCp: 16,
+      referencePriceCp: 32,
       priceSensitivity: 1.2,
       qualityPreference: 4,
       qualityWeight: 0.55,
@@ -111,7 +114,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
       "Price-sensitive customers and less formal commerce: low-cost pies, trusted local vendors. Plenty of people and very little money; strangers are ignored until the street knows them, then regulars stay loyal. Permits are rarely checked and crime is common.",
     demand: {
       baseDailyCustomers: 500,
-      referencePriceCp: 4,
+      referencePriceCp: 8,
       priceSensitivity: 2.6,
       qualityPreference: 1,
       qualityWeight: 0.15,
@@ -144,7 +147,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
       "Craftspeople and industrial workers: filling pies, bulk orders. Crews buy at the yard gates on working days and the place is quiet on Restday. Workshops take standing orders and foremen order in bulk. Few food sellers compete here.",
     demand: {
       baseDailyCustomers: 430,
-      referencePriceCp: 5,
+      referencePriceCp: 10,
       priceSensitivity: 1.8,
       qualityPreference: 2,
       qualityWeight: 0.18,
@@ -181,7 +184,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
       "Students, scholars and staff: inexpensive lunches, repeat customers. Students count every copper and charity kitchens feed the poorest, but a good stall gathers regulars who come back daily. Quiet on Restday and thin during the summer recess. Little crime.",
     demand: {
       baseDailyCustomers: 520,
-      referencePriceCp: 5,
+      referencePriceCp: 10,
       priceSensitivity: 2.2,
       qualityPreference: 2,
       qualityWeight: 0.25,
@@ -214,7 +217,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
       "Mixed residential demand: neighborhood vendors and delivery routes. A large, poorer district of homes and lodging houses where a familiar seller does steady trade and runners on regular rounds reach households that never visit a market. Some informal trade and middling crime.",
     demand: {
       baseDailyCustomers: 640,
-      referencePriceCp: 5,
+      referencePriceCp: 10,
       priceSensitivity: 2.2,
       qualityPreference: 2,
       qualityWeight: 0.2,
@@ -246,7 +249,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
       "Officials, wealthy households and institutions: catering, luxury orders and contracts. Few people buy from a cart, but offices and households pay well for fine pies delivered and catered. Ministries hold supply contracts only with fully compliant suppliers. Enforcement is strict, fees are high and street crime is rare. Offices close on Restday.",
     demand: {
       baseDailyCustomers: 260,
-      referencePriceCp: 12,
+      referencePriceCp: 24,
       priceSensitivity: 1.3,
       qualityPreference: 4,
       qualityWeight: 0.5,

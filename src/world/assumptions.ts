@@ -15,6 +15,9 @@ export const assumptions: EconomicAssumptions = {
   provenance: provisional("Initial calibration guesses (v0.1)."),
   // Count is canon; output, upkeep and the "pushed" workload are provisional/proposed.
   constructs: { count: 3, piesPerDayEach: 70, upkeepCpPerWeek: 0, pushedCapacityMultiplier: 1.3 },
+  // Proposed. Raised five-fold with the Nov 2026 repricing so a breakdown or a fire stays as
+  // serious next to the bigger income (a fire costs roughly a third of a good year's profit).
+  repairs: { minorBreakdownCp: [500, 1500], artificerCp: [10000, 25000], kitchenFireCp: [75000, 175000] },
   qualityTiers: [
     { tier: 1, label: "Scrap & gristle", ingredientCostCp: 1.0 },
     { tier: 2, label: "Plain & honest", ingredientCostCp: 1.8 },

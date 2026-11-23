@@ -19,6 +19,7 @@ Done:
 - Risk and reward: a "pushed" construct workload (more output, strain, breakdowns, fire risk), showcase spectacles, strongbox robberies, consequences scaled to business size, escalating penalties for repeat offences, and a "careful expansion" scenario for like-for-like comparison.
 - A business account kept apart from the party's purses: dated statement, operating floor, safe-to-withdraw, DM-only withdrawals and deposits (server-enforced), real consequences when it runs dry, and an optional automatic payout for sandbox runs.
 - Business sizes as the DM's guard rails: the party starts with one district, one cart, one hire and up to 500 pies a week, and the DM unlocks more. Short weekly reports (summary plus the three notes that matter most), with every note available to the DM.
+- Repriced for fun (Nov 2026): local prices doubled so a starting cart earns about 20 gp a week and established businesses 50–110 gp a week; repair costs raised so risk still bites.
 - One-step launcher and a playtest plan (`docs/TEST_PLAN.md`).
 - 111 automated tests.
 

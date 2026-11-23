@@ -62,7 +62,7 @@ describe("business account", () => {
 
   it("running dry has consequences, and a deposit is the remedy", () => {
     // Empty the account in week 2 with nobody topping it up.
-    const drained = simulateScenario(world, { plan, seed: "dry", weeks: 6, startDay: START, sandbox: { partyTopUps: "never" }, interventions: [withdraw(START + 8, 80, "drain")] }).state;
+    const drained = simulateScenario(world, { plan, seed: "dry", weeks: 6, startDay: START, sandbox: { partyTopUps: "never" }, interventions: [withdraw(START + 8, 200, "drain")] }).state;
     const cutOffDays = drained.events.filter((e) => e.eventId === "supplier-cutoff");
     expect(drained.events.some((e) => e.eventId === "bills-overdue")).toBe(true);
     expect(cutOffDays.length).toBeGreaterThan(0);
@@ -75,13 +75,13 @@ describe("business account", () => {
       weeks: 6,
       startDay: START,
       sandbox: { partyTopUps: "never" },
-      interventions: [withdraw(START + 8, 80, "drain"), deposit(START + 22, 60, "rescue")],
+      interventions: [withdraw(START + 8, 200, "drain"), deposit(START + 22, 150, "rescue")],
     }).state;
     expect(rescued.weeks[rescued.weeks.length - 1]!.produced).toBeGreaterThan(0);
   });
 
   it("the sandbox top-up assumption covers debts once suppliers cut the business off", () => {
-    const s = simulateScenario(world, { plan, seed: "dry", weeks: 6, startDay: START, interventions: [withdraw(START + 8, 80, "drain")] }).state;
+    const s = simulateScenario(world, { plan, seed: "dry", weeks: 6, startDay: START, interventions: [withdraw(START + 8, 200, "drain")] }).state;
     const topUps = s.business.account.statement.filter((e) => e.kind === "deposit" && e.authority === "sandbox-assumption");
     expect(topUps.length).toBeGreaterThan(0);
   });

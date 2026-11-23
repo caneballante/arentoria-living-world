@@ -41,7 +41,8 @@ const constructMalfunction: ConditionalEventDef = {
     const roll = rng.next() + strain / 200;
     if (roll < 0.85) {
       const days = rng.int(2, 4);
-      const repair = rng.int(10, 30) * 10;
+      const [lo, hi] = ctx.world.assumptions.repairs.minorBreakdownCp;
+      const repair = rng.int(lo / 10, hi / 10) * 10;
       return {
         severity: "minor",
         playerText: `One of the constructs seized up mid-batch; it will take ${days} days and ${formatCp(repair)} in reagents to set right.`,
@@ -56,7 +57,8 @@ const constructMalfunction: ConditionalEventDef = {
     // At severe strain a major breakdown can become a kitchen fire — the tail risk of pushing.
     if (strain >= 30 && rng.next() < (strain - 25) / 40) {
       const closed = rng.int(28, 49);
-      const repairs = rng.int(150, 350) * 100;
+      const [lo, hi] = ctx.world.assumptions.repairs.kitchenFireCp;
+      const repairs = rng.int(lo / 100, hi / 100) * 100;
       return {
         severity: "major",
         title: "Fire in the kitchen",
@@ -74,7 +76,8 @@ const constructMalfunction: ConditionalEventDef = {
       };
     }
     const days = rng.int(10, 21);
-    const repair = rng.int(20, 50) * 100;
+    const [lo, hi] = ctx.world.assumptions.repairs.artificerCp;
+    const repair = rng.int(lo / 100, hi / 100) * 100;
     const effects: Effect[] = [
       { kind: "modifier", id: "construct-down", label: "A construct badly damaged", target: "productionCap", multiplier: 0.67, durationDays: days },
       { kind: "cash", amountCp: -repair, category: "equipment", note: "Artificer's repair" },

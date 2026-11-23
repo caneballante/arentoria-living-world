@@ -15,7 +15,7 @@ describe("demand model", () => {
   };
 
   it("falls as price rises", () => {
-    const prices = [2, 3, 4, 5, 6, 8, 10];
+    const prices = [4, 6, 8, 10, 12, 16, 20];
     const d = prices.map((p) => demandAt({ priceCp: p }));
     for (let i = 1; i < d.length; i++) expect(d[i]!).toBeLessThan(d[i - 1]!);
   });
@@ -36,16 +36,16 @@ describe("demand model", () => {
     expect(hmGain).toBeGreaterThan(coGain * 1.5);
     expect(qualityFactor(n["high-march"]!, 1)).toBeLessThan(0.15);
     // The same price hurts Commons demand more than High March demand.
-    expect(priceFactor(world, n.commons!, world.channels.cart, 8)).toBeLessThan(priceFactor(world, n["high-march"]!, world.channels.cart, 8) * 0.5);
+    expect(priceFactor(world, n.commons!, world.channels.cart, 16)).toBeLessThan(priceFactor(world, n["high-march"]!, world.channels.cart, 16) * 0.5);
     expect(fairPrice(world, n["high-march"]!, 4)).toBeGreaterThan(fairPrice(world, n.commons!, 4) * 1.5);
   });
 
   it("has an interior profit-maximizing price (not 'always cheaper' or 'always dearer')", () => {
     const unitCost = 2.1;
-    const profits = [3, 4, 5, 6, 7, 9, 12].map((p) => ({ p, profit: (p - unitCost) * demandAt({ priceCp: p }) }));
+    const profits = [6, 8, 10, 12, 14, 18, 24].map((p) => ({ p, profit: (p - unitCost) * demandAt({ priceCp: p }) }));
     const best = profits.reduce((a, b) => (b.profit > a.profit ? b : a));
-    expect(best.p).toBeGreaterThan(3);
-    expect(best.p).toBeLessThan(12);
+    expect(best.p).toBeGreaterThan(6);
+    expect(best.p).toBeLessThan(24);
   });
 });
 

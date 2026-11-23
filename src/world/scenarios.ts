@@ -35,7 +35,7 @@ export const scenarios: Scenario[] = [
       weeklyProduction: 450,
       operatingDays: 6,
       quality: 2,
-      priceCp: 5,
+      priceCp: 10,
       channels: [{ type: "cart", share: 1 }],
       staff: [{ candidateId: "pell-marrow", role: "vendor", wageCpPerDay: 22 }],
       oversight: "weekly",
@@ -63,7 +63,7 @@ export const scenarios: Scenario[] = [
       weeklyProduction: 1000,
       operatingDays: 6,
       quality: 2,
-      priceCp: 5,
+      priceCp: 10,
       channels: [
         { type: "cart", share: 0.6 },
         { type: "stall", share: 0.4 },
@@ -98,7 +98,7 @@ export const scenarios: Scenario[] = [
       operatingDays: 7,
       constructWorkload: "pushed",
       quality: 3,
-      priceCp: 7,
+      priceCp: 14,
       channels: [
         { type: "stall", share: 0.6 },
         { type: "cart", share: 0.4 },
@@ -124,7 +124,7 @@ export const scenarios: Scenario[] = [
   {
     id: "grand-market-careful",
     label: "Careful Grand Market expansion",
-    summary: "Same ambition as the aggressive plan — big output, seven days, 7 cp — but by the book: steady constructs, permits, guild associate, a guard, honest staff.",
+    summary: "Same ambition as the aggressive plan — big output, seven days, 14 cp — but by the book: steady constructs, permits, guild associate, a guard, honest staff.",
     quality: "sound",
     plan: {
       name: "Dawnfire Market Pies",
@@ -133,7 +133,7 @@ export const scenarios: Scenario[] = [
       weeklyProduction: 1470,
       operatingDays: 7,
       quality: 3,
-      priceCp: 7,
+      priceCp: 14,
       channels: [
         { type: "stall", share: 0.6 },
         { type: "cart", share: 0.4 },
@@ -169,7 +169,7 @@ export const scenarios: Scenario[] = [
       weeklyProduction: 420,
       operatingDays: 6,
       quality: 5,
-      priceCp: 24,
+      priceCp: 48,
       channels: [
         { type: "delivery", share: 0.6 },
         { type: "stall", share: 0.4 },
@@ -198,13 +198,13 @@ export const scenarios: Scenario[] = [
     quality: "risky",
     plan: {
       name: "Penny Pies",
-      identity: "Three coppers, all day, every day.",
+      identity: "Six coppers, all day, every day.",
       neighborhood: "commons",
       weeklyProduction: 1900,
       operatingDays: 7,
       constructWorkload: "pushed",
       quality: 1,
-      priceCp: 3,
+      priceCp: 6,
       channels: [
         { type: "cart", share: 0.5 },
         { type: "cart", share: 0.5 },
@@ -239,7 +239,7 @@ export const scenarios: Scenario[] = [
       weeklyProduction: 1100,
       operatingDays: 6,
       quality: 3,
-      priceCp: 7,
+      priceCp: 14,
       channels: [
         { type: "stall", share: 0.7 },
         { type: "cart", share: 0.3 },
@@ -274,7 +274,7 @@ export const scenarios: Scenario[] = [
       weeklyProduction: 1300,
       operatingDays: 6,
       quality: 3,
-      priceCp: 7,
+      priceCp: 14,
       channels: [
         { type: "wholesale", share: 0.4 },
         { type: "stall", share: 0.6 },
@@ -310,7 +310,7 @@ export const scenarios: Scenario[] = [
       operatingDays: 5,
       festivalProductionMultiplier: 2.5,
       quality: 3,
-      priceCp: 7,
+      priceCp: 14,
       channels: [{ type: "stall", share: 1 }],
       staff: [
         { candidateId: "wenna-thistle", role: "vendor", wageCpPerDay: 28 },
@@ -336,12 +336,12 @@ export const scenarios: Scenario[] = [
     quality: "sound",
     plan: {
       name: "Dawnfire Pies",
-      identity: "A hot pie for four coppers.",
+      identity: "A hot pie for eight coppers.",
       neighborhood: "shades",
       weeklyProduction: 900,
       operatingDays: 6,
       quality: 1,
-      priceCp: 4,
+      priceCp: 8,
       channels: [
         { type: "cart", share: 0.7 },
         { type: "stall", share: 0.3 },
@@ -375,7 +375,7 @@ export const scenarios: Scenario[] = [
       weeklyProduction: 1200,
       operatingDays: 6,
       quality: 2,
-      priceCp: 5,
+      priceCp: 10,
       channels: [
         { type: "cart", share: 0.5 },
         { type: "wholesale", share: 0.5 },
@@ -409,7 +409,7 @@ export const scenarios: Scenario[] = [
       weeklyProduction: 900,
       operatingDays: 6,
       quality: 2,
-      priceCp: 5,
+      priceCp: 10,
       channels: [
         { type: "stall", share: 0.65 },
         { type: "cart", share: 0.35 },
@@ -443,7 +443,7 @@ export const scenarios: Scenario[] = [
       weeklyProduction: 1000,
       operatingDays: 6,
       quality: 2,
-      priceCp: 5,
+      priceCp: 10,
       channels: [
         { type: "delivery", share: 0.5 },
         { type: "cart", share: 0.5 },
@@ -478,7 +478,7 @@ export const scenarios: Scenario[] = [
       weeklyProduction: 800,
       operatingDays: 6,
       quality: 4,
-      priceCp: 15,
+      priceCp: 30,
       channels: [
         { type: "delivery", share: 0.5 },
         { type: "wholesale", share: 0.3 },
@@ -514,7 +514,7 @@ export const scenarios: Scenario[] = [
       weeklyProduction: 1470,
       operatingDays: 7,
       quality: 2,
-      priceCp: 8,
+      priceCp: 16,
       channels: [{ type: "cart", share: 1 }],
       staff: [{ candidateId: "corbin-ashe", role: "vendor", wageCpPerDay: 12 }],
       oversight: "hands-off",
@@ -542,7 +542,7 @@ export const scenarios: Scenario[] = [
       weeklyProduction: 1000,
       operatingDays: 7,
       quality: 1,
-      priceCp: 5,
+      priceCp: 10,
       channels: [{ type: "cart", share: 1 }],
       staff: [{ candidateId: "corbin-ashe", role: "vendor", wageCpPerDay: 14 }],
       oversight: "hands-off",
