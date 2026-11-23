@@ -94,8 +94,11 @@ describe("accounting", () => {
 });
 
 describe("seasonal effects", () => {
-  it("ingredient prices and weather vary across a season", () => {
-    const s = run("commons-compliant", "season", 26).state;
+  it("ingredient prices and weather vary across a season", async () => {
+    // From the start of autumn into winter, whatever date the campaign itself starts on.
+    const { dayFromDate } = await import("../src/engine/calendar");
+    const { simulateScenario } = await import("../src/engine/simulate");
+    const s = simulateScenario(world, { plan: planOf("commons-compliant"), seed: "season", weeks: 26, startDay: dayFromDate(world.calendar, 940, 9, 1) }).state;
     const idx = s.weeks.map((w) => w.avgPriceIndex);
     expect(Math.max(...idx) - Math.min(...idx)).toBeGreaterThan(0.05);
     const temps = s.weeks.map((w) => w.weather.avgTempC);

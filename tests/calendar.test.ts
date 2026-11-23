@@ -47,14 +47,16 @@ describe("the Calendar of Arentor (canon)", () => {
 
   it("assigns seasons and festivals", () => {
     const start = dateFromDay(cal, DEFAULT_START_DAY);
-    expect(start.season).toBe("autumn");
-    expect(start.monthName).toBe("Harvest");
+    // The DM's date (23 Nov 2026): 12 Rainmoot 940 CY, in spring.
+    expect(start.season).toBe("spring");
+    expect(start.monthName).toBe("Rainmoot");
+    expect(start.dayOfMonth).toBe(12);
     expect(start.year).toBe(940);
     expect(dateFromDay(cal, dayFromDate(cal, 940, 1, 10)).season).toBe("winter");
     expect(dateFromDay(cal, dayFromDate(cal, 940, 7, 10)).season).toBe("summer");
     const fair = dateFromDay(cal, dayFromDate(cal, 940, 9, 22));
     expect(fair.festivals.map((f) => f.id)).toEqual(["harvest-fair"]);
-    expect(formatDate(start, cal)).toMatch(/1 Harvest 940 CY/);
+    expect(formatDate(start, cal)).toMatch(/12 Rainmoot 940 CY/);
   });
 
   it("is canon, adopted by the DM, with the effect on trade marked provisional", () => {

@@ -75,8 +75,8 @@ export const arentorCalendar: CalendarConfig = {
 };
 
 /**
- * PLACEHOLDER start date: 1 Harvest 940 CY. Canon says the campaign is in autumn of
- * 940 CY; the exact in-world date is unresolved (the calendar document says so too).
+ * The campaign's date, set by the DM on 23 Nov 2026: 12 Rainmoot 940 CY (spring).
+ * New campaigns start here; existing campaign files keep the start they were created with.
  */
-export const DEFAULT_START = { year: 940, month: 9, day: 1 } as const;
+export const DEFAULT_START = { year: 940, month: 4, day: 12 } as const;
 export const DEFAULT_START_DAY = dayFromDate(arentorCalendar, DEFAULT_START.year, DEFAULT_START.month, DEFAULT_START.day);

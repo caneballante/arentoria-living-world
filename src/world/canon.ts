@@ -10,7 +10,12 @@ const BRIEF = "Campaign brief (Arentoria Living World, initial)";
 
 export const canonFacts: CanonFact[] = [
   { id: "setting-city", statement: "The campaign takes place in Arentoria, capital of Arentor.", provenance: canon(BRIEF), tags: ["setting"] },
-  { id: "setting-time", statement: "It is autumn of the year 940 CY (Council Years). The precise month and day are unresolved.", provenance: canon(BRIEF), tags: ["calendar"] },
+  {
+    id: "setting-time",
+    statement: "The campaign's current date is 12 Rainmoot 940 CY, in spring (CY counts from the Charter of the Five Seats).",
+    provenance: canon("DM ruling, 2026-11-23", "Supersedes the brief's \"autumn of 940 CY\" and the calendar document's open question."),
+    tags: ["calendar"],
+  },
   { id: "house-rent", statement: "The party rents a house at 17 Dawnfire Promenade in Guildstrand for 14 gp per week.", provenance: canon(BRIEF), tags: ["party", "economy"] },
   {
     id: "house-city-index",
@@ -41,7 +46,7 @@ export const canonFacts: CanonFact[] = [
     id: "calendar",
     statement:
       "The Calendar of Arentor (Council Reckoning): 13 months of 28 days, then Council Day between years, outside the week. Weeks run Firstday, Tradesday, Hearthday, Marketday, Wardday, Festday, Restday. CY is counted from the Charter of the Five Seats. Public observances follow the calendar document.",
-    provenance: canon("Arentoria Calendar (Revised), adopted by the DM 23 Nov 2026", "The exact in-world date is still unresolved."),
+    provenance: canon("Arentoria Calendar (Revised), adopted by the DM 23 Nov 2026", "The current date is a separate DM ruling (setting-time)."),
     tags: ["calendar"],
   },
   {

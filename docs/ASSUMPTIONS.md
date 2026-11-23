@@ -15,7 +15,7 @@ Every number in `src/world/` is provisional. This page lists what to calibrate f
 | 7 | **Wages and staff.** Is 2 sp/day right for a seller? How honest is the typical hire? | vendor 20 cp, runner 18 cp, guard 40 cp; skimming starts below honesty 50 | `marketWageCpPerDay`, `staff.ts`, `dynamics.skimming` |
 | 8 | **Guild dues and permits.** | Associate 2 gp + 1 gp/wk; member 10 gp + 2.5 gp/wk; permits 0.5–1.5 gp/wk | `assumptions.guild`, neighborhood fees |
 | 9 | **Kitchen rent share.** Should the business pay part of the canon 14 gp rent? | 25% (3.5 gp/wk) | `kitchenRentShareCpPerWeek` |
-| 10 | **Calendar.** The Calendar of Arentor is canon (adopted 23 Nov 2026). Still open: the exact in-game date, and how much each observance should change trade. | Start 1 Harvest 940 CY (placeholder); observance effects modest and mostly local | `world/calendar.ts` |
+| 10 | **Calendar.** The Calendar of Arentor is canon (adopted 23 Nov 2026), and the campaign date is 12 Rainmoot 940 CY (DM ruling). Still open: how much each observance should change trade. | Campaigns start 12 Rainmoot 940; observance effects modest and mostly local | `world/calendar.ts` |
 | 11 | **Pace of events.** Is about one decision every 4–6 in-game weeks right for a well-run business? | ≥ 21 days between opportunity decisions; quiet spell 14 days after major events | `world/pacing.ts`, hazard rates in `world/events/` |
 | 12 | **The business account.** How much should the party keep in the business, and how much credit do suppliers give? | Floor = 1 week of running costs; credit = about 1 week of ingredients at +10% | `assumptions.account` |
 | 13 | **Districts.** Do the characters above match the city? Should the Shades and the Outer Ward be more or less dangerous? Should the Scholarium's recess be in summer? What is Guildstrand like? | See "The districts" | `neighborhoods.ts`, `actors.ts` |
@@ -51,7 +51,7 @@ The DM's guard rail (22 Nov 2026): the party **starts with one district, one car
 
 The next sizes (a stall, a second seller, delivery, more output, pushing the constructs) are for the table to decide as the business grows. For now, to let the party buy a second cart, switch the size to Unrestricted and hold the line yourself. A second outlet of the same kind in the same district reaches half as many new customers as the first (`demand.extraOutletReach`, compounding), so a second cart adds customers but can also flop.
 
-**What a starting cart earns** (Commons, honest pies at 10 cp, 450 a week, 30 seeds): about **1,140 gp in its first year**, about **22 gp a week** on average, rising from about 8 gp in the first week to about 23 gp by the end of the year as people learn about the cart. It never loses money over a year. One seller sells about 400–450 pies a week. A cart is hopeless in High March or the Crown Ward (few buyers, and they don't buy from carts), and the Shades is thinner at 8 cp.
+**What a starting cart earns** (Commons, honest pies at 10 cp, 450 a week, 30 seeds): about **1,140 gp in its first year**, about **22 gp a week** on average. Starting in spring, it makes about 14 gp a week through Blossom and Highsun (warm weather, nobody knows the cart yet) and climbs to about 25 gp a week by autumn and winter, when hot pies sell themselves. It never loses money over a year. One seller sells about 400–450 pies a week. A cart is hopeless in High March or the Crown Ward (few buyers, and they don't buy from carts), and the Shades is thinner at 8 cp.
 
 **Short reports.** Each weekly report keeps its summary plus the three notes that matter most (events and threats first, weather last). Players see only that; the DM can switch to every note with its explanation. A starting cart averages about 3 lines a week, down from about 9 (lines plus DM explanations).
 
@@ -156,26 +156,26 @@ Measured over 52 weeks (40 seeds; 10th / 50th / 90th percentile of total profit)
 
 ## Observed behavior (30 seeds each, current calibration)
 
-52 weeks from 1 Harvest 940 (10th / median / 90th percentile profit):
+52 weeks from 12 Rainmoot 940 (10th / median / 90th percentile profit):
 
 | Strategy | Profit p10 / median / p90 | P(net loss) | Decisions | Notable | Major | Notes |
 |---|---|---|---|---|---|---|
-| Starting out: one cart in the Commons | 1,097 / 1,144 / 1,191 gp | 0% | 14.7 | 17.5 | 1.3 | One cart, one seller, ≤ 500 pies a week |
-| Conservative Commons cart | 2,748 / 2,886 / 2,960 gp | 0% | 15.9 | 17.5 | 3.5 | Meets the Ninepenny Crew in ~90% of years (one slow arc, ~12 weeks of warning) |
-| Careful Grand Market expansion | 5,628 / 5,712 / 5,775 gp | 0% | 15.0 | 17.9 | 1.3 | Same ambition as "aggressive", done by the book |
-| Aggressive Grand Market expansion | 2,806 / 4,716 / 5,212 gp | 0% (cash < 0 in every run) | 16.5 | 28.3 | 11.0 | Pushed, showcased, reckless: wide spread |
-| Luxury High March | 5,760 / 6,394 / 6,621 gp | 0% | 12.8 | 18.3 | 1.4 | Thriving and calm |
-| Low-price, high-volume (pushed) | −29 / 1,658 / 1,919 gp | 13% | 16.7 | 28.4 | 10.1 | Constant rival trouble while it keeps undercutting |
-| Paying every fee & protection | 4,259 / 4,499 / 4,549 gp | 0% | 15.1 | 18.0 | 1.3 | Over-insured and under-producing |
-| Resilient wholesale | 3,976 / 4,049 / 4,097 gp | 0% | 14.2 | 16.1 | 1.4 | |
-| Festival-oriented | 2,831 / 2,933 / 3,008 gp | 0% | 14.6 | 17.0 | 1.2 | |
-| Cheap pies in the Shades | 1,626 / 1,814 / 1,881 gp | 0% | 14.4 | 18.8 | 1.5 | Negotiates with the Lowlamp Crew; refusing brings a warning every year |
-| Stoneback yards and workshops | 2,495 / 2,734 / 2,890 gp | 0% | 14.0 | 17.2 | 1.4 | Slow start while standing orders sign on |
-| Scholarium lunch stall | 2,531 / 2,756 / 2,853 gp | 0% | 14.0 | 17.2 | 1.4 | Lowest waste; the summer recess shows in the last weeks |
-| Outer Ward delivery rounds | 2,565 / 2,862 / 2,940 gp | 0% | 14.6 | 17.4 | 1.3 | |
-| Crown Ward catering and contracts | 5,538 / 5,896 / 6,374 gp | 0% | 12.8 | 16.7 | 1.4 | Rich and calm, if fully compliant |
-| Careless Commons (control) | −573 / −496 / −439 gp | 100% | 13.6 | 35.6 | 15.6 | |
-| Cheap pies in High March (control) | −757 / −718 / −698 gp | 100% | 13.1 | 35.7 | 25.0 | |
+| Starting out: one cart in the Commons | 1,074 / 1,139 / 1,197 gp | 0% | 14.2 | 16.9 | 1.3 | One cart, one seller, ≤ 500 pies a week |
+| Conservative Commons cart | 2,620 / 2,792 / 2,950 gp | 0% | 15.1 | 16.7 | 3.3 | Meets the Ninepenny Crew in ~90% of years (one slow arc, ~12 weeks of warning) |
+| Careful Grand Market expansion | 5,497 / 5,730 / 5,771 gp | 0% | 14.6 | 17.4 | 1.4 | Same ambition as "aggressive", done by the book |
+| Aggressive Grand Market expansion | 2,925 / 4,730 / 5,161 gp | 0% (cash < 0 in every run) | 16.2 | 27.7 | 10.4 | Pushed, showcased, reckless: wide spread |
+| Luxury High March | 6,258 / 6,643 / 6,833 gp | 0% | 12.7 | 18.1 | 1.5 | Thriving and calm |
+| Low-price, high-volume (pushed) | −168 / 1,623 / 1,914 gp | 13% | 16.5 | 27.7 | 9.7 | Constant rival trouble while it keeps undercutting |
+| Paying every fee & protection | 4,361 / 4,514 / 4,594 gp | 0% | 14.7 | 17.3 | 1.4 | Over-insured and under-producing |
+| Resilient wholesale | 3,976 / 4,050 / 4,096 gp | 0% | 13.8 | 15.4 | 1.6 | |
+| Festival-oriented | 2,563 / 2,859 / 2,990 gp | 0% | 14.1 | 16.3 | 1.4 | |
+| Cheap pies in the Shades | 1,748 / 1,811 / 1,925 gp | 0% | 14.1 | 18.3 | 1.5 | Negotiates with the Lowlamp Crew; refusing brings a warning every year |
+| Stoneback yards and workshops | 2,563 / 2,722 / 2,930 gp | 0% | 13.9 | 16.6 | 1.5 | Slow start while standing orders sign on |
+| Scholarium lunch stall | 2,465 / 2,703 / 2,792 gp | 0% | 13.8 | 16.7 | 1.4 | Lowest waste; the summer recess comes early in the year |
+| Outer Ward delivery rounds | 2,719 / 2,884 / 2,946 gp | 0% | 14.6 | 17.2 | 1.8 | |
+| Crown Ward catering and contracts | 5,544 / 5,922 / 6,430 gp | 0% | 12.5 | 16.1 | 1.5 | Rich and calm, if fully compliant |
+| Careless Commons (control) | −527 / −471 / −430 gp | 100% | 13.4 | 36.0 | 14.3 | |
+| Cheap pies in High March (control) | −772 / −731 / −710 gp | 100% | 13.3 | 35.9 | 24.4 | |
 
 What this shows:
 

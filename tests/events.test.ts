@@ -33,7 +33,8 @@ describe("event system", () => {
     const dayInWeek = (pausedDay - START) % 7;
     expect(r.pausedOnEvent || r.pending.length).toBeTruthy();
     expect(dayInWeek).toBeGreaterThanOrEqual(0);
-    expect(r.state.current.days.length).toBe(dayInWeek + 1);
+    // Stopped mid-week, the week's days so far are kept; stopped at a week's close, the books are done and a new week begins.
+    expect(r.state.current.days.length).toBe((dayInWeek + 1) % 7);
   });
 
   it("supports warning stages before threats become serious", () => {

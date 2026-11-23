@@ -89,7 +89,7 @@ function StartForm({ id, catalog, busy, onStart, restarting }: { id: Id; catalog
         <button type="button" className="btn btn-primary" disabled={busy || (real && !name.trim())} onClick={() => onStart({ ...(real ? { name: name.trim() } : {}), scenarioId, neighborhood, priceCp, ...(seed.trim() ? { seed: seed.trim() } : {}) })}>
           {restarting ? (real ? "Start the real campaign over" : "Restart the test campaign") : real ? "Start the real campaign" : "Start the test campaign"}
         </button>
-        <span className="small muted">Starts on {catalog.startDate} (placeholder calendar).</span>
+        <span className="small muted">Starts on {catalog.startDate}, the campaign date.</span>
       </div>
     </div>
   );
