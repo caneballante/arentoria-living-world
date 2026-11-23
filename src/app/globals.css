@@ -299,3 +299,8 @@ details > summary { cursor: pointer; color: var(--ink-2); }
   .edition { border: none; padding: 0; max-width: none; }
   .edition-questions { break-before: page; }
 }
+
+.section-collapsible > summary { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.section-collapsible > summary::-webkit-details-marker { display: none; }
+.section-collapsible > summary::after { content: "▸"; color: var(--muted); margin-left: auto; }
+.section-collapsible[open] > summary::after { content: "▾"; }

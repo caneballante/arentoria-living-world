@@ -62,6 +62,7 @@ describe("a campaign", () => {
     expect(e.content.totals.weeks).toBe(2);
     const json = JSON.stringify(e.content);
     for (const secret of ['"basis"', '"hidden', '"traits"', '"drivers"', "honesty", "skimmed", "criminalAttention"]) expect(json).not.toContain(secret);
+    expect(e.content.choices.standingOrders).toBeUndefined(); // a DM setting, kept out of the players' report
     expect(publishedDay(c)).toBe(START + 13);
     expect(summarize(world, c).draftDays).toBe(0);
     expect(campaignView(world, play(c, 7)).view.clock.daysElapsed).toBe(21);

@@ -55,7 +55,8 @@ export interface EditionContent {
     advertisingCpPerWeek: number;
     suppliers: number;
     reserveDays: number;
-    standingOrders: Record<string, string>;
+    /** Not included in new reports: the manager's standing instructions are a DM setting. */
+    standingOrders?: Record<string, string>;
   };
 }
 
@@ -148,7 +149,6 @@ export function buildEdition(world: WorldDefinition, result: RunResult, o: Editi
       advertisingCpPerWeek: plan.advertisingCpPerWeek,
       suppliers: plan.suppliers,
       reserveDays: plan.reserveDays,
-      standingOrders: { ...plan.standingOrders },
     },
   };
 }

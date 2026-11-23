@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { isCampaignId } from "@/campaign/model";
 import { formatCp } from "@/engine/math";
@@ -8,21 +7,25 @@ import type { EditionContent } from "@/views/edition";
 
 export const dynamic = "force-dynamic";
 
-const ORDER_LABELS: Record<string, [string, Record<string, string>]> = {
-  protectionDemand: ["If a crew demands protection money", { pay: "Pay", negotiate: "Haggle", refuse: "Refuse" }],
-  guildNotice: ["If the guild says to join", { "join-associate": "Join as associates", "join-member": "Join as full members", refuse: "Decline" }],
-  largeOrder: ["If a big order comes in", { accept: "Accept", decline: "Decline" }],
-  dishonestStaff: ["If the takings come up short", { dismiss: "Dismiss the seller", warn: "Have a firm word", ignore: "Let it go" }],
-  rivalTricks: ["If a rival plays dirty", { ignore: "Weather it", "seek-mediation": "Ask the Fellowship to mediate" }],
-  raiseRequest: ["If staff ask for a raise", { grant: "Pay what they ask", partial: "Meet them partway", refuse: "Refuse" }],
-  festivalPitch: ["If offered a festival pitch", { accept: "Take it", decline: "Decline" }],
-  supplierExclusive: ["If a supplier offers an exclusive deal", { accept: "Accept", decline: "Keep several suppliers" }],
-  rivalTruce: ["If a rival proposes a price truce", { accept: "Agree", decline: "Refuse" }],
-  charity: ["If asked for charity", { accept: "Donate", decline: "Decline" }],
-  fillVacancies: ["If someone leaves", { auto: "Hire a replacement", manual: "Leave it to us" }],
-};
-const COMPLIANCE: Record<string, string> = { informal: "No permits", basic: "Vendor permit", full: "Permit, food certificate and market tax" };
-const GUILD: Record<string, string> = { none: "Independent", associate: "Guild associates", member: "Full guild members" };
+const CITY: Record<string, string> = { informal: "No permits", basic: "A vendor's permit", full: "Permits in order" };
+const GUILD: Record<string, string> = { none: "not in the guild", associate: "guild associates", member: "full guild members" };
+
+const list = (xs: string[]) => (xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+const DAYS = ["", "one day", "two days", "three days", "four days", "five days", "six days", "every day"];
+
+/** "How we run things" in a few plain sentences: no settings, no jargon. */
+function runningSummary(e: EditionContent): string[] {
+  const c = e.choices;
+  const outlets = list(c.outlets.map((o) => `a ${o.label.toLowerCase()}`));
+  const pies = c.quality.replace(/^\d+\.\s*/, "");
+  const sellers = c.staff.map((s) => s.name);
+  return [
+    `${outlets.charAt(0).toUpperCase()}${outlets.slice(1)} in ${c.neighborhood}, open ${DAYS[c.daysOpen] ?? `${c.daysOpen} days`} a week.`,
+    `${pies} pies at ${formatCp(c.priceCp)} each, about ${c.piesPerWeek} a week.`,
+    sellers.length ? `${list(sellers)} ${sellers.length === 1 ? "works" : "work"} for us.` : "Nobody works for us yet.",
+    `${CITY[c.compliance] ?? c.compliance}; ${GUILD[c.guild] ?? c.guild}.`,
+  ];
+}
 
 function Edition({ e }: { e: EditionContent }) {
   return (
@@ -109,27 +112,8 @@ function Edition({ e }: { e: EditionContent }) {
 
       <section className="edition-choices">
         <h2>How we run things</h2>
-        <p className="small muted">To change any of this, tell the DM. Business size: {e.choices.size}.</p>
-        <dl className="kv">
-          <dt>Where</dt><dd>{e.choices.neighborhood}: {e.choices.outlets.map((o) => `${o.label}${e.choices.outlets.length > 1 ? ` (${o.sharePct}%)` : ""}`).join(", ")}</dd>
-          <dt>What we bake</dt><dd>{e.choices.quality}, {formatCp(e.choices.priceCp)} a pie, about {e.choices.piesPerWeek} a week, {e.choices.daysOpen} days a week</dd>
-          <dt>Who works here</dt><dd>{e.choices.staff.length ? e.choices.staff.map((s) => `${s.name} (${s.role}, ${s.wageCpPerDay} cp a day)`).join("; ") : "Nobody yet"}</dd>
-          <dt>The city</dt><dd>{COMPLIANCE[e.choices.compliance] ?? e.choices.compliance}; {GUILD[e.choices.guild] ?? e.choices.guild}{e.choices.precautions ? "; sensible precautions" : ""}</dd>
-          <dt>Rainy days</dt><dd>{e.choices.suppliers} supplier{e.choices.suppliers === 1 ? "" : "s"}, {e.choices.reserveDays} day{e.choices.reserveDays === 1 ? "" : "s"} of spare stock</dd>
-          <dt>Advertising</dt><dd>{formatCp(e.choices.advertisingCpPerWeek)} a week</dd>
-        </dl>
-        <h3>While you're away</h3>
-        <dl className="kv">
-          {Object.entries(e.choices.standingOrders).map(([k, v]) => {
-            const label = ORDER_LABELS[k];
-            return label ? (
-              <Fragment key={k}>
-                <dt>{label[0]}</dt>
-                <dd>{label[1][v] ?? v}</dd>
-              </Fragment>
-            ) : null;
-          })}
-        </dl>
+        <p>{runningSummary(e).join(" ")}</p>
+        <p className="small muted">Want to change something? Tell the DM.</p>
       </section>
     </article>
   );

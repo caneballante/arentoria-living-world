@@ -319,7 +319,14 @@ export function PlanEditor({ catalog, plan, onChange }: { catalog: Catalog; plan
         </div>
       </Section>
 
-      <Section n="★" title="Standing orders" hint="What staff do when a decision is due and nobody has answered. With 'Stop and ask', you answer these yourself; decisions that can wait show a deadline.">
+      <details className="section section-collapsible">
+        <summary className="section-title">
+          <span className="section-num">★</span>
+          <h3>Manager's standing instructions</h3>
+          <span className="hint">optional · what happens if nobody answers in time</span>
+        </summary>
+        <div className="stack" style={{ gap: 10, marginTop: 10 }}>
+          <p className="hint">DM settings only; they never appear in the players' report. With "Stop and ask", you answer questions yourself; these only decide when a deadline passes with no answer.</p>
         <Select label="If a crew demands protection money" value={orders.protectionDemand} options={[{ value: "pay", label: "Pay" }, { value: "negotiate", label: "Haggle" }, { value: "refuse", label: "Refuse" }]} onChange={(v) => setOrder("protectionDemand", v)} />
         <Select label="If the Fellowship says to join the guild" value={orders.guildNotice} options={[{ value: "join-associate", label: "Join as associate" }, { value: "join-member", label: "Join as full member" }, { value: "refuse", label: "Decline" }]} onChange={(v) => setOrder("guildNotice", v)} />
         <Select label="If a large order comes in" value={orders.largeOrder} options={[{ value: "accept", label: "Accept" }, { value: "decline", label: "Decline" }]} onChange={(v) => setOrder("largeOrder", v)} />
@@ -331,7 +338,8 @@ export function PlanEditor({ catalog, plan, onChange }: { catalog: Catalog; plan
         <Select label="If a rival proposes a price truce" value={orders.rivalTruce ?? "accept"} options={[{ value: "accept", label: "Agree" }, { value: "decline", label: "Refuse" }]} onChange={(v) => setOrder("rivalTruce", v)} />
         <Select label="If asked for charity" value={orders.charity ?? "accept"} options={[{ value: "accept", label: "Donate" }, { value: "decline", label: "Decline" }]} onChange={(v) => setOrder("charity", v)} />
         <Select label="If someone leaves" value={orders.fillVacancies ?? "auto"} options={[{ value: "auto", label: "Hire a replacement" }, { value: "manual", label: "Leave it to us" }]} onChange={(v) => setOrder("fillVacancies", v)} />
-      </Section>
+        </div>
+      </details>
     </div>
   );
 }
