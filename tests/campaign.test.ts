@@ -178,3 +178,39 @@ describe("campaign files", () => {
     expect(campaignView(world, back!).view.clock.daysElapsed).toBe(7);
   });
 });
+
+describe("notices in published reports", () => {
+  const NOW2 = "2026-11-23T10:00:00Z";
+  const reports = (() => {
+    let c = createCampaign(world, { id: "test", name: "t", plan: planOf("starting-out"), seed: "ads", startDay: START, startScenario: "starting-out", now: NOW2 });
+    c = setPauseNever(c);
+    for (let i = 0; i < 4; i++) c = publish(world, advance(world, c, 7, false, NOW2), { note: "", deadline: "", now: NOW2, publishedAt: "x" });
+    return c.editions.map((e) => e.content);
+  })();
+
+  it("carry a way to grow, another district, and an option or two", () => {
+    for (const r of reports) {
+      const kinds = (r.notices ?? []).map((n) => n.kind);
+      expect(kinds).toContain("grow");
+      expect(kinds).toContain("district");
+      expect(kinds.filter((k) => k === "service").length).toBeGreaterThanOrEqual(1);
+      expect(r.notices!.length).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it("rotate from report to report, and never pitch the district you're already in", () => {
+    const districts = reports.map((r) => r.notices!.find((n) => n.kind === "district")!.headline);
+    expect(new Set(districts).size).toBe(reports.length);
+    for (const h of districts) expect(h).not.toMatch(/COMMONS/);
+    expect(new Set(reports.map((r) => r.notices!.find((n) => n.kind === "grow")!.headline)).size).toBeGreaterThan(1);
+  });
+
+  it("offer a second cart with staff to a one-cart business, with a price", () => {
+    const cart = reports.flatMap((r) => r.notices!).find((n) => n.headline.startsWith("CART FOR SALE"));
+    expect(cart?.price).toMatch(/gp/);
+  });
+});
+
+function setPauseNever(c: CampaignFile): CampaignFile {
+  return { ...c, pause: "never" };
+}

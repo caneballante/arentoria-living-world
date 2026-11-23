@@ -29,6 +29,15 @@ Some fixed amounts now feel small next to the income. Repairs were raised five-f
 
 With automatic payouts keeping only a small reserve, a rare artificer's repair (100–250 gp) can overdraw a steady business in about one run in 30. In real play, payouts are DM-only, so money builds up in the strongbox.
 
+## Notices (classified ads in reports)
+
+Each published report carries three or four notices (`src/world/notices.ts`, proposed flavor):
+- one way to grow, rotating through those the business hasn't taken (a second cart "ready with staff", a stall, runners and baskets, an innkeeper wanting standing orders);
+- one pitch for another district, a different one each report, quoting a typical pie's price there;
+- one or two options that would change something for this business: a seller or runner looking for work (public blurb and asking wage), a bodyguard, a town crier, a second butcher, better cuts, the guild, the licensing office.
+
+They remind the party of their options without telling them when to act. Buying is a conversation at the table: the DM records the cost as a withdrawal and changes the plan (and the business size, if it needs a bigger one). Set-up prices quoted are provisional: cart 45 gp, stall 60 gp plus the district's weekly fee, baskets 25 gp (`GROWTH_PRICES_CP`).
+
 ## Starting small (business size)
 
 The DM's guard rail (22 Nov 2026): the party **starts with one district, one cart and one hire**, and the business grows only when the DM unlocks a bigger size. The plan's "Business size" sets the limits, and the server rejects anything bigger, including a mid-season revision. Only the DM can change the size.

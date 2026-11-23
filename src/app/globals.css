@@ -304,3 +304,14 @@ details > summary { cursor: pointer; color: var(--ink-2); }
 .section-collapsible > summary::-webkit-details-marker { display: none; }
 .section-collapsible > summary::after { content: "▸"; color: var(--muted); margin-left: auto; }
 .section-collapsible[open] > summary::after { content: "▾"; }
+
+/* Classified ads in published reports */
+.notices { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.notice-ad { border: 1px solid var(--ink); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; background: var(--surface-2); }
+.notice-ad p { margin: 0; font-size: 13px; }
+.notice-ad .notice-head { font-weight: 700; letter-spacing: 0.03em; font-size: 12.5px; }
+.notice-ad .notice-price { font-weight: 600; }
+.notice-ad .notice-from { color: var(--muted); font-style: italic; font-size: 12px; }
+.notice-grow { border-width: 2px; }
+.notice-district { border-style: double; border-width: 3px; }
+@media print { .notice-ad { background: none; break-inside: avoid; } }

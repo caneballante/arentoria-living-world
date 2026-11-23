@@ -18,6 +18,7 @@ import { threads } from "./events/threads";
 import { channels, neighborhoods } from "./neighborhoods";
 import { pacing } from "./pacing";
 import { staffPool } from "./staff";
+import { notices } from "./notices";
 import { stages } from "./stages";
 
 export const arentoria: WorldDefinition = {
@@ -38,6 +39,7 @@ export const arentoria: WorldDefinition = {
   scheduled: [...scheduledEvents, festivalPitch],
   pacing,
   stages,
+  notices,
 };
 
 const calendarProblems = validateCalendar(arentorCalendar);

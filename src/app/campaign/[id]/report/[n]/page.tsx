@@ -32,7 +32,7 @@ function Edition({ e }: { e: EditionContent }) {
     <article className="edition">
       <header className="edition-head">
         <div>
-          <p className="edition-eyebrow">{e.title} · {e.business.name}</p>
+          <p className="edition-eyebrow">{e.business.name} · news for the partners · {e.title}</p>
           <h1>{e.period.from} – {e.period.to}</h1>
           <p className="muted small">{e.business.neighborhood} · {e.period.days} days · published {e.publishedAt}</p>
         </div>
@@ -107,6 +107,22 @@ function Edition({ e }: { e: EditionContent }) {
               ))}
             </tbody>
           </table>
+        </section>
+      )}
+
+      {(e.notices?.length ?? 0) > 0 && (
+        <section>
+          <h2>Notices</h2>
+          <div className="notices">
+            {e.notices!.map((n, i) => (
+              <div key={i} className={`notice-ad notice-${n.kind}`}>
+                <p className="notice-head">{n.headline}</p>
+                <p>{n.text}</p>
+                {n.price && <p className="notice-price">{n.price}</p>}
+                {n.from && <p className="notice-from">— {n.from}</p>}
+              </div>
+            ))}
+          </div>
         </section>
       )}
 

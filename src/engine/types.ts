@@ -259,6 +259,24 @@ export interface WorldDefinition {
   pacing: PacingConfig;
   /** Business sizes: the DM's guard rails on how big a plan may be. */
   stages: Record<string, BusinessStage>;
+  /** Classified ads and notices for published reports (world flavor that points at real options). */
+  notices?: (ctx: NoticeContext) => Notice[];
+}
+
+/** A newsletter-style notice in a published report. It must describe an option that really exists. */
+export interface Notice {
+  kind: "grow" | "district" | "service";
+  headline: string;
+  text: string;
+  price?: string;
+  from?: string;
+}
+
+export interface NoticeContext {
+  world: WorldDefinition;
+  state: WorldState;
+  reportNumber: number;
+  rng: Rng;
 }
 
 /**
