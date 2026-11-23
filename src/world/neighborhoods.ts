@@ -20,7 +20,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
     name: "the Commons",
     provenance: nameIsCanon("characterization and numbers are provisional."),
     description:
-      "Modelled as a crowded working district: lots of hungry passers-by, tight purses, many cheap food sellers and lax but present enforcement. (Provisional characterization.)",
+      "A crowded working district: lots of hungry passers-by, tight purses, many cheap food sellers, and lax but present enforcement.",
     demand: {
       baseDailyCustomers: 600,
       referencePriceCp: 10,
@@ -50,7 +50,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
     name: "the Grand Market",
     provenance: nameIsCanon("characterization and numbers are provisional."),
     description:
-      "Modelled as the city's commercial heart: the largest crowds, busy market days, strong Merchants' Guild presence, active market enforcement and opportunistic thieves. (Provisional characterization.)",
+      "The city's commercial heart: the largest crowds, busy market days, a strong Merchants' Guild presence, active market enforcement and opportunistic thieves.",
     demand: {
       baseDailyCustomers: 950,
       referencePriceCp: 12,

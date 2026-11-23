@@ -136,6 +136,7 @@ export function PlanEditor({ catalog, plan, onChange }: { catalog: Catalog; plan
 
       <Section n={2} title="Neighborhood">
         <Select label="Where we sell" value={plan.neighborhood} options={catalog.neighborhoods.map((n) => ({ value: n.id, label: n.name }))} onChange={(v) => set("neighborhood", v)} hint={neighborhood?.description} />
+        {neighborhood?.cartNote && plan.channels.some((c) => c.type === "cart" && c.share > 0) && <p className="hint" style={{ color: "var(--serious)" }}>{neighborhood.cartNote}</p>}
         <p className="hint">Not yet modelled: {catalog.unmodelled.join(", ")}. The kitchen is at 17 Dawnfire Promenade, Guildstrand (canon).</p>
       </Section>
 
@@ -167,7 +168,7 @@ export function PlanEditor({ catalog, plan, onChange }: { catalog: Catalog; plan
 
       <Section n={4} title="Quality & price">
         <Select label="Ingredient quality" value={plan.quality} options={catalog.qualityTiers.map((t) => ({ value: t.tier, label: `${t.tier}. ${t.label} — ${t.costHint}` }))} onChange={(v) => set("quality", v)} />
-        <NumberField label="Price per pie" suffix="cp" value={plan.priceCp} min={1} max={200} onChange={(v) => set("priceCp", v)} hint={`${formatCp(plan.priceCp)} each. 1 gp = 10 sp = 100 cp.`} />
+        <NumberField label="Price per pie" suffix="cp" value={plan.priceCp} min={1} max={200} onChange={(v) => set("priceCp", v)} hint={`${formatCp(plan.priceCp)} each${neighborhood ? `; the going rate in ${neighborhood.name} for this quality is about ${neighborhood.goingRateCp[plan.quality] ?? "?"} cp` : ""}. 1 gp = 10 sp = 100 cp.`} />
       </Section>
 
       <Section n={5} title="Distribution" hint="Share of each day's pies sent to each outlet. Each outlet needs staff in the right role.">

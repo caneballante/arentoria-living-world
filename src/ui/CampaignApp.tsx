@@ -23,11 +23,30 @@ async function api<T>(url: string, body?: unknown): Promise<T> {
   return json as T;
 }
 
-function StartForm({ id, catalog, busy, onStart, restarting }: { id: Id; catalog: Catalog; busy: boolean; onStart: (o: { name?: string; scenarioId: string; seed?: string }) => void; restarting?: boolean }) {
-  const [name, setName] = useState(catalog.scenarios[0]!.plan.name);
-  const [scenarioId, setScenarioId] = useState(catalog.scenarios[0]!.id);
+type StartOptions = { name?: string; scenarioId: string; seed?: string; neighborhood: string; priceCp: number };
+
+function StartForm({ id, catalog, busy, onStart, restarting }: { id: Id; catalog: Catalog; busy: boolean; onStart: (o: StartOptions) => void; restarting?: boolean }) {
+  const first = catalog.scenarios[0]!;
+  const [name, setName] = useState(first.plan.name);
+  const [scenarioId, setScenarioId] = useState(first.id);
+  const [neighborhood, setNeighborhood] = useState(first.plan.neighborhood);
+  const scenarioPlan = catalog.scenarios.find((s) => s.id === scenarioId)?.plan ?? first.plan;
+  const rateFor = (hood: string, quality: number) => catalog.neighborhoods.find((n) => n.id === hood)?.goingRateCp[quality] ?? scenarioPlan.priceCp;
+  const [priceCp, setPriceCp] = useState(rateFor(first.plan.neighborhood, first.plan.quality));
   const [seed, setSeed] = useState("");
   const real = id === "party";
+  const district = catalog.neighborhoods.find((n) => n.id === neighborhood);
+  const usesCart = scenarioPlan.channels.some((c) => c.type === "cart" && c.share > 0);
+  const pickScenario = (sid: string) => {
+    const p = catalog.scenarios.find((s) => s.id === sid)?.plan ?? first.plan;
+    setScenarioId(sid);
+    setNeighborhood(p.neighborhood);
+    setPriceCp(rateFor(p.neighborhood, p.quality));
+  };
+  const pickDistrict = (hood: string) => {
+    setNeighborhood(hood);
+    setPriceCp(rateFor(hood, scenarioPlan.quality));
+  };
   return (
     <div className="stack" style={{ gap: 10 }}>
       {real && (
@@ -38,19 +57,36 @@ function StartForm({ id, catalog, busy, onStart, restarting }: { id: Id; catalog
       )}
       <label className="field">
         <span>Starting plan</span>
-        <select value={scenarioId} onChange={(e) => setScenarioId(e.target.value)}>
+        <select value={scenarioId} onChange={(e) => pickScenario(e.target.value)}>
           {catalog.scenarios.map((s) => (
             <option key={s.id} value={s.id}>{s.label}</option>
           ))}
         </select>
         <span className="hint">{catalog.scenarios.find((s) => s.id === scenarioId)?.summary}</span>
       </label>
+      <div className="grid-2">
+        <label className="field">
+          <span>District <span className="hint">(the players' choice)</span></span>
+          <select value={neighborhood} onChange={(e) => pickDistrict(e.target.value)}>
+            {catalog.neighborhoods.map((n) => (
+              <option key={n.id} value={n.id}>{n.name}</option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          <span>Price per pie <span className="hint">(cp)</span></span>
+          <input type="number" min={1} max={200} value={priceCp} onChange={(e) => setPriceCp(Math.max(1, Math.round(Number(e.target.value) || 1)))} />
+          <span className="hint">Going rate here for these pies: about {rateFor(neighborhood, scenarioPlan.quality)} cp.</span>
+        </label>
+      </div>
+      {district && <p className="hint" style={{ marginTop: -4 }}>{district.description}</p>}
+      {district?.cartNote && usesCart && <div className="warnings">{district.cartNote} A starting cart is likely to lose money there.</div>}
       <label className="field">
         <span>Luck (seed) <span className="hint">optional — leave blank for fresh luck; the same seed and choices always give the same results</span></span>
         <input type="text" value={seed} maxLength={60} onChange={(e) => setSeed(e.target.value)} placeholder="random" />
       </label>
       <div className="row">
-        <button type="button" className="btn btn-primary" disabled={busy || (real && !name.trim())} onClick={() => onStart({ ...(real ? { name: name.trim() } : {}), scenarioId, ...(seed.trim() ? { seed: seed.trim() } : {}) })}>
+        <button type="button" className="btn btn-primary" disabled={busy || (real && !name.trim())} onClick={() => onStart({ ...(real ? { name: name.trim() } : {}), scenarioId, neighborhood, priceCp, ...(seed.trim() ? { seed: seed.trim() } : {}) })}>
           {restarting ? (real ? "Start the real campaign over" : "Restart the test campaign") : real ? "Start the real campaign" : "Start the test campaign"}
         </button>
         <span className="small muted">Starts on {catalog.startDate} (placeholder calendar).</span>
@@ -135,7 +171,7 @@ export function CampaignApp({ catalog }: { catalog: Catalog }) {
     }
   };
 
-  const start = async (o: { name?: string; scenarioId: string; seed?: string }) => {
+  const start = async (o: StartOptions) => {
     setBusy(true);
     setError(null);
     try {
@@ -200,6 +236,11 @@ export function CampaignApp({ catalog }: { catalog: Catalog }) {
               {planDirty && (
                 <div className="warnings" role="status">
                   <strong>Orders changed.</strong>
+                  {elapsed > 0 && plan.neighborhood !== view.state.plan.neighborhood && (
+                    <p className="small" style={{ margin: "6px 0 0" }}>
+                      This moves the business to {catalog.neighborhoods.find((n) => n.id === plan.neighborhood)?.name}. Nobody there knows you yet and your regulars stay behind. Standing orders end, and the old crew and rival are left behind. About half of your reputation travels with you by word of mouth.
+                    </p>
+                  )}
                   <div className="row" style={{ marginTop: 8 }}>
                     <button type="button" className="btn btn-primary btn-small" disabled={busy || blocked} onClick={() => act({ action: "plan", plan }, "New orders recorded.")}>{elapsed === 0 ? "Use these orders" : `Apply from day ${elapsed + 1}`}</button>
                     <button type="button" className="btn btn-small btn-ghost" disabled={busy} onClick={() => setPlan(structuredClone(view.state.plan) as BusinessPlanInput)}>Undo edits</button>

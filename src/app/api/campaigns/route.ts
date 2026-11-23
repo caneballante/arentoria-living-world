@@ -24,6 +24,9 @@ const Create = z.object({
   name: z.string().trim().min(1).max(80).optional(),
   scenarioId: z.string().optional(),
   seed: z.string().trim().min(1).max(60).optional(),
+  /** The district the players chose, and the price per pie (cp). */
+  neighborhood: z.string().optional(),
+  priceCp: z.number().int().min(1).max(200).optional(),
 });
 
 /** Start the real campaign (or start it over before its first report), or (re)start the test campaign. */
@@ -46,6 +49,8 @@ export async function POST(request: Request) {
       if (existing) await backupCampaign(id, "restart", now);
       const plan = structuredClone(getScenario(scenarioId).plan);
       if (body.data.name) plan.name = body.data.name;
+      if (body.data.neighborhood) plan.neighborhood = body.data.neighborhood;
+      if (body.data.priceCp) plan.priceCp = body.data.priceCp;
       const seed = body.data.seed ?? `${id}-${now.slice(0, 10)}-${Math.random().toString(36).slice(2, 7)}`;
       const c = createCampaign(world, { id, name: id === "party" ? plan.name : "Test campaign", plan, seed, startDay: DEFAULT_START_DAY, startScenario: scenarioId, now });
       await saveCampaign(c);

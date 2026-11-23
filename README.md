@@ -23,8 +23,10 @@ A 20-minute playtest checklist is in **[docs/TEST_PLAN.md](docs/TEST_PLAN.md)**.
 
 Open **Campaign** in the top bar. There are two campaigns side by side:
 
-- **The party's campaign** is the real one. Start it once (it begins with the *Starting out* plan). Then, between sessions: move the clock, look over what happened (the DM view shows everything), record what the players decided (answers, new orders, money taken out or put in), and **Publish** a report. Publishing locks that stretch in: later runs continue from it, so it never changes, even if the simulation's numbers are recalibrated later. Each report opens as a printable page (letter, questions with tick boxes, strongbox, week by week, current orders).
+- **The party's campaign** is the real one. Start it once with the *Starting out* plan in the district the players chose. The price fills in with the going rate there, and you're warned where a cart alone won't work. Then, between sessions: move the clock, look over what happened (the DM view shows everything), record what the players decided (answers, new orders, money taken out or put in), and **Publish** a report. Publishing locks that stretch in: later runs continue from it, so it never changes, even if the simulation's numbers are recalibrated later. Each report opens as a printable page (letter, questions with tick boxes, strongbox, week by week, current orders).
 - **The test campaign** works exactly the same way, and you can restart it whenever you like. It never touches the real one.
+
+The district can change later from **Orders**. That's a real move: nobody in the new district knows the business yet, regulars and standing orders stay behind, the old crew and rival are left behind, and about half the reputation travels by word of mouth. The move is listed in the audit trail and reported to the players that week.
 
 Campaigns are saved on your computer in the project's `campaigns/` folder, which is kept out of git. Set `ARENTORIA_CAMPAIGN_DIR` to keep them somewhere else. A backup is written to `campaigns/backups/` before every publish, undo and restart. Back the folder up like any other important file. The real campaign can be started over only until its first report is published; after that you can **undo the latest report** if the players haven't seen it yet.
 

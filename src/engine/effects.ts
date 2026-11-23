@@ -9,7 +9,7 @@
 import { clamp, clamp100 } from "./math";
 import { stageViolations } from "./stage";
 import { PlanSchema } from "./plan";
-import type { AppliedChange, Authority, Effect, StatementEntry, WorldDefinition, WorldState } from "./types";
+import type { AppliedChange, Authority, Effect, HiddenVar, StatementEntry, WorldDefinition, WorldState } from "./types";
 
 export function nextId(state: WorldState, prefix: string): string {
   state.seq += 1;
@@ -190,10 +190,44 @@ export function applyChange(
   state: WorldState,
   change: Omit<AppliedChange, "id"> & { authority: Authority },
 ): AppliedChange {
-  for (const e of change.effects) applyEffect(world, state, e, change.day, change.authority);
-  const record: AppliedChange = { id: nextId(state, "chg"), ...change };
+  // A plan change that moves the business to another district brings the consequences of
+  // the move with it, listed in the audit record like any other effect.
+  const effects: Effect[] = [];
+  for (const e of change.effects) {
+    const from = state.plan.neighborhood;
+    applyEffect(world, state, e, change.day, change.authority);
+    effects.push(e);
+    if (e.kind === "plan" && state.plan.neighborhood !== from) {
+      for (const m of moveEffects(world, state, from, state.plan.neighborhood)) {
+        applyEffect(world, state, m, change.day, change.authority);
+        effects.push(m);
+      }
+    }
+  }
+  const record: AppliedChange = { id: nextId(state, "chg"), ...change, effects };
   state.history.push(record);
   return record;
+}
+
+/** What moving from one district to another does to the business (see assumptions.move). */
+export function moveEffects(world: WorldDefinition, state: WorldState, from: string, to: string): Effect[] {
+  const m = world.assumptions.move;
+  const h = state.business.hidden;
+  const start = world.assumptions.initialHidden;
+  const fromName = world.neighborhoods[from]?.name ?? from;
+  const toName = world.neighborhoods[to]?.name ?? to;
+  const toward = (variable: HiddenVar, target: number): Effect => ({ kind: "adjust", variable, delta: Math.round((target - h[variable]) * 100) / 100 });
+  const effects: Effect[] = [
+    toward("visibility", h.visibility * m.visibilityKept),
+    toward("loyalty", h.loyalty * m.regularsKept),
+    toward("reputation", 50 + (h.reputation - 50) * m.reputationKept),
+    toward("criminalAttention", start.criminalAttention),
+    toward("rivalHostility", start.rivalHostility),
+    ...m.localThreads.filter((id) => state.threads[id]).map((id): Effect => ({ kind: "thread", threadId: id, setProgress: 0, setStage: 0, freezeDays: 0 })),
+    ...(state.business.wholesaleAccounts > 0 ? [{ kind: "wholesaleAccounts", delta: -state.business.wholesaleAccounts } as Effect] : []),
+    { kind: "reveal", topic: "business", text: `We moved to ${toName}. Nobody there knows us yet, and our regulars stayed behind in ${fromName}.` },
+  ];
+  return effects.filter((e) => !(e.kind === "adjust" && Math.abs(e.delta) < 0.01));
 }
 
 /** Human-readable one-line description of an effect (for audit logs and DM tooling). */

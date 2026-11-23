@@ -302,6 +302,9 @@ export function SandboxApp({ catalog }: { catalog: Catalog }) {
         {planDirty && (
           <div className="warnings" role="status">
             <strong>The plan has changed.</strong> {elapsed > 0 ? "Apply it from today and carry on, or restart the season with it." : "Apply it to start from day 0."}
+            {elapsed > 0 && effectivePlan && plan.neighborhood !== effectivePlan.neighborhood && (
+              <p className="small" style={{ margin: "6px 0 0" }}>Applying it moves the business: nobody in the new district knows it yet, regulars and standing orders stay behind, the old crew and rival are left behind, and about half the reputation travels.</p>
+            )}
             <div className="row" style={{ marginTop: 8 }}>
               <button type="button" className="btn btn-primary btn-small" disabled={busy || blocked} onClick={applyPlanChange}>{elapsed > 0 ? `Apply from day ${elapsed + 1}` : "Apply"}</button>
               {elapsed > 0 && <button type="button" className="btn btn-small" disabled={busy} onClick={() => runFresh(Math.max(elapsed, 7))}>Restart to day {Math.max(elapsed, 7)} with this plan</button>}

@@ -21,7 +21,7 @@ Done:
 - Business sizes as the DM's guard rails: the party starts with one district, one cart, one hire and up to 500 pies a week, and the DM unlocks more. Short weekly reports (summary plus the three notes that matter most), with every note available to the DM.
 - Repriced for fun (Nov 2026): local prices doubled so a starting cart earns about 20 gp a week and established businesses 50–110 gp a week; repair costs raised so risk still bites.
 - One-step launcher and a playtest plan (`docs/TEST_PLAN.md`).
-- 123 automated tests.
+- 130 automated tests.
 
 Next small steps (before Phase 2):
 
@@ -33,6 +33,7 @@ Next small steps (before Phase 2):
 
 The tool runs on the DM's machine and publishes to DungeonShare, so it doesn't need to be hosted. Campaign storage is local files instead of Supabase.
 
+- Done: the players choose the starting district (with the going rate and a warning where a cart won't work), and changing district later is a real move with costs.
 - Done: **the real campaign and a test campaign**, saved locally. The DM moves the clock, reviews, records the party's answers, orders and money, and publishes numbered reports. Published stretches are locked (snapshots), drafts can be rewound, and the latest report can be undone. Reports are printable and available as player-safe JSON.
 - Next: a **Pie Shop tab in DungeonShare** (Overview, Latest update, Our choices) fed by Publish, the way DnD Tracker publishes Session Memory (needs a DungeonShare change and a key on the live site).
 - Next: a **manager's voice** for the report letter, with "because you…" lines tying results to the party's choices.

@@ -163,6 +163,13 @@ export interface MarketConfig {
 export interface EconomicAssumptions {
   provenance: Provenance;
   constructs: { count: number; piesPerDayEach: number; upkeepCpPerWeek: number; pushedCapacityMultiplier: number };
+  /**
+   * Moving to another district: how much of the old district's standing comes along.
+   * Name recognition and regulars stay behind (kept shares); reputation partly travels
+   * (share of its distance from average kept); crews' and rivals' interest resets, as do
+   * the listed local threads; standing (wholesale) orders end.
+   */
+  move: { visibilityKept: number; regularsKept: number; reputationKept: number; localThreads: string[] };
   /** Repair cost ranges (cp) when the constructs break down or the kitchen burns. */
   repairs: { minorBreakdownCp: [number, number]; artificerCp: [number, number]; kitchenFireCp: [number, number] };
   qualityTiers: QualityTier[];

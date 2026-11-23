@@ -18,6 +18,9 @@ export const assumptions: EconomicAssumptions = {
   // Proposed. Raised five-fold with the Nov 2026 repricing so a breakdown or a fire stays as
   // serious next to the bigger income (a fire costs roughly a third of a good year's profit).
   repairs: { minorBreakdownCp: [500, 1500], artificerCp: [10000, 25000], kitchenFireCp: [75000, 175000] },
+  // Proposed. Moving district: a few people have heard of us, regulars stay behind, word of
+  // our reputation half travels, and the old crew's and rival's feuds are left behind.
+  move: { visibilityKept: 0.15, regularsKept: 0, reputationKept: 0.5, localThreads: ["extortion", "rival-response"] },
   qualityTiers: [
     { tier: 1, label: "Scrap & gristle", ingredientCostCp: 1.0 },
     { tier: 2, label: "Plain & honest", ingredientCostCp: 1.8 },

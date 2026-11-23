@@ -214,6 +214,11 @@ export function buildWeeklyReport(world: WorldDefinition, state: WorldState, w: 
     add("street", "bad", `${name} have started calling out 'real pies, honest meat' whenever customers drift our way.`, `Rival hostility ${round(h1.rivalHostility, 0)}.`);
   }
 
+  // --- News about the business itself (e.g. a move to another district) ---
+  for (const k of state.knowledge.filter((x) => x.topic === "business" && x.day >= w.startDay && x.day <= w.endDay)) {
+    add("summary", "neutral", k.text, "Revealed by a recorded change (see the audit trail).", 85);
+  }
+
   // --- Events players witnessed ---
   const events = state.events.filter((e) => e.week === w.index && e.visibleToPlayers && e.eventId !== "staff-absence");
   for (const e of events) {

@@ -140,6 +140,10 @@ The business keeps its own account, separate from the party's purses. Every mone
 
 The API accepts `accountActions` only from the DM (`resolveRole`), and turns them into audited interventions. Scheduled interventions are idempotent: each has a `refId`, applied interventions are remembered in `state.appliedInterventions`, and anything scheduled for "first thing tomorrow" is applied when a run ends, so a withdrawal shows immediately and is never counted twice on replay.
 
+### Moving district
+
+A plan change that sets a different `neighborhood` is a move. `applyChange` appends the move's effects (`moveEffects` in `engine/effects.ts`, driven by `assumptions.move`) right after the plan effect, so they are applied through the usual choke point and listed in the same audit record. A `reveal` tells the players, and the weekly report gives it a high weight so it appears in the short report.
+
 ### Business size and short reports
 
 A plan carries a **business size** (`plan.stage`), defined in world data (`src/world/stages.ts`) as limits on outlets, staff, roles, weekly production, pushing the constructs and festival-day baking. `engine/stage.ts` lists any violations in plain sentences. `checkPlan` reports them as errors, `createInitialState` and plan revisions refuse them, and the API accepts a change of size only from the DM. Plans saved before sizes existed default to "unrestricted".

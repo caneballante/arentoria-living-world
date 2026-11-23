@@ -3,6 +3,7 @@
  * (staff honesty etc.) and numeric neighborhood parameters stay on the server.
  */
 import { dateFromDay, formatDate } from "../engine/calendar";
+import { fairPrice } from "../engine/economy";
 import { formatCp } from "../engine/math";
 import type { BusinessPlanInput } from "../engine/plan";
 import { arentoria, DEFAULT_START_DAY, scenarios } from "../world";
@@ -12,7 +13,8 @@ export interface Catalog {
   startDate: string;
   calendarLabel: string;
   scenarios: { id: string; label: string; summary: string; quality: string; plan: BusinessPlanInput }[];
-  neighborhoods: { id: string; name: string; description: string }[];
+  /** Districts, with the going rate for a pie at each quality tier and a note if carts struggle there. */
+  neighborhoods: { id: string; name: string; description: string; goingRateCp: Record<number, number>; cartNote: string | null }[];
   unmodelled: string[];
   /** Business sizes (the DM's guard rails) and their limits. */
   stages: {
@@ -42,7 +44,13 @@ export function publicCatalog(): Catalog {
     startDate: formatDate(dateFromDay(w.calendar, DEFAULT_START_DAY), w.calendar),
     calendarLabel: w.calendar.label,
     scenarios: scenarios.map((s) => ({ id: s.id, label: s.label, summary: s.summary, quality: s.quality, plan: s.plan })),
-    neighborhoods: Object.values(w.neighborhoods).map((n) => ({ id: n.id, name: n.name, description: n.description })),
+    neighborhoods: Object.values(w.neighborhoods).map((n) => ({
+      id: n.id,
+      name: n.name,
+      description: n.description,
+      goingRateCp: Object.fromEntries(a.qualityTiers.map((t) => [t.tier, Math.round(fairPrice(w, n, t.tier))])),
+      cartNote: n.channelFit.cart < 0.6 ? `Few people in ${n.name} buy from a street cart, so a cart alone will struggle here.` : null,
+    })),
     unmodelled: unmodelledNeighborhoods,
     stages: Object.values(w.stages).map((s) => ({
       id: s.id,

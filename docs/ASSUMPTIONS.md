@@ -61,6 +61,8 @@ Eight districts are modelled. The names are canon. Each one's character comes fr
 
 Each district has a proposed local rival and crew (stand-ins until the DM picks real ones from the City Index or the small-factions proposal).
 
+**Moving to another district** (provisional, `assumptions.move`): name recognition drops to 15% (a few people have heard of us), regulars stay behind, and reputation keeps half its distance from average (word of mouth). The old crew's and rival's interest reset, along with their feuds (the protection-racket and rival threads), and standing orders end. Guild standing, officials' attention, the kitchen and the money carry over. Choosing the district before day 1 is not a move.
+
 ## The business account
 
 The pie money is kept apart from the party's own purses, in a place the party chooses (a label; the default is a strongbox, location to be decided). Only the DM records withdrawals and deposits, and the server enforces that. The account shows a dated statement, the balance, an **operating floor** (provisional: one week of running costs), and what is **safe to withdraw** above it.
