@@ -92,7 +92,7 @@ docs/              Architecture, roadmap, assumptions, related projects
 
 ## Canon, proposals and simulation
 
-Every world item carries provenance: **canon** (from the campaign), **proposed** (drafted worldbuilding), **provisional** (a tunable number) or **simulated** (engine output). The calendar, festivals, month names, rivals, crews, the Fellowship, the licensing office and all staff candidates are *proposed*. All numbers are *provisional*. Simulated events are never promoted to canon automatically. The **Canon & assumptions** page in the app lists everything with its label.
+Every world item carries provenance: **canon** (from the campaign), **proposed** (drafted worldbuilding), **provisional** (a tunable number) or **simulated** (engine output). The Calendar of Arentor and its observances, the major factions and the seven public churches are *canon*: the DM adopted them from the campaign documents in Nov 2026. The fifteen small-time crews come from the DM's pool, with names proposed for approval. Rival pie sellers, the Fellowship, the licensing office and all staff candidates are *proposed*. All numbers are *provisional*. Simulated events are never promoted to canon automatically. The **Canon & assumptions** page in the app lists everything with its label.
 
 ## Key documents
 

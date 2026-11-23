@@ -13,6 +13,7 @@ The DM's City Index (`caneballante/arentoria`) documents the map, all 1,676 buil
 | Date | Ruling |
 |---|---|
 | 2026-11-22 | **Big factions are in.** The City Index's major factions (Cloverpot Compact, Deep Ledger, Merchants' Guild & Guild Wardens, and others) can be used. **Smaller, less consequential local factions** sit beneath them, to be created and proposed for the canon doc. Drafts: [`proposals/small-factions.md`](proposals/small-factions.md) (spreadsheet: [`proposals/small-factions.csv`](proposals/small-factions.csv)). |
+| 2026-11-23 | **Calendar, factions and faiths adopted** from the DM's revised documents. The Calendar of Arentor (dates and observances) and the major factions are canon; Stonehome Heritage House is separate from the Deep Ledger. The seven public churches are canon, with Dawnfire underground. The fifteen small-time crews (SC-01 to SC-15) are a name pool, proposed for approval; the simulator draws each district's crew from it. Exact temple buildings remain unassigned. |
 | 2026-11-22 | **17 Dawnfire Promenade = AR-0603**, a Guildstrand row house, and the party lives there. The index's listed households at AR-0603 (the Tanners, incl. guildmaster Derrin Torr, P-02071; and the Harrowells) do not live there in the campaign. Recorded in `src/world/canon.ts` as `house-city-index`. Where those residents live instead is undecided; the index itself is unchanged. |
 
 ## Findings relevant to the simulation
@@ -26,7 +27,7 @@ The DM's City Index (`caneballante/arentoria`) documents the map, all 1,676 buil
 
 ## Open questions
 
-- Adopt, rename or reject the seven proposed small factions (SF-001…SF-007), then swap them into the simulation in place of the stand-ins.
+- The small-factions proposal (SF-001…SF-007) is superseded for crime by the DM's SC pool. Its noncriminal groups (bakers' circle, butchers, barrow hands, residents' committee, stewards) remain optional source material.
 - Choose rival bakeries and crews from the index for every district. The five newer districts (Shades, Stoneback, Scholarium, Outer Ward, Crown Ward) use proposed stand-ins for now. Candidate food businesses include The Flour Crown (Crown Ward), the Shades' cookshops and taverns, and the Outer Ward's cookshops and bakeries. Stoneback has none in the index.
 - Where do the displaced AR-0603 residents live, if it ever matters?
 - Which index version to pin, and how to review re-imports (a diff before adopting changes).

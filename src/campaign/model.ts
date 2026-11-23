@@ -63,6 +63,8 @@ export interface CampaignFile {
   seed: string;
   startDay: number;
   startScenario: string;
+  /** The calendar version the campaign started under (published reports keep its dates). */
+  calendarId?: string;
   createdAt: string;
   updatedAt: string;
   /** When the clock stops: on decisions (and major events), or never (standing orders decide). */
@@ -101,6 +103,7 @@ export function createCampaign(world: WorldDefinition, o: NewCampaign): Campaign
     seed: o.seed,
     startDay: o.startDay,
     startScenario: o.startScenario,
+    calendarId: world.calendar.id,
     createdAt: o.now,
     updatedAt: o.now,
     pause: "decisions-and-major",
@@ -156,6 +159,8 @@ export interface CampaignSummary {
   draftDays: number;
   canStartOver: boolean;
   canUndo: boolean;
+  /** Set when the calendar has changed since the campaign began. */
+  calendarNote: string | null;
 }
 
 export function summarize(world: WorldDefinition, c: CampaignFile, result?: RunResult): CampaignSummary {
@@ -176,6 +181,10 @@ export function summarize(world: WorldDefinition, c: CampaignFile, result?: RunR
     draftDays: Math.max(0, last - pub),
     canStartOver: c.kind === "test" || c.editions.length === 0,
     canUndo: c.editions.length > 0 && (c.editions.length === 1 || !!c.editions[c.editions.length - 2]!.snapshot),
+    calendarNote:
+      c.calendarId !== world.calendar.id
+        ? `This campaign began under an earlier calendar. Published reports keep their dates; days after the last report now follow ${world.calendar.label}.`
+        : null,
   };
 }
 

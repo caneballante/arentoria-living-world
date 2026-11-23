@@ -38,6 +38,40 @@ export const canonFacts: CanonFact[] = [
     tags: ["factions"],
   },
   {
+    id: "calendar",
+    statement:
+      "The Calendar of Arentor (Council Reckoning): 13 months of 28 days, then Council Day between years, outside the week. Weeks run Firstday, Tradesday, Hearthday, Marketday, Wardday, Festday, Restday. CY is counted from the Charter of the Five Seats. Public observances follow the calendar document.",
+    provenance: canon("Arentoria Calendar (Revised), adopted by the DM 23 Nov 2026", "The exact in-world date is still unresolved."),
+    tags: ["calendar"],
+  },
+  {
+    id: "public-churches",
+    statement:
+      "Arentoria has seven public churches. Lathander has the largest congregation; Waukeen the wealthiest and best-connected church. Tyr, Sune and Chauntea are established but smaller; Gond and Oghma are small specialist churches. These rankings describe the city, not the whole kingdom.",
+    provenance: canon("Faiths and Temples of Arentoria (Revised), adopted by the DM 23 Nov 2026"),
+    tags: ["religion"],
+  },
+  {
+    id: "dawnfire-underground",
+    statement: "Dawnfire worship is underground, with no openly celebrated holiday. Dawnfire is not the same as Lathander's church despite overlapping imagery.",
+    provenance: canon("Faiths and Temples of Arentoria (Revised), adopted by the DM 23 Nov 2026"),
+    tags: ["religion"],
+  },
+  {
+    id: "major-factions",
+    statement:
+      "Major established groups: the Merchants' Guild & Guild Wardens, the Cloverpot Compact, the Deep Ledger, Stonehome Heritage House (separate from the Deep Ledger), the City Guard and Watch, the Blanders School of Adventuring, the five-seat City Council and the Harrowell Agricultural Trust.",
+    provenance: canon("Factions of Arentoria (Revised), adopted by the DM 23 Nov 2026"),
+    tags: ["factions"],
+  },
+  {
+    id: "small-operators",
+    statement:
+      "Small-time criminal crews sit below the major factions. Their incidents stay minor (petty theft, market tricks, harassment, petty protection, counterfeit permits) and do not escalate to a major faction without an established link or an explicit DM decision.",
+    provenance: canon("Factions of Arentoria (Revised), adopted by the DM 23 Nov 2026", "The fifteen crew names themselves are proposed for approval."),
+    tags: ["factions", "crime"],
+  },
+  {
     id: "neighborhoods",
     statement: "Established neighborhoods: Guildstrand, Grand Market, the Commons, High March, Stoneback, Scholarium, Crown Ward, the Shades and Outer Ward.",
     provenance: canon(BRIEF),

@@ -63,11 +63,14 @@ describe("business size: starting out", () => {
     expect(checkPlan(world, parsePlan(planOf("grand-market-aggressive"))).errors).toEqual([]);
   });
 
-  it("a starting cart makes a small profit over a season", () => {
+  it("a starting cart makes a small profit over a season", async () => {
     const r = run("starting-out", "small", 26);
     const profit = r.state.weeks.reduce((a, w) => a + w.profitCp, 0);
     expect(profit).toBeGreaterThan(0);
-    expect(Math.max(...r.state.weeks.map((w) => w.produced))).toBeLessThanOrEqual(500);
+    // The plan's 500-a-week limit holds; Council Day sits outside the week and adds one day's batch.
+    const { dateFromDay } = await import("../src/engine/calendar");
+    const hasCouncilDay = (w: (typeof r.state.weeks)[number]) => Array.from({ length: 7 }, (_, i) => dateFromDay(world.calendar, w.startDay + i)).some((d) => d.intercalary);
+    for (const w of r.state.weeks) expect(w.produced).toBeLessThanOrEqual(hasCouncilDay(w) ? Math.ceil(500 * 7 / 6) : 500);
   });
 });
 

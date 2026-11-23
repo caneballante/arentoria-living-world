@@ -85,7 +85,8 @@ describe("threats resolve instead of looping", () => {
       expect(s.playerDecisions.mean, `${sc.id} decisions`).toBeLessThanOrEqual(16);
       expect(s.longestQuietWeeks.mean, `${sc.id} quiet`).toBeLessThanOrEqual(12);
       expect(s.majorMoments.mean, `${sc.id} majors`).toBeLessThanOrEqual(5);
-      expect(s.notableEvents.mean, `${sc.id} notable`).toBeLessThanOrEqual(18);
+      // Monthly choices and the canon calendar's observances add news; keep it readable.
+      expect(s.notableEvents.mean, `${sc.id} notable`).toBeLessThanOrEqual(20);
     }
   });
 

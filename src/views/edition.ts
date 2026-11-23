@@ -38,7 +38,7 @@ export interface EditionContent {
   };
   totals: { weeks: number; piesSold: number; takingsCp: number; earnedCp: number; withdrawnCp: number };
   weeks: { index: number; dateRange: string; produced: number; sold: number; revenueCp: number; profitCp: number; cashEndCp: number; festivals: string[] }[];
-  comingUp: { date: string; text: string }[];
+  comingUp: { date: string; text: string; festivalId?: string }[];
   /** Classified ads: reminders of real options (growing, other districts, hires, services). */
   notices?: Notice[];
   /** The party's standing choices (their own plan; nothing hidden). */
@@ -76,8 +76,8 @@ export interface EditionOptions {
 function withNotices(world: WorldDefinition, result: RunResult, number: number, comingUp: EditionContent["comingUp"]) {
   const s = result.state;
   const notices = world.notices?.({ world, state: s, reportNumber: number, rng: rngFor(s.seed, "notices", number) }) ?? [];
-  const announced = notices.filter((n) => n.kind === "festival").map((n) => n.headline);
-  return { comingUp: comingUp.filter((c) => !announced.some((h) => h.startsWith(c.text.split(".")[0]!.toUpperCase()))), notices };
+  const announced = new Set(notices.filter((n) => n.kind === "festival" && n.ref).map((n) => n.ref));
+  return { comingUp: comingUp.filter((c) => !c.festivalId || !announced.has(c.festivalId)), notices };
 }
 
 export function buildEdition(world: WorldDefinition, result: RunResult, o: EditionOptions): EditionContent {
@@ -94,7 +94,7 @@ export function buildEdition(world: WorldDefinition, result: RunResult, o: Editi
 
   const comingUp: EditionContent["comingUp"] = [];
   for (let d = o.toDay + 1; d <= o.toDay + 28; d++) {
-    for (const f of dateFromDay(world.calendar, d).festivals) if (!comingUp.some((c) => c.text.startsWith(f.name))) comingUp.push({ date: short(d), text: `${f.name}. ${f.description.replace(/\s*\(proposed\)\.?$/, ".")}` });
+    for (const f of dateFromDay(world.calendar, d).festivals) if (!comingUp.some((c) => c.festivalId === f.id)) comingUp.push({ date: short(d), festivalId: f.id, text: `${f.name}${f.area ? ` (${f.area})` : ""}. ${f.description}` });
   }
 
   return {

@@ -93,6 +93,11 @@ export function operatingWeekdays(world: WorldDefinition, plan: BusinessPlan): n
   return order.slice(0, Math.min(n, plan.operatingDays));
 }
 
+/** Does the business trade today? Days outside the week (e.g. Council Day) are public gatherings: open. */
+export function operatesOn(world: WorldDefinition, plan: BusinessPlan, date: CalendarDate): boolean {
+  return date.weekday < 0 ? plan.operatingDays > 0 : operatingWeekdays(world, plan).includes(date.weekday);
+}
+
 export function calendarMultiplier(n: NeighborhoodDef, date: CalendarDate): { value: number; festival: number } {
   let m = 1;
   if (date.isMarketDay) m *= n.marketDayMultiplier;
@@ -261,7 +266,7 @@ export function runOperations(world: WorldDefinition, state: WorldState, date: C
 
   if (state.business.status === "closed") return { record: { ...baseRecord, reason: "closed" }, ledger: {} };
   if (state.business.status === "suspended") return { record: { ...baseRecord, reason: "suspended by authorities" }, ledger: {} };
-  if (!operatingWeekdays(world, plan).includes(date.weekday)) return { record: { ...baseRecord, reason: "not an operating day" }, ledger: {} };
+  if (!operatesOn(world, plan, date)) return { record: { ...baseRecord, reason: "not an operating day" }, ledger: {} };
 
   const absent = new Set(state.business.staff.filter((s) => hasActiveCondition(state, `absent:${s.id}`, day)).map((s) => s.id));
   const festivalBoost = date.festivals.length ? plan.festivalProductionMultiplier : 1;

@@ -3,8 +3,9 @@
  * festivals; those come from a CalendarConfig supplied by the world definition.
  *
  * Time is tracked as an absolute integer day index. Day 0 is the first day of the
- * first month of `epochYear`. The weekday cycle runs continuously through every day,
- * including intercalary days (a design choice that is easy to revisit).
+ * first month of `epochYear`. By default the weekday cycle runs through every day; a
+ * calendar can instead keep its intercalary days outside the week
+ * (`intercalaryOutsideWeek`), so they have no weekday and the week resumes after them.
  */
 
 import type { Provenance } from "./provenance";
@@ -38,6 +39,13 @@ export interface FestivalConfig {
   /** Demand multipliers keyed by neighborhood id; "*" is the default. */
   demandMultiplier: Record<string, number>;
   description: string;
+  /** What kind of occasion it is (public holiday, daytime market, evening event, religious service). */
+  kind?: "holiday" | "market" | "evening" | "religious";
+  /** Who holds it, and where (as the calendar describes them). */
+  sponsor?: string;
+  area?: string;
+  /** Citywide observances, or a district's or smaller church's own. */
+  scale?: "citywide" | "district";
 }
 
 export interface CalendarConfig {
@@ -56,6 +64,8 @@ export interface CalendarConfig {
   /** Weekday index of the customary rest day (or -1). */
   restDay: number;
   festivals: FestivalConfig[];
+  /** Intercalary days sit outside the week: no weekday, and the week resumes after them. */
+  intercalaryOutsideWeek?: boolean;
 }
 
 export interface CalendarDate {
@@ -69,6 +79,7 @@ export interface CalendarDate {
   /** 1-based day of month (1 on intercalary days). */
   dayOfMonth: number;
   intercalary: string | null;
+  /** Weekday index, or -1 on an intercalary day that sits outside the week. */
   weekday: number;
   weekdayName: string;
   season: Season;
@@ -146,7 +157,16 @@ export function dateFromDay(cal: CalendarConfig, absoluteDay: number): CalendarD
   }
   const dayOfMonth = dayOfYear - seg.startDoy + 1;
   const n = cal.weekdayNames.length;
-  const weekday = (((cal.epochWeekday + absoluteDay) % n) + n) % n;
+  let weekday: number;
+  if (cal.intercalaryOutsideWeek) {
+    if (seg.kind === "intercalary") weekday = -1;
+    else {
+      const perYear = segs.filter((s) => s.kind === "intercalary").length;
+      const earlierThisYear = segs.filter((s) => s.kind === "intercalary" && s.startDoy < dayOfYear).length;
+      const counted = absoluteDay - (yearOffset * perYear + earlierThisYear);
+      weekday = (((cal.epochWeekday + counted) % n) + n) % n;
+    }
+  } else weekday = (((cal.epochWeekday + absoluteDay) % n) + n) % n;
   return {
     absoluteDay,
     year: cal.epochYear + yearOffset,
@@ -156,10 +176,10 @@ export function dateFromDay(cal: CalendarConfig, absoluteDay: number): CalendarD
     dayOfMonth,
     intercalary: seg.kind === "intercalary" ? seg.name : null,
     weekday,
-    weekdayName: cal.weekdayNames[weekday]!,
+    weekdayName: weekday >= 0 ? cal.weekdayNames[weekday]! : seg.name,
     season: seg.season,
-    isMarketDay: cal.marketDays.includes(weekday),
-    isRestDay: cal.restDay === weekday,
+    isMarketDay: weekday >= 0 && cal.marketDays.includes(weekday),
+    isRestDay: weekday >= 0 && cal.restDay === weekday,
     festivals: festivalsOn(cal, seg, dayOfMonth),
   };
 }

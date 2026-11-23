@@ -216,6 +216,7 @@ export function CampaignApp({ catalog }: { catalog: Catalog }) {
       </div>
 
       {error && <div className="issues" role="alert">{error}</div>}
+      {summary?.calendarNote && <div className="warnings small">{summary.calendarNote}</div>}
       {notice && <div className="callout" role="status">{notice}</div>}
 
       {list && entry && !entry.exists && (

@@ -202,7 +202,7 @@ describe("notices in published reports", () => {
   it("don't repeat an announced festival under 'Coming up'", () => {
     for (const r of reports) {
       const fest = r.notices!.find((n) => n.kind === "festival");
-      if (fest) for (const c of r.comingUp) expect(fest.headline.startsWith(c.text.split(".")[0]!.toUpperCase())).toBe(false);
+      if (fest) for (const c of r.comingUp) expect(c.festivalId).not.toBe(fest.ref);
     }
   });
 

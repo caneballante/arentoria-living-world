@@ -44,6 +44,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
     wholesaleAccountPotential: 8,
     rivalActorId: "hobbs-hot-pies",
     crewActorId: "ninepenny-crew",
+    crewCandidates: ["ninepenny-crew", "ravenshade-lads", "three-penny-syndicate"],
   },
   "grand-market": {
     id: "grand-market",
@@ -74,6 +75,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
     wholesaleAccountPotential: 12,
     rivalActorId: "brannock-pie-hall",
     crewActorId: "saltgutter-crew",
+    crewCandidates: ["saltgutter-crew", "lucky-die-ring", "copper-knaves"],
   },
   "high-march": {
     id: "high-march",
@@ -135,6 +137,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
     wholesaleAccountPotential: 4,
     rivalActorId: "mother-gannets-cookshop",
     crewActorId: "lowlamp-crew",
+    crewCandidates: ["lowlamp-crew", "moonstep-runners"],
     regularsWeight: 1.8,
     awarenessFloor: 0.08,
     wholesale: { buyers: "taverns and cookshops" },
@@ -168,6 +171,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
     wholesaleAccountPotential: 14,
     rivalActorId: "old-brasks-dinner-pails",
     crewActorId: "yard-gate-boys",
+    crewCandidates: ["yard-gate-boys", "ash-alley-cutters"],
     largeOrders: {
       rate: 2.2,
       sizeMultiplier: 1.4,
@@ -205,6 +209,7 @@ export const neighborhoods: Record<string, NeighborhoodDef> = {
     wholesaleAccountPotential: 6,
     rivalActorId: "inkpot-pasty-shop",
     crewActorId: "cloister-dippers",
+    crewCandidates: ["cloister-dippers", "moonstep-runners"],
     regularsWeight: 2.0,
     seasons: { multiplier: { summer: 0.6 }, reason: "Summer recess: most students have gone home" },
     wholesale: { buyers: "college refectories" },

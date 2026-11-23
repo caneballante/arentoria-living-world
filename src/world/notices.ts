@@ -102,11 +102,12 @@ export function notices({ world, state, reportNumber, rng }: NoticeContext): Not
   const color: Notice[] = [];
   const rival = world.actors.find((x) => x.id === here.rivalActorId);
   if (rival) color.push({ kind: "rival", ...RIVAL_ADS[(reportNumber - 1) % RIVAL_ADS.length]!(rival.name), from: rival.name });
-  for (let d = state.day; d < state.day + 28; d++) {
-    const f = dateFromDay(world.calendar, d).festivals[0];
-    if (f) {
-      color.push({ kind: "festival", headline: `${f.name.toUpperCase()}: ${formatShortDate(dateFromDay(world.calendar, d)).toUpperCase()}`, text: `${f.description.replace(/\s*\(proposed\)\.?$/, ".")} Stewards are letting prime pitches; ask early.`, from: "The festival stewards" });
-      break;
+  // The next observance that matters here: citywide, or one that brings crowds to this district.
+  for (let d = state.day; d < state.day + 28 && !color.some((c) => c.kind === "festival"); d++) {
+    const date = dateFromDay(world.calendar, d);
+    const f = date.festivals.find((x) => x.scale === "citywide" || (x.demandMultiplier[here.id] ?? 1) > 1);
+    if (f && (f.month === null || date.dayOfMonth === f.day)) {
+      color.push({ kind: "festival", ref: f.id, headline: `${f.name.toUpperCase()}: ${formatShortDate(date).toUpperCase()}`, text: `${f.description}${f.area ? ` (${f.area}.)` : ""} ${f.kind === "religious" ? "Expect crowds around the temples." : "Stewards are letting pitches; ask early."}`, from: f.sponsor ?? "The festival stewards" });
     }
   }
   color.push({ kind: "hook", ...LOST_AND_FOUND[(reportNumber + state.seed.length) % LOST_AND_FOUND.length]!, from: "Lost & found" });

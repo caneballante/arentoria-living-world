@@ -94,7 +94,8 @@ const throwingAway: ConditionalEventDef = {
   resolve(ctx) {
     const days = ctx.week?.days ?? [];
     const waste = days.reduce((a, d) => a + d.waste, 0);
-    const cut = Math.max(10, Math.min(tens(waste / 2), ctx.plan.weeklyProduction - 100));
+    // A small adjustment, not a fix-all: about a tenth of the batch, never below 100 a week.
+    const cut = Math.max(10, Math.min(Math.max(30, tens(ctx.plan.weeklyProduction * 0.1)), ctx.plan.weeklyProduction - 100));
     const crier = 300;
     return {
       severity: "notable",
@@ -107,7 +108,7 @@ const throwingAway: ConditionalEventDef = {
         defaultOptionId: "safe",
         respondWithinDays: 14,
         options: [
-          { id: "safe", label: `Bake ${cut} fewer a week`, description: "Less waste, steady takings.", effects: [{ kind: "plan", patch: { weeklyProduction: ctx.plan.weeklyProduction - cut }, note: "Baking fewer" }] },
+          { id: "safe", label: `Bake ${cut} fewer a week`, description: "A little less waste. If we're still throwing pies away, we can trim again.", effects: [{ kind: "plan", patch: { weeklyProduction: ctx.plan.weeklyProduction - cut }, note: "Baking fewer" }] },
           {
             id: "risky",
             label: `Keep baking and hire a crier for a month (${formatCp(crier)})`,

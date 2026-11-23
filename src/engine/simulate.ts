@@ -41,6 +41,7 @@ import type {
   EventContext,
   EventOutcome,
   EventRecord,
+  NeighborhoodDef,
   PendingDecision,
   SandboxAssumptions,
   WeekAccumulator,
@@ -211,6 +212,17 @@ function estimatedWeeklyFixed(world: WorldDefinition, state: WorldState): number
   return fixed + wages;
 }
 
+/**
+ * The district's crew for this campaign: chosen once by the campaign's luck from the
+ * district's candidates, so the same name stays in play for the whole campaign.
+ */
+export function withCampaignCrew(n: NeighborhoodDef, seed: string): NeighborhoodDef {
+  const pool = n.crewCandidates?.filter(Boolean) ?? [];
+  if (!pool.length) return n;
+  const pick = pool[Math.floor(uniformFor(seed, "district-crew", n.id) * pool.length)]!;
+  return pick === n.crewActorId ? n : { ...n, crewActorId: pick };
+}
+
 export function makeContext(world: WorldDefinition, state: WorldState, date: CalendarDate, extra: Partial<EventContext> = {}): EventContext {
   let derived: DerivedMetrics | undefined;
   const ctx: EventContext = {
@@ -218,7 +230,7 @@ export function makeContext(world: WorldDefinition, state: WorldState, date: Cal
     state,
     date,
     plan: state.plan,
-    neighborhood: world.neighborhoods[state.plan.neighborhood]!,
+    neighborhood: withCampaignCrew(world.neighborhoods[state.plan.neighborhood]!, state.seed),
     get derived() {
       derived ??= computeDerived(world, state, estimatedWeeklyFixed(world, state));
       return derived;

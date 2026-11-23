@@ -140,6 +140,12 @@ The business keeps its own account, separate from the party's purses. Every mone
 
 The API accepts `accountActions` only from the DM (`resolveRole`), and turns them into audited interventions. Scheduled interventions are idempotent: each has a `refId`, applied interventions are remembered in `state.appliedInterventions`, and anything scheduled for "first thing tomorrow" is applied when a run ends, so a withdrawal shows immediately and is never counted twice on replay.
 
+### Calendar and crews
+
+`CalendarConfig.intercalaryOutsideWeek` keeps Council Day outside the week: it has no weekday (`weekday = -1`, not a market or rest day), and the week resumes after it. `operatesOn` treats a day outside the week as a trading day. Festivals carry `kind`, `sponsor`, `area` and `scale` from the calendar document. Calendars are versioned by `id`, each campaign file records the one it began under, and published reports keep their dates.
+
+A neighborhood's `crewCandidates` lists the crews that could operate there. `withCampaignCrew` draws one by the campaign's seed, so a campaign keeps the same crew name, and the event context exposes that crew as `neighborhood.crewActorId` to every event.
+
 ### Moving district
 
 A plan change that sets a different `neighborhood` is a move. `applyChange` appends the move's effects (`moveEffects` in `engine/effects.ts`, driven by `assumptions.move`) right after the plan effect, so they are applied through the usual choke point and listed in the same audit record. A `reveal` tells the players, and the weekly report gives it a high weight so it appears in the short report.

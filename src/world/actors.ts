@@ -8,16 +8,34 @@ import { canon, proposed } from "../engine/provenance";
 import type { ActorDef } from "../engine/types";
 
 const BRIEF = "Campaign brief";
-const AWAITING = "Objectives and sphere of influence: awaiting campaign documents.";
+const FACTIONS = "Factions of Arentoria (Revised), adopted by the DM 23 Nov 2026";
+const FAITHS = "Faiths and Temples of Arentoria (Revised), adopted by the DM 23 Nov 2026";
+const SC = (pool: string, status: string) =>
+  proposed(`Small-time crew ${pool} from the DM's Factions document: name and optional district placement proposed for approval; ${status}.`);
+/** Names only: what a crew does is decided in play; incidents stay minor and never escalate to a major faction on their own. */
+const CREW = "Small-time operators. Names only: what they do is decided in play, and incidents stay minor.";
 
 export const actors: ActorDef[] = [
-  // --- Canon major factions (names only; details pending) ---
-  { id: "merchants-guild", name: "the Merchants' Guild", kind: "major-faction", provenance: canon(BRIEF), description: AWAITING },
-  { id: "cloverpot-compact", name: "the Cloverpot Compact", kind: "major-faction", provenance: canon(BRIEF), description: AWAITING },
-  { id: "stonehome-deep-ledger", name: "Stonehome / Deep Ledger", kind: "major-faction", provenance: canon(BRIEF), description: AWAITING },
-  { id: "blanders-school", name: "the Blanders School of Adventuring", kind: "major-faction", provenance: canon(BRIEF), description: AWAITING },
-  { id: "city-council", name: "the five-seat city Council", kind: "official-body", provenance: canon(BRIEF), description: AWAITING },
+  // --- Major established civic and economic groups (canon; spheres at high level only) ---
+  { id: "merchants-guild", name: "the Merchants' Guild & Guild Wardens", kind: "major-faction", provenance: canon(FACTIONS, "City Index FAC-005."), description: "Guild commerce, permits and market standing." },
+  { id: "cloverpot-compact", name: "the Cloverpot Compact", kind: "major-faction", provenance: canon(FACTIONS, "City Index FAC-002."), description: "A major criminal faction; not automatically behind every street crew." },
+  { id: "deep-ledger", name: "the Deep Ledger", kind: "major-faction", provenance: canon(FACTIONS, "City Index FAC-004."), description: "A major criminal fraternity that keeps its own sphere." },
+  { id: "stonehome-heritage-house", name: "Stonehome Heritage House", kind: "major-faction", provenance: canon(FACTIONS, "City Index FAC-003."), description: "Dwarven community and craft networks; separate from the Deep Ledger." },
+  { id: "city-guard", name: "the City Guard and Watch", kind: "official-body", provenance: canon(FACTIONS, "City Index FAC-006."), description: "Public law enforcement." },
+  { id: "blanders-school", name: "the Blanders School of Adventuring", kind: "major-faction", provenance: canon(FACTIONS, "City Index FAC-015."), description: "Training and adventuring contracts." },
+  { id: "city-council", name: "the five-seat City Council", kind: "official-body", provenance: canon(FACTIONS), description: "Municipal authority." },
+  { id: "harrowell-trust", name: "the Harrowell Agricultural Trust", kind: "major-faction", provenance: canon(FACTIONS, "City Index FAC-010."), description: "An agricultural institution." },
   { id: "galen-vale", name: "Galen Vale", kind: "npc", provenance: canon(BRIEF), description: "The party's lawyer; has initiated the constructs' licensing process." },
+
+  // --- The seven public churches, as light factions. Standing is canon; district ties and
+  //     institutional links are the documents' proposals, and describe patterns, not alliances. ---
+  { id: "church-lathander", name: "the Church of Lathander", kind: "church", provenance: canon(FAITHS, "Standing canon; district and link proposed."), description: "Largest congregation. Sunrise worship, renewal, civic and household rites, charity. Observances: First Light, Longnight Vigil. Works with the City Council on ceremonies and charity.", neighborhoods: ["commons"] },
+  { id: "church-waukeen", name: "the Church of Waukeen", kind: "church", provenance: canon(FAITHS, "Standing canon; district and link proposed."), description: "Wealthiest and best connected to the Council. Commerce, bargains, patronage. Observances: Golden Exchange, Ledger Closing. Close to the Merchants' Guild in trade and patronage.", neighborhoods: ["grand-market", "guildstrand"] },
+  { id: "church-tyr", name: "the Church of Tyr", kind: "church", provenance: canon(FAITHS, "Standing canon; district and link proposed."), description: "Established, smaller. Justice, oaths, courts. Observance: Judgments and Oaths. Professional contact with the City Guard and Watch.", neighborhoods: ["crown-ward"] },
+  { id: "church-sune", name: "the Church of Sune", kind: "church", provenance: canon(FAITHS, "Standing canon; district and link proposed."), description: "Established, smaller. Beauty, arts, performance. Observances: Festival of the Rose, Silken Promenade. Light patronage ties to luxury trade.", neighborhoods: ["high-march"] },
+  { id: "church-chauntea", name: "the Church of Chauntea", kind: "church", provenance: canon(FAITHS, "Standing canon; district and link proposed."), description: "Established, smaller. Planting, harvest, food relief. Observances: Seedtide Fair, Harvest Fair. Shares agricultural work with the Harrowell Agricultural Trust.", neighborhoods: ["outer-ward", "commons"] },
+  { id: "church-gond", name: "the Church of Gond", kind: "church", provenance: canon(FAITHS, "Standing canon; district and link proposed."), description: "Small specialist church. Invention, craft, engineering. Observances: Wonderwright's Day, First Hammer. Craft traditions shared with Stonehome Heritage House.", neighborhoods: ["stoneback"] },
+  { id: "church-oghma", name: "the Church of Oghma", kind: "church", provenance: canon(FAITHS, "Standing canon; district and link proposed."), description: "Small specialist church. Learning, writing, remembered knowledge. Observance: The Open Book. Research ties with the Blanders School.", neighborhoods: ["scholarium"] },
 
   // --- Proposed small actors (provisional worldbuilding) ---
   {
@@ -58,31 +76,7 @@ export const actors: ActorDef[] = [
     description: "A genteel pastry house that supplies several noble kitchens.",
     neighborhoods: ["high-march"],
   },
-  {
-    id: "ninepenny-crew",
-    name: "the Ninepenny Crew",
-    kind: "criminal-crew",
-    provenance: proposed("Proposed small Commons protection racket — not one of the major factions."),
-    description: "Half a dozen toughs who 'look after' Commons street sellers for a weekly fee.",
-    neighborhoods: ["commons"],
-  },
-  {
-    id: "saltgutter-crew",
-    name: "the Saltgutter Crew",
-    kind: "criminal-crew",
-    provenance: proposed("Proposed Grand Market pickpocket-and-protection crew."),
-    description: "Cutpurses and runners who work the market crowds and lean on stallholders.",
-    neighborhoods: ["grand-market"],
-  },
-  {
-    id: "velvet-gloves",
-    name: "the Velvet Gloves",
-    kind: "criminal-crew",
-    provenance: proposed("Proposed discreet High March burglary ring."),
-    description: "A quiet ring of burglars who prefer servants' gossip to street muscle.",
-    neighborhoods: ["high-march"],
-  },
-  // --- Stand-ins for the newer districts (proposed; swap for City Index businesses or small factions if preferred) ---
+  // --- Rival pie sellers for the newer districts (proposed stand-ins) ---
   {
     id: "mother-gannets-cookshop",
     name: "Mother Gannet's Cookshop",
@@ -123,44 +117,22 @@ export const actors: ActorDef[] = [
     description: "Society caterers with friends in the ministries and a jealous hold on official receptions.",
     neighborhoods: ["crown-ward"],
   },
-  {
-    id: "lowlamp-crew",
-    name: "the Lowlamp Crew",
-    kind: "criminal-crew",
-    provenance: proposed("Proposed small Shades crew (stand-in), not one of the major factions."),
-    description: "Hard young toughs who run the lanes below the ridge and take a cut from anyone selling there.",
-    neighborhoods: ["shades"],
-  },
-  {
-    id: "yard-gate-boys",
-    name: "the Yard Gate Boys",
-    kind: "criminal-crew",
-    provenance: proposed("Proposed small Stoneback crew (stand-in)."),
-    description: "Out-of-work laborers who 'keep order' at the yard gates and expect sellers to pay for the privilege.",
-    neighborhoods: ["stoneback"],
-  },
-  {
-    id: "cloister-dippers",
-    name: "the Cloister Street Dippers",
-    kind: "criminal-crew",
-    provenance: proposed("Proposed small Scholarium pickpocket ring (stand-in)."),
-    description: "Pickpockets who work the lecture crowds and occasionally lean on a stallholder.",
-    neighborhoods: ["scholarium"],
-  },
-  {
-    id: "gatehouse-gang",
-    name: "the Gatehouse Gang",
-    kind: "criminal-crew",
-    provenance: proposed("Proposed small Outer Ward crew (stand-in)."),
-    description: "A loose gang from the lodging houses by the old gate who shake down vendors on their rounds.",
-    neighborhoods: ["outer-ward"],
-  },
-  {
-    id: "seal-court-fixers",
-    name: "the Seal Court Fixers",
-    kind: "criminal-crew",
-    provenance: proposed("Proposed small Crown Ward ring (stand-in)."),
-    description: "Well-dressed go-betweens who sell 'introductions' and make permits move faster, or slower.",
-    neighborhoods: ["crown-ward"],
-  },
+
+  // --- The fifteen small-time criminal enterprises (the DM's pool, SC-01..SC-15). Each
+  //     district's crew is drawn from its candidates once per campaign (see neighborhoods). ---
+  { id: "ravenshade-lads", name: "the Ravenshade Lads", kind: "criminal-crew", provenance: SC("SC-01", "freelance, possible loose Compact contacts"), description: CREW, neighborhoods: ["commons"] },
+  { id: "lucky-die-ring", name: "the Lucky Die Ring", kind: "criminal-crew", provenance: SC("SC-02", "independent"), description: CREW, neighborhoods: ["grand-market"] },
+  { id: "ninepenny-crew", name: "the Ninepenny Crew", kind: "criminal-crew", provenance: SC("SC-03", "independent"), description: CREW, neighborhoods: ["commons"] },
+  { id: "saltgutter-crew", name: "the Saltgutter Crew", kind: "criminal-crew", provenance: SC("SC-04", "independent"), description: CREW, neighborhoods: ["grand-market"] },
+  { id: "velvet-gloves", name: "the Velvet Gloves", kind: "criminal-crew", provenance: SC("SC-05", "freelance"), description: CREW, neighborhoods: ["high-march"] },
+  { id: "lowlamp-crew", name: "the Lowlamp Crew", kind: "criminal-crew", provenance: SC("SC-06", "independent"), description: CREW, neighborhoods: ["shades"] },
+  { id: "yard-gate-boys", name: "the Yard Gate Boys", kind: "criminal-crew", provenance: SC("SC-07", "independent"), description: CREW, neighborhoods: ["stoneback"] },
+  { id: "cloister-dippers", name: "the Cloister Street Dippers", kind: "criminal-crew", provenance: SC("SC-08", "independent"), description: CREW, neighborhoods: ["scholarium"] },
+  { id: "gatehouse-gang", name: "the Gatehouse Gang", kind: "criminal-crew", provenance: SC("SC-09", "independent"), description: CREW, neighborhoods: ["outer-ward"] },
+  { id: "seal-court-fixers", name: "the Seal Court Fixers", kind: "criminal-crew", provenance: SC("SC-10", "independent"), description: CREW, neighborhoods: ["crown-ward"] },
+  { id: "bell-rope-boys", name: "the Bell-Rope Boys", kind: "criminal-crew", provenance: SC("SC-11", "freelance"), description: CREW, neighborhoods: ["guildstrand"] },
+  { id: "copper-knaves", name: "the Copper Knaves", kind: "criminal-crew", provenance: SC("SC-12", "freelance"), description: CREW, neighborhoods: ["grand-market"] },
+  { id: "ash-alley-cutters", name: "the Ash Alley Cutters", kind: "criminal-crew", provenance: SC("SC-13", "independent"), description: CREW, neighborhoods: ["stoneback"] },
+  { id: "three-penny-syndicate", name: "the Three-Penny Syndicate", kind: "criminal-crew", provenance: SC("SC-14", "independent"), description: CREW, neighborhoods: ["commons", "guildstrand"] },
+  { id: "moonstep-runners", name: "the Moonstep Runners", kind: "criminal-crew", provenance: SC("SC-15", "freelance"), description: CREW, neighborhoods: ["scholarium", "shades"] },
 ];

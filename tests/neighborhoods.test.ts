@@ -86,3 +86,40 @@ describe("district plans", () => {
     }
   });
 });
+
+describe("the DM's crews and churches", () => {
+  it("draws each district's crew from its candidates, once per campaign", async () => {
+    const { withCampaignCrew } = await import("../src/engine/simulate");
+    const commons = n.commons!;
+    const picks = new Set<string>();
+    for (const seed of ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]) {
+      const crew = withCampaignCrew(commons, seed).crewActorId;
+      expect(commons.crewCandidates).toContain(crew);
+      expect(withCampaignCrew(commons, seed).crewActorId).toBe(crew); // the same campaign keeps the same crew
+      picks.add(crew);
+    }
+    expect(picks.size).toBeGreaterThan(1);
+  });
+
+  it("names the crew the campaign drew when trouble comes", () => {
+    const state = createInitialState(world, planOf("commons-compliant"), { seed: "crew-name", startDay: START });
+    const ctx = makeContext(world, state, dateFromDay(world.calendar, START));
+    const name = world.actors.find((a) => a.id === ctx.neighborhood.crewActorId)!.name;
+    expect(ctx.actorName(ctx.neighborhood.crewActorId)).toBe(name);
+  });
+
+  it("has all fifteen small-time crews, with their pool ids, kept below the major factions", () => {
+    const crews = world.actors.filter((a) => a.kind === "criminal-crew");
+    expect(crews).toHaveLength(15);
+    for (let i = 1; i <= 15; i++) expect(crews.some((c) => c.provenance.note?.includes(`SC-${String(i).padStart(2, "0")}`))).toBe(true);
+    expect(world.canon.some((f) => f.id === "small-operators")).toBe(true);
+  });
+
+  it("has the seven public churches, with Dawnfire underground", () => {
+    const churches = world.actors.filter((a) => a.kind === "church").map((a) => a.name);
+    expect(churches).toHaveLength(7);
+    for (const g of ["Lathander", "Waukeen", "Tyr", "Sune", "Chauntea", "Gond", "Oghma"]) expect(churches.some((c) => c.includes(g))).toBe(true);
+    expect(churches.some((c) => c.includes("Dawnfire"))).toBe(false);
+    expect(world.canon.find((f) => f.id === "dawnfire-underground")?.provenance.status).toBe("canon");
+  });
+});

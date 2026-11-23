@@ -1,11 +1,11 @@
-import { operatingWeekdays } from "../../engine/economy";
+import { operatesOn } from "../../engine/economy";
 import { clamp01 } from "../../engine/math";
 import type { Driver, EventContext } from "../../engine/types";
 
 export { formatCp } from "../../engine/math";
 
 export function isOperatingDay(ctx: EventContext): boolean {
-  return ctx.state.business.status === "operating" && operatingWeekdays(ctx.world, ctx.plan).includes(ctx.date.weekday);
+  return ctx.state.business.status === "operating" && operatesOn(ctx.world, ctx.plan, ctx.date);
 }
 
 export function avgWeeklyRevenue(ctx: EventContext, weeks = 3): number {

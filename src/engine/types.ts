@@ -61,7 +61,9 @@ export interface NeighborhoodDef {
   /** Taverns/inns that could plausibly take wholesale pies here. */
   wholesaleAccountPotential: number;
   rivalActorId: string;
+  /** Default crew; when `crewCandidates` is set, each campaign's luck picks one and keeps it. */
   crewActorId: string;
+  crewCandidates?: string[];
   // --- Optional district character (defaults keep a neighborhood "ordinary") ---
   /** How much regulars matter here: multiplies the loyalty boost to demand (default 1). */
   regularsWeight?: number;
@@ -113,7 +115,7 @@ export interface StaffCandidate {
 export interface ActorDef {
   id: string;
   name: string;
-  kind: "major-faction" | "trade-group" | "rival-business" | "criminal-crew" | "official-body" | "npc";
+  kind: "major-faction" | "trade-group" | "rival-business" | "criminal-crew" | "official-body" | "church" | "npc";
   provenance: Provenance;
   description: string;
   neighborhoods?: string[];
@@ -272,6 +274,8 @@ export interface Notice {
   text: string;
   price?: string;
   from?: string;
+  /** What it refers to (e.g. a festival id), so the report doesn't repeat it elsewhere. */
+  ref?: string;
 }
 
 export interface NoticeContext {
