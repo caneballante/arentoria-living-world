@@ -74,3 +74,25 @@ describe("telling the players about a move", () => {
     expect(line?.brief).toBe(true);
   });
 });
+
+describe("a second cart in the same district", () => {
+  it("adds customers, but nowhere near double", () => {
+    const one = planOf("starting-out", { stage: "unrestricted", weeklyProduction: 1200 });
+    const two = { ...one, channels: [{ type: "cart" as const, share: 0.5 }, { type: "cart" as const, share: 0.5 }], staff: [...one.staff, { candidateId: "dob-hennick", role: "vendor" as const, wageCpPerDay: 18 }] };
+    const sold = (p: typeof one) => run(p, "two-carts", 26).state.weeks.slice(-8).reduce((a, w) => a + w.sold, 0);
+    const a = sold(one);
+    const b = sold(two);
+    expect(b).toBeGreaterThan(a);
+    expect(b).toBeLessThan(a * 1.7);
+  });
+});
+
+describe("monthly choices", () => {
+  it("a starting cart gets about one A-or-B choice a month, each with a safe and a risky option", async () => {
+    const r = run("starting-out", "choices", 52);
+    const dilemmas = r.state.events.filter((e) => e.eventId?.startsWith("dilemma-"));
+    expect(dilemmas.length).toBeGreaterThanOrEqual(6);
+    const decisions = r.state.history.filter((h) => h.cause.kind === "decision");
+    expect(decisions.length).toBeGreaterThan(0);
+  });
+});

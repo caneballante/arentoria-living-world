@@ -297,9 +297,12 @@ export function runOperations(world: WorldDefinition, state: WorldState, date: C
       const r = expectedRetailDemand(world, state, plan, n, ch, date);
       const draw = rngFor(state.seed, "demand", day, i).normal(0, noise.noiseSd);
       const mult = clamp(Math.exp(draw), noise.noiseMin, noise.noiseMax);
-      demand = Math.round(r.expected * mult);
+      // A second outlet of the same kind in the same district mostly meets the same customers.
+      const sameKindBefore = plan.channels.slice(0, i).filter((x) => x.type === c.type && x.share > 0).length;
+      const reach = Math.pow(noise.extraOutletReach, sameKindBefore);
+      demand = Math.round(r.expected * mult * reach);
       priceCp = plan.priceCp;
-      factors = { ...r.factors, noise: mult };
+      factors = { ...r.factors, noise: mult, ...(reach < 1 ? { "extra outlet reach": reach } : {}) };
     }
     const sold = Math.max(0, Math.min(allocated, demand, capacityToday));
     const revenueCp = sold * priceCp;

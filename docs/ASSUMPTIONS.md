@@ -36,6 +36,8 @@ Each published report carries three or four notices (`src/world/notices.ts`, pro
 - one pitch for another district, a different one each report, quoting a typical pie's price there;
 - one or two options that would change something for this business: a seller or runner looking for work (public blurb and asking wage), a bodyguard, a town crier, a second butcher, better cuts, the guild, the licensing office.
 
+- one bit of color, rotating: the local rival's own ad, an upcoming festival (then not repeated under "Coming up"), a lost-and-found oddity, or an adventuring notice. The last two are story hooks for the DM; they don't change the simulation.
+
 They remind the party of their options without telling them when to act. Buying is a conversation at the table: the DM records the cost as a withdrawal and changes the plan (and the business size, if it needs a bigger one). Set-up prices quoted are provisional: cart 45 gp, stall 60 gp plus the district's weekly fee, baskets 25 gp (`GROWTH_PRICES_CP`).
 
 ## Starting small (business size)
@@ -47,7 +49,7 @@ The DM's guard rail (22 Nov 2026): the party **starts with one district, one car
 | **Starting out** | One street cart in one district; one hire (a seller); up to **500 pies a week** (provisional); constructs at a steady pace; no extra festival-day baking. |
 | **Unrestricted (sandbox)** | No limits. For strategy studies only. |
 
-The next sizes (a stall, a second seller, delivery, more output, pushing the constructs) are for the table to decide as the business grows.
+The next sizes (a stall, a second seller, delivery, more output, pushing the constructs) are for the table to decide as the business grows. For now, to let the party buy a second cart, switch the size to Unrestricted and hold the line yourself. A second outlet of the same kind in the same district reaches half as many new customers as the first (`demand.extraOutletReach`, compounding), so a second cart adds customers but can also flop.
 
 **What a starting cart earns** (Commons, honest pies at 10 cp, 450 a week, 30 seeds): about **1,080 gp in its first year**, about **21 gp a week** on average, rising from about 8 gp in the first week to about 23 gp by the end of the year as people learn about the cart. It never loses money over a year. One seller sells about 400–450 pies a week. A cart is hopeless in High March or the Crown Ward (few buyers, and they don't buy from carts), and the Shades is thinner at 8 cp.
 
@@ -89,10 +91,10 @@ Pacing is tuned per **in-game time**, never per session: you decide how far the 
 
 | | Sound plan | Risky plan |
 |---|---|---|
-| Player decisions | 6–10 (about one every 4–6 weeks) | 12–18 |
+| Player decisions | about one a month (12–16), the DM's target from Nov 2026 | 14–18 |
 | Notable report items | 10–15 | 20–30 |
 | Major events / adventure hooks | 2–4 | 6–10 |
-| Longest quiet stretch | ≤ 10 weeks | 4–6 weeks |
+| Longest quiet stretch | ≤ 6 weeks | 3–5 weeks |
 | Same crisis repeating | rarely | at most 3 times |
 
 Mechanisms (all in `src/world/pacing.ts` and the event library, all explainable):
@@ -103,6 +105,13 @@ Mechanisms (all in `src/world/pacing.ts` and the event library, all explainable)
 - **Repeat cooldowns**: a thread stage can't re-fire for weeks after it last fired.
 - **Threats resolve**: the second refused reprisal ends the extortion round. With real security the crew backs off; without it, they do damage first and it becomes a showdown to play at the table. A second sabotage burns a rival feud out for months.
 - **Response windows**: most decisions can wait 1–14 days. Urgent ones (a crew at the door, an inspection ruling) stop the clock at once. Unanswered decisions fall back to the standing order at their deadline.
+- **Monthly A-or-B choices** (`world/events/dilemmas.ts`): small decisions that move the dial, each with a safe and a risky option, and triggered by what really happened or by ordinary street life. They grow more likely over the six weeks after the party's last decision, so one arrives about monthly. Unanswered, the manager plays it safe.
+  - *Selling out early*: bake a few more, or a lot more at a copper extra. At full capacity: keep the price, or charge two coppers more.
+  - *Throwing pies away*: bake fewer, or pay a crier for a month (3 gp).
+  - *A busier corner*: stay put, or take it for a month (more customers, and more attention from crews or inspectors).
+  - *Cheap meat, no questions asked*: turn the drover away, or buy it (ingredients 30% cheaper for a month; a 35% chance someone falls ill).
+  - *A new recipe*: stick to what works, or let the seller try it (55% a hit, 45% a flop).
+  - *A street performer*: no thanks, or 2 gp for a week of crowds (20% chance of a mishap).
 - **Good-news decisions**: raise requests, staff poaching, festival pitches, exclusive supplier deals, rival truces, charity requests, guild invitations, large orders and a caravan commission, so quiet, well-run businesses still have choices to make.
 
 ## Risk and reward

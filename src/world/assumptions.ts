@@ -40,6 +40,8 @@ export const assumptions: EconomicAssumptions = {
   reserveHoldingRatePerWeek: 0.08,
   demand: {
     awarenessFloor: 0.2,
+    // Proposed: a second cart in the same district reaches half as many new customers as the first.
+    extraOutletReach: 0.5,
     reputationMin: 0.55,
     reputationMax: 1.45,
     loyaltyBoostMax: 0.35,

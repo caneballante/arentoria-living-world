@@ -21,7 +21,7 @@ Done:
 - Business sizes as the DM's guard rails: the party starts with one district, one cart, one hire and up to 500 pies a week, and the DM unlocks more. Short weekly reports (summary plus the three notes that matter most), with every note available to the DM.
 - Repriced for fun (Nov 2026): local prices doubled so a starting cart earns about 20 gp a week and established businesses 50–110 gp a week; repair costs raised so risk still bites.
 - One-step launcher and a playtest plan (`docs/TEST_PLAN.md`).
-- 130 automated tests.
+- 136 automated tests.
 
 Next small steps (before Phase 2):
 

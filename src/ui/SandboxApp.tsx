@@ -207,6 +207,7 @@ export function SandboxApp({ catalog }: { catalog: Catalog }) {
     return c.daysElapsed === 0 ? `Not started · first day ${catalog.startDate}` : `Day ${c.daysElapsed} · ${c.date} · week ${c.weekNumber}, day ${c.dayOfWeek}`;
   }, [resp, catalog.startDate]);
   const advanceDisabled = busy || blocked || planDirty;
+  const whyDisabled = busy ? "Working…" : planDirty ? "Apply or undo your plan changes first" : blocked ? "Answer the question that stopped the clock first" : undefined;
 
   return (
     <div className="sandbox">
@@ -279,10 +280,10 @@ export function SandboxApp({ catalog }: { catalog: Catalog }) {
               <strong className="num">{clockLabel}</strong>
             </div>
             <div className="row" role="group" aria-label="Advance the clock">
-              <button type="button" className="btn" disabled={advanceDisabled} onClick={() => advance(1)}>+1 day</button>
-              <button type="button" className="btn" disabled={advanceDisabled} onClick={() => advance(7)}>+1 week</button>
-              <button type="button" className="btn" disabled={advanceDisabled} onClick={() => advance(28)}>+4 weeks</button>
-              <button type="button" className="btn btn-primary" disabled={advanceDisabled} onClick={() => advance(56, true)} title="Runs up to 8 weeks, stopping as soon as a decision arises or something major happens">
+              <button type="button" className="btn" disabled={advanceDisabled} title={whyDisabled} onClick={() => advance(1)}>+1 day</button>
+              <button type="button" className="btn" disabled={advanceDisabled} title={whyDisabled} onClick={() => advance(7)}>+1 week</button>
+              <button type="button" className="btn" disabled={advanceDisabled} title={whyDisabled} onClick={() => advance(28)}>+4 weeks</button>
+              <button type="button" className="btn btn-primary" disabled={advanceDisabled} onClick={() => advance(56, true)} title={whyDisabled ?? "Runs up to 8 weeks, stopping as soon as a decision arises or something major happens"}>
                 Until something needs the party
               </button>
             </div>

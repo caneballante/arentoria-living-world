@@ -188,13 +188,21 @@ describe("notices in published reports", () => {
     return c.editions.map((e) => e.content);
   })();
 
-  it("carry a way to grow, another district, and an option or two", () => {
+  it("carry a way to grow, another district, an option, and a bit of color", () => {
     for (const r of reports) {
       const kinds = (r.notices ?? []).map((n) => n.kind);
       expect(kinds).toContain("grow");
       expect(kinds).toContain("district");
-      expect(kinds.filter((k) => k === "service").length).toBeGreaterThanOrEqual(1);
-      expect(r.notices!.length).toBeLessThanOrEqual(4);
+      expect(kinds.filter((k) => k === "service").length).toBe(1);
+      expect(kinds.some((k) => k === "rival" || k === "festival" || k === "hook")).toBe(true);
+      expect(r.notices!.length).toBe(4);
+    }
+  });
+
+  it("don't repeat an announced festival under 'Coming up'", () => {
+    for (const r of reports) {
+      const fest = r.notices!.find((n) => n.kind === "festival");
+      if (fest) for (const c of r.comingUp) expect(fest.headline.startsWith(c.text.split(".")[0]!.toUpperCase())).toBe(false);
     }
   });
 

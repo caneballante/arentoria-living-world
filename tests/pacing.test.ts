@@ -80,8 +80,9 @@ describe("threats resolve instead of looping", () => {
   it("sound plans meet the cadence targets: regular choices, ordinary weeks, a few big moments", () => {
     for (const sc of scenarios.filter((x) => x.quality === "sound")) {
       const s = sum(sc.id);
-      expect(s.playerDecisions.mean, `${sc.id} decisions`).toBeGreaterThanOrEqual(5);
-      expect(s.playerDecisions.mean, `${sc.id} decisions`).toBeLessThanOrEqual(14);
+      // DM's target (Nov 2026): about one choice a month that moves the dial.
+      expect(s.playerDecisions.mean, `${sc.id} decisions`).toBeGreaterThanOrEqual(8);
+      expect(s.playerDecisions.mean, `${sc.id} decisions`).toBeLessThanOrEqual(16);
       expect(s.longestQuietWeeks.mean, `${sc.id} quiet`).toBeLessThanOrEqual(12);
       expect(s.majorMoments.mean, `${sc.id} majors`).toBeLessThanOrEqual(5);
       expect(s.notableEvents.mean, `${sc.id} notable`).toBeLessThanOrEqual(18);

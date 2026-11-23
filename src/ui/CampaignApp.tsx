@@ -196,6 +196,9 @@ export function CampaignApp({ catalog }: { catalog: Catalog }) {
   const nextReport = (summary?.reports.length ?? 0) + 1;
   const clockLabel = view ? (elapsed === 0 ? `Not started · first day ${catalog.startDate}` : `Day ${elapsed} · ${view.clock.date} · week ${view.clock.weekNumber}, day ${view.clock.dayOfWeek}`) : "";
   const disabled = busy || blocked || planDirty;
+  const whyDisabled = busy ? "Working…" : planDirty ? "Apply or undo your order changes first" : blocked ? "Answer the question that's due today first" : undefined;
+  const applyOrders = () => act({ action: "plan", plan }, "New orders recorded.");
+  const undoOrders = () => view && setPlan(structuredClone(view.state.plan) as BusinessPlanInput);
 
   return (
     <div className="stack">
@@ -242,8 +245,8 @@ export function CampaignApp({ catalog }: { catalog: Catalog }) {
                     </p>
                   )}
                   <div className="row" style={{ marginTop: 8 }}>
-                    <button type="button" className="btn btn-primary btn-small" disabled={busy || blocked} onClick={() => act({ action: "plan", plan }, "New orders recorded.")}>{elapsed === 0 ? "Use these orders" : `Apply from day ${elapsed + 1}`}</button>
-                    <button type="button" className="btn btn-small btn-ghost" disabled={busy} onClick={() => setPlan(structuredClone(view.state.plan) as BusinessPlanInput)}>Undo edits</button>
+                    <button type="button" className="btn btn-primary btn-small" disabled={busy || blocked} onClick={applyOrders}>{elapsed === 0 ? "Use these orders" : `Apply from day ${elapsed + 1}`}</button>
+                    <button type="button" className="btn btn-small btn-ghost" disabled={busy} onClick={undoOrders}>Undo edits</button>
                   </div>
                 </div>
               )}
@@ -252,6 +255,14 @@ export function CampaignApp({ catalog }: { catalog: Catalog }) {
           </aside>
 
           <section className="stack" aria-label="Campaign">
+            {planDirty && (
+              <div className="callout row" role="status" style={{ gap: 10, flexWrap: "wrap" }}>
+                <span><strong>You've changed the orders.</strong> They don't take effect until you apply them. The clock and Publish wait until you do.</span>
+                <span className="spacer" />
+                <button type="button" className="btn btn-primary btn-small" disabled={busy || blocked} onClick={applyOrders}>{elapsed === 0 ? "Use these orders" : `Apply from day ${elapsed + 1}`}</button>
+                <button type="button" className="btn btn-small btn-ghost" disabled={busy} onClick={undoOrders}>Undo edits</button>
+              </div>
+            )}
             <div className="panel">
               <div className="runbar" style={{ alignItems: "center" }}>
                 <div style={{ minWidth: 240 }}>
@@ -263,10 +274,10 @@ export function CampaignApp({ catalog }: { catalog: Catalog }) {
                   </div>
                 </div>
                 <div className="row" role="group" aria-label="Advance the clock">
-                  <button type="button" className="btn" disabled={disabled} onClick={() => act({ action: "advance", days: 1 })}>+1 day</button>
-                  <button type="button" className="btn" disabled={disabled} onClick={() => act({ action: "advance", days: 7 })}>+1 week</button>
-                  <button type="button" className="btn" disabled={disabled} onClick={() => act({ action: "advance", days: 28 })}>+4 weeks</button>
-                  <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => act({ action: "advance", days: 56, untilNeeded: true })} title="Runs up to 8 weeks, stopping as soon as a decision arises or something major happens">
+                  <button type="button" className="btn" disabled={disabled} title={whyDisabled} onClick={() => act({ action: "advance", days: 1 })}>+1 day</button>
+                  <button type="button" className="btn" disabled={disabled} title={whyDisabled} onClick={() => act({ action: "advance", days: 7 })}>+1 week</button>
+                  <button type="button" className="btn" disabled={disabled} title={whyDisabled} onClick={() => act({ action: "advance", days: 28 })}>+4 weeks</button>
+                  <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => act({ action: "advance", days: 56, untilNeeded: true })} title={whyDisabled ?? "Runs up to 8 weeks, stopping as soon as a decision arises or something major happens"}>
                     Until something needs the party
                   </button>
                 </div>
@@ -310,6 +321,7 @@ export function CampaignApp({ catalog }: { catalog: Catalog }) {
                   type="button"
                   className="btn btn-primary"
                   disabled={busy || blocked || planDirty || summary.draftDays === 0}
+                  title={whyDisabled ?? (summary.draftDays === 0 ? "Move the clock forward first" : undefined)}
                   onClick={async () => {
                     if (await act({ action: "publish", deadline, note }, `Report ${nextReport} published. It's locked in; open it below to print or share.`)) {
                       setNote("");

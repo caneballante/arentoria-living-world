@@ -72,6 +72,14 @@ export interface EditionOptions {
   note: string;
 }
 
+/** Notices for a report; a festival announced in the notices isn't repeated under "Coming up". */
+function withNotices(world: WorldDefinition, result: RunResult, number: number, comingUp: EditionContent["comingUp"]) {
+  const s = result.state;
+  const notices = world.notices?.({ world, state: s, reportNumber: number, rng: rngFor(s.seed, "notices", number) }) ?? [];
+  const announced = notices.filter((n) => n.kind === "festival").map((n) => n.headline);
+  return { comingUp: comingUp.filter((c) => !announced.some((h) => h.startsWith(c.text.split(".")[0]!.toUpperCase()))), notices };
+}
+
 export function buildEdition(world: WorldDefinition, result: RunResult, o: EditionOptions): EditionContent {
   const s = result.state;
   const view = buildPlayerView(world, result, { digestFromDay: o.fromDay });
@@ -135,8 +143,7 @@ export function buildEdition(world: WorldDefinition, result: RunResult, o: Editi
       withdrawnCp: s.business.account.withdrawnCp,
     },
     weeks: view.weeks.map((w) => ({ index: w.index, dateRange: w.dateRange, produced: w.produced, sold: w.sold, revenueCp: w.revenueCp, profitCp: w.profitCp, cashEndCp: w.cashEndCp, festivals: w.festivals })),
-    comingUp,
-    notices: world.notices?.({ world, state: s, reportNumber: o.number, rng: rngFor(s.seed, "notices", o.number) }) ?? [],
+    ...withNotices(world, result, o.number, comingUp),
     choices: {
       neighborhood: n?.name ?? plan.neighborhood,
       size,

@@ -163,7 +163,7 @@ input[type="checkbox"] { accent-color: var(--accent); }
   border: 1px solid var(--border-strong); background: var(--surface-1); color: var(--ink);
 }
 .btn:hover { background: var(--surface-2); }
-.btn:disabled { opacity: 0.55; cursor: progress; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
 .btn-primary { background: var(--accent-bg); color: var(--accent-ink); border-color: transparent; }
 .btn-primary:hover { background: var(--accent-bg); filter: brightness(1.08); }
 .btn-small { padding: 3px 8px; font-size: 12px; font-weight: 500; }

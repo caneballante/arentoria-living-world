@@ -184,6 +184,8 @@ export interface EconomicAssumptions {
   reserveHoldingRatePerWeek: number;
   demand: {
     awarenessFloor: number;
+    /** Share of new customers each additional outlet of the same kind reaches (compounding). */
+    extraOutletReach: number;
     reputationMin: number;
     reputationMax: number;
     loyaltyBoostMax: number;
@@ -265,7 +267,7 @@ export interface WorldDefinition {
 
 /** A newsletter-style notice in a published report. It must describe an option that really exists. */
 export interface Notice {
-  kind: "grow" | "district" | "service";
+  kind: "grow" | "district" | "service" | "rival" | "festival" | "hook";
   headline: string;
   text: string;
   price?: string;

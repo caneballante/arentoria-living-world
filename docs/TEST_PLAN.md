@@ -40,7 +40,7 @@ The **campaign clock** bar is how you move time: **+1 day**, **+1 week**, **+4 w
 
 ## Things to judge (please jot down)
 
-- **Pace.** Does roughly one decision every 4–6 in-game weeks feel right for a well-run business? Do the risky plans feel eventful rather than relentless?
+- **Pace.** Does about one A-or-B choice a month feel right? Are the safe and risky options tempting in the right ways? Do the risky plans feel eventful rather than relentless?
 - **Session fit.** For a typical session (about a week passes), was there enough to talk about? For a long downtime, did "Until something needs the party" stop at the right moments?
 - **Money.** Does ~20 gp/week for a starting cart, ~50 gp/week for an established Commons business and ~110 gp/week for a luxury High March or Crown Ward business feel right next to 14 gp/week rent?
 - **Trouble.** A busy Commons cart that refuses to pay usually meets the Ninepenny Crew in its first year (watchers, then a demand, then a warning). Too often, or about right?
