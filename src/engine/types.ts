@@ -651,6 +651,8 @@ export interface ChannelDayResult {
 export interface DayRecord {
   day: number;
   operating: boolean;
+  /** Extra paid to suppliers for buying on credit while the account is overdrawn. */
+  creditSurchargeCp?: number;
   reason?: string;
   produced: number;
   sold: number;
@@ -698,6 +700,9 @@ export interface WeekRecord {
   index: number;
   startDay: number;
   endDay: number;
+  /** What running out of money cost this week: the suppliers' credit surcharge, and late wages. */
+  creditSurchargeCp?: number;
+  wagesLate?: boolean;
   produced: number;
   sold: number;
   waste: number;

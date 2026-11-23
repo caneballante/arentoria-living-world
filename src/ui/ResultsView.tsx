@@ -472,6 +472,16 @@ function AccountPanel({ account, onAccountAction, busy }: { account: AccountView
           <div className="tile-delta">deposits {formatCp(account.depositedCp)}</div>
         </div>
       </div>
+      {account.toCushionCp > 0 && (
+        <div className={account.owedCp > 0 ? "issues" : "warnings"} role="status">
+          <strong>{account.owedCp > 0 ? `We owe our suppliers ${formatCp(account.owedCp)}.` : "Money is getting thin."}</strong>{" "}
+          {account.toResumeCp > 0 && <>At least <strong>{formatCp(account.toResumeCp)}</strong> gets deliveries going again. </>}
+          {account.toClearCp > 0 && <><strong>{formatCp(account.toClearCp)}</strong> clears the debt. </>}
+          <strong>{formatCp(account.toCushionCp)}</strong> {account.owedCp > 0 ? "would also leave" : "would restore"} a week&apos;s cushion.
+          {account.owedCp > 0 && " Until it's paid, suppliers charge extra on every delivery and wages go out late."}
+          {onAccountAction && " Record the party's deposit below."}
+        </div>
+      )}
       <p className="small secondary">
         {st.note} Kept at: <strong>{account.location}</strong>. Suppliers extend about {formatCp(account.creditLimitCp)} of credit before they stop delivering.
       </p>

@@ -568,6 +568,8 @@ function closeWeek(world: WorldDefinition, state: WorldState, date: CalendarDate
     profitCp: profit,
     skimmedCp: acc.days.reduce((a, d) => a + d.skimmedCp, 0),
     ownerDrawCp: draw,
+    creditSurchargeCp: acc.days.reduce((a, d) => a + (d.creditSurchargeCp ?? 0), 0),
+    wagesLate,
     withdrawnCp: acc.withdrawnCp ?? 0,
     depositedCp: acc.depositedCp ?? 0,
     ...(() => {

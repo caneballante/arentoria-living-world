@@ -6,9 +6,10 @@
  * All events are PROPOSED content. Probabilities are PROVISIONAL.
  */
 import { fairPrice, hasActiveCondition, productionCapacity, supplierCreditLimitCp, unitIngredientCost } from "../../engine/economy";
+import { accountSummary } from "../../engine/account";
 import { clamp01 } from "../../engine/math";
 import { proposed } from "../../engine/provenance";
-import type { ConditionalEventDef, Driver, Effect } from "../../engine/types";
+import type { ConditionalEventDef, Driver, Effect, WorldState } from "../../engine/types";
 import { ingredientPriceIndex } from "../../engine/weather";
 import { formatCp, isOperatingDay, securityMitigation, vendors } from "./helpers";
 
@@ -457,10 +458,16 @@ const billsOverdue: ConditionalEventDef = {
   resolve(ctx) {
     const cash = ctx.state.business.cashCp;
     const limit = supplierCreditLimitCp(ctx.world, ctx.plan);
+    const a = accountSummary(ctx.world, ctx.state as WorldState);
+    const surcharge = (ctx.week?.days ?? []).reduce((s, d) => s + (d.creditSurchargeCp ?? 0), 0);
+    const premium = Math.round((ctx.world.assumptions.account.arrearsIngredientPremium - 1) * 100);
     return {
       severity: "notable",
-      playerText: `The business money has run out: we owe about ${formatCp(-cash)}. Suppliers are charging extra for credit and wages went out late.`,
-      dmText: `Overdrawn ${formatCp(-cash)}; suppliers cut off at about ${formatCp(limit)} overdrawn. Staff morale drops each week wages are late. Remedy: a deposit (DM-recorded).`,
+      playerText:
+        `The business money has run out: we owe our suppliers about ${formatCp(a.owedCp)}. ` +
+        `While we owe them they charge ${premium}% extra on everything we buy${surcharge > 0 ? ` (${formatCp(surcharge)} extra this week)` : ""}, and wages go out late. ` +
+        `${formatCp(a.toClearCp)} in the strongbox clears the debt; ${formatCp(a.toCushionCp)} would also leave a week's cushion.`,
+      dmText: `Overdrawn ${formatCp(-cash)}; suppliers cut off at about ${formatCp(limit)} overdrawn. Staff morale drops each week wages are late. Remedy: the party refills the strongbox (DM records a deposit).`,
       effects: [],
     };
   },
@@ -481,11 +488,12 @@ const supplierCutoff: ConditionalEventDef = {
     return { probability: over ? 1 : 0, drivers: over ? [{ label: `Overdrawn beyond suppliers' credit (${formatCp(limit)})`, value: 1 }] : [] };
   },
   resolve(ctx) {
+    const a = accountSummary(ctx.world, ctx.state as WorldState);
     return {
       severity: "major",
-      playerText: "Our suppliers refuse to deliver another sack until the bills are paid. The constructs stand idle.",
-      dmText: `Account ${formatCp(ctx.state.business.cashCp)}. No production until a deposit brings the balance back within the suppliers' credit.`,
-      sessionHook: "Where does the party find the money — and who would lend it to them?",
+      playerText: `Our suppliers refuse to deliver another sack until the bills are paid, so the constructs stand idle. We owe them ${formatCp(a.owedCp)}. At least ${formatCp(a.toResumeCp)} in the strongbox gets deliveries going again; ${formatCp(a.toClearCp)} clears the debt.`,
+      dmText: `Account ${formatCp(ctx.state.business.cashCp)}. No production until a deposit brings the balance back within the suppliers' credit (${formatCp(a.toResumeCp)} including a margin for price swings).`,
+      sessionHook: "The business is out of money: the party needs to bring coin to the strongbox.",
       effects: [],
     };
   },

@@ -105,6 +105,11 @@ The pie money is kept apart from the party's own purses, in a place the party ch
 When the account runs dry there are no loans; the remedy is a deposit the DM records. Short of that:
 
 - **Overdrawn:** suppliers sell on credit at +10%, wages go out late (each employee loses morale every week), and players get a "bills going unpaid" notice.
+- **The players are told exactly what it costs and what they need,** rounded up to whole gold:
+  - the report spells out the surcharge paid ("suppliers charged us 1 gp 4 sp extra for buying on credit") and the late wages;
+  - it says how much is owed, how much gets deliveries going again (with a margin for price swings), how much clears the debt, and how much also leaves a week's cushion.
+
+  The Account tab shows the same figures for the DM. Paying is simply a deposit: the party refills the strongbox, and the manager pays the suppliers from it. There are no moneylenders, by the DM's choice.
 - **Beyond the suppliers' credit** (provisional: about a week of ingredients): deliveries stop, and the constructs stand idle until a deposit arrives. This is a major event with a session hook.
 - **Unattended sandbox runs** assume the party covers the debts at week's end once suppliers have cut the business off, recorded as a deposit by "sandbox assumption". Set "If the money runs out" to "Nobody does" for real play.
 - **Payouts:** the plan's "Paying the party" setting is either an automatic share above the reserve (handy for sandbox comparisons) or "only when the DM records a withdrawal" (real play).

@@ -60,6 +60,24 @@ function Edition({ e }: { e: EditionContent }) {
         <div><span>Earned since opening</span><b>{formatCp(e.totals.earnedCp)}</b></div>
       </section>
 
+      {(e.strongbox.owedCp ?? 0) > 0 || (e.strongbox.creditSurchargeCp ?? 0) > 0 ? (
+        <section className="money-short">
+          <h2>{(e.strongbox.owedCp ?? 0) > 0 ? "We've run out of money" : "Running short cost us"}</h2>
+          {(e.strongbox.owedCp ?? 0) > 0 && (
+            <p>
+              We owe our suppliers <strong>{formatCp(e.strongbox.owedCp!)}</strong>.{" "}
+              {(e.strongbox.toResumeCp ?? 0) > 0 && <>At least <strong>{formatCp(e.strongbox.toResumeCp!)}</strong> in the strongbox gets deliveries going again. </>}
+              <strong>{formatCp(e.strongbox.toClearCp ?? 0)}</strong> clears the debt; <strong>{formatCp(e.strongbox.toCushionCp ?? 0)}</strong> would also leave a week&apos;s cushion.
+            </p>
+          )}
+          <p>
+            {(e.strongbox.creditSurchargeCp ?? 0) > 0 && <>Buying on credit cost us <strong>{formatCp(e.strongbox.creditSurchargeCp!)}</strong> extra in these {e.period.days} days. </>}
+            {(e.strongbox.lateWageWeeks ?? 0) > 0 && <>Wages went out late {e.strongbox.lateWageWeeks === 1 ? "once" : `${e.strongbox.lateWageWeeks} times`}, and the staff noticed. </>}
+            {(e.strongbox.owedCp ?? 0) > 0 && "Tell the DM how much you put in."}
+          </p>
+        </section>
+      ) : null}
+
       {e.questions.length > 0 && (
         <section className="edition-questions">
           <h2>Your answer is needed</h2>

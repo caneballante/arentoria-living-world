@@ -170,6 +170,17 @@ export function buildWeeklyReport(world: WorldDefinition, state: WorldState, w: 
   } else if (w.accountStatus === "healthy" && w.cashEndCp >= w.accountFloorCp * 1.5 && w.index % 4 === 0) {
     add("summary", "good", `The business could spare about ${formatCp(w.cashEndCp - w.accountFloorCp)} for the party without running short.`, `Safe to withdraw = balance ${formatCp(w.cashEndCp)} − floor ${formatCp(w.accountFloorCp)}.`);
   }
+  // What running out of money cost this week, in plain coin (unless the overdue-bills notice already says so).
+  const billsNotice = state.events.some((e) => e.week === w.index && e.eventId === "bills-overdue");
+  const surcharge = w.creditSurchargeCp ?? 0;
+  if (!billsNotice && (surcharge > 0 || w.wagesLate)) {
+    const premium = Math.round((world.assumptions.account.arrearsIngredientPremium - 1) * 100);
+    const parts = [
+      ...(surcharge > 0 ? [`suppliers charged us ${formatCp(surcharge)} extra for buying on credit (${premium}% while we owe them)`] : []),
+      ...(w.wagesLate ? ["wages went out late, and the staff noticed"] : []),
+    ];
+    add("summary", "bad", `Running short cost us this week: ${parts.join(", and ")}.`, `Overdrawn: ${premium}% credit surcharge on ingredients${w.wagesLate ? `; late wages, morale −${world.assumptions.account.unpaidWageMoraleHit} for everyone` : ""}.`, 79);
+  }
   if (w.withdrawnCp > 0) add("summary", "neutral", `The party withdrew ${formatCp(w.withdrawnCp)} from the business this week.`, "DM-recorded withdrawal(s).");
   if (w.depositedCp > 0) add("summary", "neutral", `The party put ${formatCp(w.depositedCp)} into the business this week.`, "DM-recorded deposit(s).");
 

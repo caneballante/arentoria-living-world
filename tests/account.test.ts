@@ -132,3 +132,49 @@ describe("only the DM can record withdrawals (server-enforced)", () => {
     expect(json.view.account.withdrawnCp).toBe(500);
   });
 });
+
+describe("running out of money: the players are told what it costs and what they need", () => {
+  const plan = planOf("commons-compliant", { finance: { reserveTargetCp: 2500, ownerDrawShare: 0, payoutMode: "dm-only", reinvestAdvertisingShare: 0.1 } });
+  const drained = simulateScenario(world, { plan, seed: "dry", weeks: 6, startDay: START, sandbox: { partyTopUps: "never" }, interventions: [withdraw(START + 8, 200, "drain")] }).state;
+
+  it("records the suppliers' credit surcharge and late wages, and says so in the report", async () => {
+    const { buildAllReports } = await import("../src/narrative/weekly-report");
+    // Overdraw by about 15 gp: within the suppliers' credit, so they keep delivering, at a price.
+    const before = simulateScenario(world, { plan, seed: "short", weeks: 2, days: 10, startDay: START, sandbox: { partyTopUps: "never" } }).state;
+    const gp = Math.ceil(before.business.cashCp / 100) + 15;
+    const short = simulateScenario(world, { plan, seed: "short", weeks: 3, startDay: START, sandbox: { partyTopUps: "never" }, interventions: [withdraw(START + 10, gp, "short")] }).state;
+    const owing = short.weeks.filter((w) => (w.creditSurchargeCp ?? 0) > 0);
+    expect(owing.length).toBeGreaterThan(0);
+    expect(short.weeks.some((w) => w.wagesLate)).toBe(true);
+    const reports = buildAllReports(world, short);
+    const lines = reports.flatMap((r) => r.lines.filter((l) => l.brief).map((l) => l.text));
+    // Either the overdue-bills notice or the "running short" line spells it out, in the short report.
+    const said = lines.filter((t) => /charge 10% extra on everything we buy|suppliers charged us .+ extra for buying on credit \(10% while we owe them\)/.test(t));
+    expect(said.length).toBeGreaterThan(0);
+    expect(lines.some((t) => /wages (go|went) out late/.test(t))).toBe(true);
+  });
+
+  it("tells the players how much clears the debt and how much gets deliveries going again", () => {
+    const bills = drained.events.find((e) => e.eventId === "bills-overdue")!;
+    expect(bills.playerText).toMatch(/we owe our suppliers about .+ gp/);
+    expect(bills.playerText).toMatch(/clears the debt; .+ would also leave a week's cushion/);
+    const cutoff = drained.events.find((e) => e.eventId === "supplier-cutoff")!;
+    expect(cutoff.playerText).toMatch(/At least .+ gp in the strongbox gets deliveries going again/);
+    expect(cutoff.sessionHook).not.toMatch(/lend/);
+  });
+
+  it("depositing the amount it names really does get deliveries going again", () => {
+    // Find the first day suppliers stopped, take the account as it stood, and deposit exactly what it says.
+    const cut = drained.events.find((e) => e.eventId === "supplier-cutoff")!;
+    const upTo = simulateScenario(world, { plan, seed: "dry", weeks: 6, days: cut.day - START + 1, startDay: START, sandbox: { partyTopUps: "never" }, interventions: [withdraw(START + 8, 200, "drain")] }).state;
+    const need = accountSummary(world, upTo);
+    expect(need.toResumeCp).toBeGreaterThan(0);
+    expect(need.toResumeCp % 100).toBe(0); // whole gold
+    expect(need.toClearCp).toBeGreaterThanOrEqual(need.toResumeCp);
+    expect(need.toCushionCp).toBeGreaterThan(need.toClearCp);
+    const after = runSimulation(world, upTo, { untilDay: upTo.day + 6, interventions: [deposit(upTo.day, need.toResumeCp / 100, "rescue")] }).state;
+    const days = [...after.weeks.filter((w) => w.endDay >= upTo.day).flatMap(() => []), ...after.current.days];
+    const resumed = after.weeks.some((w) => w.endDay >= upTo.day && w.produced > 0) || days.some((d) => d.produced > 0);
+    expect(resumed).toBe(true);
+  });
+});

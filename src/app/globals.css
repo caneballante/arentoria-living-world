@@ -343,3 +343,7 @@ details > summary { cursor: pointer; color: var(--ink-2); }
 .cg-legend { color: var(--muted); font-size: 12px; }
 .calendar-guide.compact .cg-months li { font-size: 12px; padding: 1px 3px; }
 @media print { .cg-season { break-inside: avoid; } .cg-now { outline-width: 2px; } }
+
+.money-short { border: 2px solid var(--neg); border-radius: 8px; padding: 10px 14px; }
+.money-short h2 { margin-top: 0; }
+.money-short p { margin: 4px 0 0; }

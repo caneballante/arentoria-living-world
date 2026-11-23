@@ -35,6 +35,14 @@ export interface EditionContent {
     status: string;
     withdrawnCp: number;
     depositedCp: number;
+    /** When money is short: what's owed, and what gets deliveries going, clears the debt, and leaves a week's cushion. */
+    owedCp?: number;
+    toResumeCp?: number;
+    toClearCp?: number;
+    toCushionCp?: number;
+    /** What running out of money cost during this stretch. */
+    creditSurchargeCp?: number;
+    lateWageWeeks?: number;
     entries: { date: string; kind: string; description: string; amountCp: number; balanceCp?: number; by?: string }[];
   };
   totals: { weeks: number; piesSold: number; takingsCp: number; earnedCp: number; withdrawnCp: number };
@@ -134,6 +142,12 @@ export function buildEdition(world: WorldDefinition, result: RunResult, o: Editi
       status: view.account.status,
       withdrawnCp: view.account.withdrawnCp,
       depositedCp: view.account.depositedCp,
+      owedCp: view.account.owedCp,
+      toResumeCp: view.account.toResumeCp,
+      toClearCp: view.account.toClearCp,
+      toCushionCp: view.account.toCushionCp,
+      creditSurchargeCp: s.weeks.filter((w) => inPeriod(w.endDay)).reduce((a, w) => a + (w.creditSurchargeCp ?? 0), 0),
+      lateWageWeeks: s.weeks.filter((w) => inPeriod(w.endDay) && w.wagesLate).length,
       entries: s.business.account.statement
         .filter((e) => inPeriod(e.day))
         .map((e) => ({ date: short(e.day), kind: e.kind, description: e.description, amountCp: e.amountCp, ...(e.balanceCp !== undefined ? { balanceCp: e.balanceCp } : {}), ...(by(e.authority) ? { by: by(e.authority) } : {}) })),

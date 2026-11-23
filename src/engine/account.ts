@@ -18,7 +18,18 @@ export interface AccountSummary {
   status: AccountStatus;
   withdrawnCp: Cp;
   depositedCp: Cp;
+  /** What the business owes its suppliers (0 unless overdrawn). */
+  owedCp: Cp;
+  /** Deposit needed to get deliveries going again (0 unless cut off), with a margin for price swings. */
+  toResumeCp: Cp;
+  /** Deposit needed to clear the debt. */
+  toClearCp: Cp;
+  /** Deposit needed to reach the operating floor (a week's running costs). */
+  toCushionCp: Cp;
 }
+
+/** Players hand over coin: round deposits up to whole gold pieces. */
+const wholeGp = (cp: number) => (cp > 0 ? Math.ceil(cp / 100) * 100 : 0);
 
 /** Typical weekly running costs: fixed costs, wages and ingredients for the planned output. */
 export function weeklyRunningCostsCp(world: WorldDefinition, state: WorldState): Cp {
@@ -51,5 +62,10 @@ export function accountSummary(world: WorldDefinition, state: WorldState): Accou
     status: accountStatusOf(balanceCp, floorCp, creditLimitCp),
     withdrawnCp: state.business.account.withdrawnCp,
     depositedCp: state.business.account.depositedCp,
+    owedCp: Math.max(0, -balanceCp),
+    // Suppliers resume once the debt is back within their credit; ingredient prices swing, so keep a 20% margin.
+    toResumeCp: balanceCp < -creditLimitCp ? wholeGp(-balanceCp - creditLimitCp * 0.8) : 0,
+    toClearCp: wholeGp(-balanceCp),
+    toCushionCp: wholeGp(floorCp - balanceCp),
   };
 }

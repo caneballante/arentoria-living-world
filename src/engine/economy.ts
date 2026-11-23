@@ -339,7 +339,9 @@ export function runOperations(world: WorldDefinition, state: WorldState, date: C
   const retailRevenue = channels.filter((c) => c.channel !== "wholesale").reduce((a, c) => a + c.revenueCp, 0);
 
   const wages = state.business.staff.filter((s) => !absent.has(s.id)).reduce((a, s) => a + s.wageCpPerDay, 0);
-  const ingredients = produced * unitIngredientCost(world, state, plan, priceIndex, day) * (overdrawn ? world.assumptions.account.arrearsIngredientPremium : 1);
+  const baseIngredients = produced * unitIngredientCost(world, state, plan, priceIndex, day);
+  const ingredients = baseIngredients * (overdrawn ? world.assumptions.account.arrearsIngredientPremium : 1);
+  const creditSurchargeCp = Math.round(ingredients - baseIngredients);
   const fuel = produced * world.assumptions.fuelCostPerPieCp * fuelPriceIndex(world.market, world.calendar, date.dayOfYear);
   const taxes = plan.compliance === "full" ? retailRevenue * n.marketTaxRate : 0;
 
@@ -348,6 +350,7 @@ export function runOperations(world: WorldDefinition, state: WorldState, date: C
       ...baseRecord,
       operating: true,
       reason: cutOff ? "suppliers won't deliver until the bills are paid" : undefined,
+      ...(creditSurchargeCp > 0 ? { creditSurchargeCp } : {}),
       produced,
       sold,
       waste: produced - sold,
