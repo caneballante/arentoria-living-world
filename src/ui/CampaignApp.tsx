@@ -190,6 +190,7 @@ export function CampaignApp({ catalog }: { catalog: Catalog }) {
 
   const entry = list?.find((c) => c.id === active);
   const summary = data?.campaign;
+  const share = data?.dungeonShare;
   const view = data?.view;
   const blocked = !!view && view.pending.some((p) => p.dueNow);
   const planDirty = !!plan && !!view && !same(plan, view.state.plan);
@@ -328,7 +329,7 @@ export function CampaignApp({ catalog }: { catalog: Catalog }) {
                   disabled={busy || blocked || planDirty || summary.draftDays === 0}
                   title={whyDisabled ?? (summary.draftDays === 0 ? "Move the clock forward first" : undefined)}
                   onClick={async () => {
-                    if (await act({ action: "publish", deadline, note }, `Report ${nextReport} published. It's locked in; open it below to print or share.`)) {
+                    if (await act({ action: "publish", deadline, note }, `Report ${nextReport} published. It's locked in; open it below to print${data?.dungeonShare?.ready ? ", or send it to DungeonShare" : " or share"}.`)) {
                       setNote("");
                       setConfirmUndo(false);
                     }
@@ -350,16 +351,30 @@ export function CampaignApp({ catalog }: { catalog: Catalog }) {
                       <a className="btn btn-small" href={`/campaign/${active}/report/${r.number}`} target="_blank" rel="noreferrer">Report {r.number}</a>
                       <span className="small">{r.from} – {r.to}</span>
                       <span className="small muted">published {r.publishedAt}{r.deadline ? ` · answers by ${r.deadline}` : ""}{r.questions ? ` · ${r.questions} question${r.questions === 1 ? "" : "s"}` : ""}</span>
+                      {share?.ready &&
+                        (r.sentAt ? (
+                          <span className="row" style={{ gap: 6 }}>
+                            <span className="small">✓ On DungeonShare</span>
+                            <button type="button" className="btn btn-small btn-ghost" disabled={busy} title="Send this report again (replaces the copy on DungeonShare)" onClick={() => act({ action: "send", number: r.number }, `Report ${r.number} sent again.`)}>Send again</button>
+                            <button type="button" className="btn btn-small btn-ghost" disabled={busy} title="Remove this report from DungeonShare (it stays here)" onClick={() => act({ action: "take-down", number: r.number }, `Report ${r.number} taken down from DungeonShare.`)}>Take down</button>
+                          </span>
+                        ) : (
+                          <button type="button" className="btn btn-small" disabled={busy} title={share.note} onClick={() => act({ action: "send", number: r.number }, `Report ${r.number} is on DungeonShare.`)}>Send to DungeonShare</button>
+                        ))}
                     </li>
                   ))}
                 </ul>
+                {share && <p className="small muted">{share.note}</p>}
                 {summary.canUndo && (
                   <div className="row">
                     {!confirmUndo ? (
                       <button type="button" className="btn btn-small btn-ghost" disabled={busy} onClick={() => setConfirmUndo(true)}>Undo Report {summary.reports.length}…</button>
                     ) : (
                       <>
-                        <span className="small">{active === "party" ? `Undo Report ${summary.reports.length}? It goes back to being a draft (a backup is kept). Only do this if the players haven't seen it.` : `Undo Report ${summary.reports.length}?`}</span>
+                        <span className="small">
+                          {active === "party" ? `Undo Report ${summary.reports.length}? It goes back to being a draft (a backup is kept). Only do this if the players haven't seen it.` : `Undo Report ${summary.reports.length}?`}
+                          {summary.reports[summary.reports.length - 1]?.sentAt ? " It also comes down from DungeonShare." : ""}
+                        </span>
                         <button type="button" className="btn btn-small" disabled={busy} onClick={async () => { await act({ action: "undo-publish" }, "Report undone. That stretch is a draft again."); setConfirmUndo(false); }}>Yes, undo it</button>
                         <button type="button" className="btn btn-small btn-ghost" onClick={() => setConfirmUndo(false)}>Keep it</button>
                       </>

@@ -9,6 +9,7 @@ import {
   CampaignError,
   campaignView,
   createCampaign,
+  markSent,
   publish,
   publishedDay,
   recordAccount,
@@ -155,6 +156,43 @@ describe("a campaign", () => {
     }
     const r = runDraft(world, c);
     if (r.blocking.length) expect(() => pub(c)).toThrow(/due today/);
+  });
+});
+
+describe("reports on DungeonShare", () => {
+  it("remembers which reports were sent, and clears it when one is taken down", () => {
+    const c = pub(play(fresh(), 14));
+    const sent = markSent(c, 1, "2026-11-23T11:00:00Z", NOW);
+    expect(summarize(world, sent).reports[0]!.sentAt).toBe("2026-11-23T11:00:00Z");
+    const down = markSent(sent, 1, null, NOW);
+    expect(summarize(world, down).reports[0]!.sentAt).toBeNull();
+    expect(() => markSent(c, 2, NOW, NOW)).toThrow(CampaignError);
+  });
+
+  it("won't undo a report the players can see until it comes down", () => {
+    const sent = markSent(pub(play(fresh(), 14)), 1, NOW, NOW);
+    expect(() => undoPublish(sent, NOW)).toThrow(/Take it down first/);
+    expect(undoPublish(markSent(sent, 1, null, NOW), NOW).editions).toHaveLength(0);
+  });
+
+  it("lists the party's decisions so far, never the DM's", () => {
+    let c = advance(world, fresh("test", "decisions-1"), 42, false, NOW);
+    const picked: string[] = [];
+    for (let i = 0; i < 30; i++) {
+      const r = runDraft(world, c);
+      if (r.status !== "paused") break;
+      if (r.pausedOnEvent) c = acknowledge(world, c, r.pausedOnEvent.id, NOW);
+      for (const id of r.blocking) {
+        const p = r.pending.find((x) => x.id === id)!;
+        if (p.authority === "players") picked.push(p.options[0]!.label);
+        c = answer(world, c, id, p.options[0]!.id, NOW);
+      }
+    }
+    const e = pub(c).editions[0]!.content;
+    expect(picked.length).toBeGreaterThan(0);
+    expect(e.decisions!.filter((d) => d.by === "party").map((d) => d.choice)).toEqual(picked);
+    const dmOnly = runDraft(world, c).state.events.filter((x) => x.resolution && (x.resolution.authority === "dm" || x.resolution.authority === "sandbox-assumption"));
+    for (const x of dmOnly) expect(e.decisions!.map((d) => d.title)).not.toContain(x.title);
   });
 });
 

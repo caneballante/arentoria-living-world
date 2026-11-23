@@ -54,6 +54,8 @@ export interface EditionRecord {
   /** Engine state at the end of the stretch; kept for the latest few reports. */
   snapshot: string | null;
   content: EditionContent;
+  /** When this report was last sent to DungeonShare (cleared when it is taken down). */
+  sentAt?: string;
 }
 
 export interface CampaignFile {
@@ -156,7 +158,7 @@ export interface CampaignSummary {
   pause: PauseMode;
   startDate: string;
   publishedThrough: { day: number; date: string } | null;
-  reports: { number: number; from: string; to: string; publishedAt: string; deadline: string; note: string; questions: number }[];
+  reports: { number: number; from: string; to: string; publishedAt: string; deadline: string; note: string; questions: number; sentAt: string | null }[];
   draftDays: number;
   canStartOver: boolean;
   canUndo: boolean;
@@ -178,7 +180,7 @@ export function summarize(world: WorldDefinition, c: CampaignFile, result?: RunR
     pause: c.pause,
     startDate: fmt(c.startDay),
     publishedThrough: c.editions.length ? { day: pub - c.startDay + 1, date: fmt(pub) } : null,
-    reports: c.editions.map((e) => ({ number: e.number, from: e.content.period.from, to: e.content.period.to, publishedAt: e.publishedAt, deadline: e.deadline, note: e.note, questions: e.content.questions.length })),
+    reports: c.editions.map((e) => ({ number: e.number, from: e.content.period.from, to: e.content.period.to, publishedAt: e.publishedAt, deadline: e.deadline, note: e.note, questions: e.content.questions.length, sentAt: e.sentAt ?? null })),
     draftDays: Math.max(0, last - pub),
     canStartOver: c.kind === "test" || c.editions.length === 0,
     canUndo: c.editions.length > 0 && (c.editions.length === 1 || !!c.editions[c.editions.length - 2]!.snapshot),
@@ -196,6 +198,8 @@ export interface CampaignView {
   answers: Record<string, string>;
   /** Where the clock is in the year, and the months since the last report. */
   calendar: CalendarGuide;
+  /** Filled in by the server: whether reports can be sent to DungeonShare from this campaign. */
+  dungeonShare?: { ready: boolean; site: string; note: string };
 }
 
 export function campaignView(world: WorldDefinition, c: CampaignFile): CampaignView {
@@ -334,10 +338,17 @@ export function publish(world: WorldDefinition, c: CampaignFile, o: { note: stri
   return touch({ ...c, editions, draft: carry }, o.now);
 }
 
+/** Record that a report was sent to DungeonShare (or, with null, taken down from it). */
+export function markSent(c: CampaignFile, number: number, sentAt: string | null, now: string): CampaignFile {
+  if (!c.editions.some((e) => e.number === number)) throw new CampaignError(`There is no Report ${number}.`);
+  return touch({ ...c, editions: c.editions.map((e) => (e.number === number ? { ...e, sentAt: sentAt ?? undefined } : e)) }, now);
+}
+
 /** Undo the latest report: it goes back to being a draft (a deliberate DM step). */
 export function undoPublish(c: CampaignFile, now: string): CampaignFile {
   const last = c.editions[c.editions.length - 1];
   if (!last) throw new CampaignError("There is no report to undo.");
+  if (last.sentAt) throw new CampaignError(`Report ${last.number} is on DungeonShare. Take it down first.`);
   const prev = c.editions[c.editions.length - 2];
   if (prev && !prev.snapshot) throw new CampaignError("That report is too old to undo.");
   const ivs = new Map(last.inputs.interventions.map((iv) => [iv.refId ?? JSON.stringify(iv), iv]));

@@ -22,7 +22,7 @@ Done:
 - Repriced for fun (Nov 2026): local prices doubled so a starting cart earns about 20 gp a week and established businesses 50–110 gp a week; repair costs raised so risk still bites.
 - The DM's canon calendar (Council Day outside the week; eight citywide and thirteen district or church observances with modest local effects), the major factions, the seven public churches, and the fifteen small-time crews as a pool each campaign draws its district crews from.
 - One-step launcher and a playtest plan (`docs/TEST_PLAN.md`).
-- 145 automated tests.
+- 153 automated tests.
 
 Next small steps (before Phase 2):
 
@@ -36,7 +36,8 @@ The tool runs on the DM's machine and publishes to DungeonShare, so it doesn't n
 
 - Done: the players choose the starting district (with the going rate and a warning where a cart won't work), and changing district later is a real move with costs.
 - Done: **the real campaign and a test campaign**, saved locally. The DM moves the clock, reviews, records the party's answers, orders and money, and publishes numbered reports. Published stretches are locked (snapshots), drafts can be rewound, and the latest report can be undone. Reports are printable and available as player-safe JSON.
-- Next: a **Pie Shop tab in DungeonShare** (Overview, Latest update, Our choices) fed by Publish, the way DnD Tracker publishes Session Memory (needs a DungeonShare change and a key on the live site).
+- Done (Living World side): **Send to DungeonShare** for published reports of the real campaign, with send again, take down, and take-down on undo. The DungeonShare side (a **Pie Shop** tab with Overview, Latest update and Our choices, and a `POST/DELETE /api/pie-shop` endpoint with its own key) is built and needs merging and deploying there.
+- The simulation stays as it is: no new mechanics. Assessments and clues come from asking Claude at the table, outside the sim's accounting.
 - Next: a **manager's voice** for the report letter, with "because you…" lines tying results to the party's choices.
 - **Proposal → adjudication → effects** workflow for freeform actions. The DM gets a suggested interpretation (possible checks, costs, affected variables, candidate effects) and approves an edited effect list.
 - DM overrides: edit any hidden variable, condition or thread through `applyIntervention`.

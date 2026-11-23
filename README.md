@@ -30,6 +30,23 @@ The district can change later from **Orders**. That's a real move: nobody in the
 
 Campaigns are saved on your computer in the project's `campaigns/` folder, which is kept out of git. Set `ARENTORIA_CAMPAIGN_DIR` to keep them somewhere else. A backup is written to `campaigns/backups/` before every publish, undo and restart. Back the folder up like any other important file. The real campaign can be started over only until its first report is published; after that you can **undo the latest report** if the players haven't seen it yet.
 
+### Sending reports to DungeonShare
+
+Players read the reports on DungeonShare, in a **Pie Shop** tab beside Chronicle and Party (Overview, Latest update, Our choices). Only the party's campaign is sent; the test campaign stays on your computer.
+
+1. Once DungeonShare has the Pie Shop update and its Pie Shop key, create a file called `.env.local` in the project folder (it's kept out of git) with:
+
+   ```
+   DUNGEONSHARE_PIESHOP_TOKEN=<the same key as on DungeonShare>
+   DUNGEONSHARE_CAMPAIGN_SLUG=<the campaign's name in its DungeonShare address>
+   ```
+
+   `.env.example` shows the format. Restart the app after changing it.
+2. After publishing, click **Send to DungeonShare** next to the report. It's marked "On DungeonShare"; **Send again** replaces the copy and **Take down** removes it.
+3. Undoing a report that's on DungeonShare takes it down first.
+
+The key stays on your computer: the browser never sees it.
+
 ### The sandbox
 
 In the **Sandbox** (for experiments and strategy studies):

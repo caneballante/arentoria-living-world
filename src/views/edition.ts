@@ -48,6 +48,11 @@ export interface EditionContent {
   totals: { weeks: number; piesSold: number; takingsCp: number; earnedCp: number; withdrawnCp: number };
   weeks: { index: number; dateRange: string; produced: number; sold: number; revenueCp: number; profitCp: number; cashEndCp: number; festivals: string[] }[];
   comingUp: { date: string; text: string; festivalId?: string }[];
+  /**
+   * Every decision so far (whole campaign, oldest first): what the party chose, or what the
+   * manager did when it was left to them. DM-only decisions are never included.
+   */
+  decisions?: { date: string; title: string; choice: string; by: "party" | "manager" }[];
   /** Where we are in the year: the season guide shown with the report. */
   calendar?: CalendarGuide;
   /** Classified ads: reminders of real options (growing, other districts, hires, services). */
@@ -160,6 +165,9 @@ export function buildEdition(world: WorldDefinition, result: RunResult, o: Editi
       withdrawnCp: s.business.account.withdrawnCp,
     },
     weeks: view.weeks.map((w) => ({ index: w.index, dateRange: w.dateRange, produced: w.produced, sold: w.sold, revenueCp: w.revenueCp, profitCp: w.profitCp, cashEndCp: w.cashEndCp, festivals: w.festivals })),
+    decisions: s.events
+      .filter((e) => e.visibleToPlayers && e.resolution && (e.resolution.authority === "players" || e.resolution.authority === "standing-order"))
+      .map((e) => ({ date: short(e.day), title: e.title, choice: e.resolution!.label, by: e.resolution!.authority === "players" ? ("party" as const) : ("manager" as const) })),
     ...withNotices(world, result, o.number, comingUp),
     calendar: buildCalendarGuide(world, o.fromDay, o.toDay),
     choices: {
