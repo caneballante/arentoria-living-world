@@ -19,7 +19,18 @@ npm run launch -- --prod     # production build (snappier pages)
 
 A 20-minute playtest checklist is in **[docs/TEST_PLAN.md](docs/TEST_PLAN.md)**.
 
-Then, in the browser:
+### Running the real campaign
+
+Open **Campaign** in the top bar. There are two campaigns side by side:
+
+- **The party's campaign** is the real one. Start it once (it begins with the *Starting out* plan). Then, between sessions: move the clock, look over what happened (the DM view shows everything), record what the players decided (answers, new orders, money taken out or put in), and **Publish** a report. Publishing locks that stretch in: later runs continue from it, so it never changes, even if the simulation's numbers are recalibrated later. Each report opens as a printable page (letter, questions with tick boxes, strongbox, week by week, current orders).
+- **The test campaign** works exactly the same way, and you can restart it whenever you like. It never touches the real one.
+
+Campaigns are saved on your computer in the project's `campaigns/` folder, which is kept out of git. Set `ARENTORIA_CAMPAIGN_DIR` to keep them somewhere else. A backup is written to `campaigns/backups/` before every publish, undo and restart. Back the folder up like any other important file. The real campaign can be started over only until its first report is published; after that you can **undo the latest report** if the players haven't seen it yet.
+
+### The sandbox
+
+In the **Sandbox** (for experiments and strategy studies):
 
 1. Pick a starting scenario (or build a plan) in the left panel. It covers all twelve business decisions plus standing orders. The default, **Starting out**, is where the party begins: one district, one cart, one hire and up to 500 pies a week. The DM unlocks bigger sizes as the business grows ("Business size" at the top of the plan). The other scenarios are unrestricted strategy studies.
 2. Move the **campaign clock**: **+1 day**, **+1 week** (a typical session), **+4 weeks**, or **Until something needs the party** (downtime: it runs up to 8 weeks and stops when a decision arises or something major happens). **Run a whole season** plays 13–52 weeks at once. The start is the placeholder date 1 Harvest 940 CY.
@@ -64,10 +75,11 @@ src/world/         Arentoria content: canon facts, proposed worldbuilding, provi
   staff.ts           proposed hiring pool (hidden traits)
   events/            conditional events, threads (progress clocks), scheduled events
   scenarios.ts       strategy test cases
+src/campaign/      The real and test campaigns: draft, publish, undo (pure functions over a campaign file)
 src/narrative/     Weekly reports derived from simulated conditions (each line has a DM-only basis)
 src/views/         Player and DM projections — the only shapes that leave the server
 src/analysis/      Seeded batch runs, metrics, paired comparisons
-src/persistence/   Repository boundary (in-memory now; Postgres/Supabase in Phase 2)
+src/persistence/   Campaign files on the DM's machine (campaigns/), plus the repository boundary
 src/server/        Public catalog, role resolution
 src/app/, src/ui/  Next.js App Router pages, API routes and client components
 scripts/           CLI runners

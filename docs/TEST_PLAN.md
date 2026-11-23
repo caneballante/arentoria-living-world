@@ -2,13 +2,21 @@
 
 The goal is to confirm the prototype works, and to collect your judgment on whether the numbers, the pace of events and the stories *feel right* for Arentoria. Note anything that feels off, since calibration is the next step.
 
-**Launch:** double-click `Launch Arentoria.cmd` (Windows) or `Launch Arentoria.command` (Mac), or run `npm run launch`. The first launch installs dependencies (about a minute), then your browser opens the Sandbox. To stop, press Ctrl+C in the launcher window or close it.
+**Launch:** double-click `Launch Arentoria.cmd` (Windows) or `Launch Arentoria.command` (Mac), or run `npm run launch`. The first launch installs dependencies (about a minute), then your browser opens the app. To stop, press Ctrl+C in the launcher window or close it.
 
 The **campaign clock** bar is how you move time: **+1 day**, **+1 week**, **+4 weeks**, or **Until something needs the party** (up to 8 weeks, stopping as soon as a decision arises or something major happens). **Run a whole season** plays 13–52 weeks in one go.
 
 **First, the real starting point.** The default plan is *Starting out: one cart in the Commons*. Check the "Business size" box at the top of the plan: you can't add a second outlet, hire a second person, push the constructs, or bake more than 500 pies a week. Click **+1 week**: the report shows the week's summary and up to three notes. Click **Every note + DM explanations** to see the rest. Then try **Unrestricted (sandbox)** and back: a bigger plan offers **Trim the plan to fit**.
 
-For the steps below, pick *Conservative Commons cart* (an unrestricted strategy study), seed `autumn-940`, "Stop and ask".
+**The campaign (real play).** Open **Campaign**, choose **Test campaign** and click **Start the test campaign**.
+1. Click **+1 week**, type a deadline under "Answers due by", and click **Publish Report 1**. It appears under "Published reports"; open it. You should see a printable page with the letter, figures, any questions with tick boxes, week by week, and "How we run things".
+2. Click **Until something needs the party**. If it stops on a question that's due today, answer it. When it stops on a new question, publish Report 2: that question is in the report with its deadline and what happens if nobody answers.
+3. Change an order (say the price) and click **Apply from day N**. Record a withdrawal on the **Account** tab. Both show up straight away.
+4. Click **Undo Report 2…**, then **Yes, undo it**. The stretch becomes a draft again. Publish it again and it comes out the same.
+5. **Rewind to the last report**, then move the clock again: the same days replay identically.
+6. **Restart…** the test campaign. It goes back to day 0, and **The party's campaign** is untouched. Start the real campaign when you're ready for the table.
+
+**The sandbox.** For the steps below, open **Sandbox** and pick *Conservative Commons cart* (an unrestricted strategy study), seed `autumn-940`, "Stop and ask".
 
 | # | Do | Expect |
 |---|---|---|

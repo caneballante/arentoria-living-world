@@ -97,7 +97,8 @@ while (Date.now() < deadline) {
 }
 say(`Ready: ${url}   (press Ctrl+C in this window to stop)`);
 if (open) {
-  const opener = isWin ? ["cmd", ["/c", "start", "", url]] : process.platform === "darwin" ? ["open", [url]] : ["xdg-open", [url]];
+  const page = `${url}/campaign`; // the DM's campaign desk; the sandbox is one click away
+  const opener = isWin ? ["cmd", ["/c", "start", "", page]] : process.platform === "darwin" ? ["open", [page]] : ["xdg-open", [page]];
   try {
     spawn(opener[0], opener[1], { stdio: "ignore", detached: true }).on("error", () => say(`Open ${url} in your browser.`)).unref();
   } catch {

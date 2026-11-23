@@ -15,11 +15,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <header className="topbar">
           <div className="brand">
             <span className="brand-mark">Arentoria Living World</span>
-            <span className="brand-sub">Phase 1 · pie-business sandbox</span>
+            <span className="brand-sub">The party's pie business · runs on the DM's machine</span>
           </div>
           <Nav />
-          <span className="notice" title="Nothing in this sandbox changes campaign canon.">
-            Sandbox · provisional · not canon
+          <span className="notice" title="Simulated results are provisional. Only reports the DM publishes become part of the campaign.">
+            Provisional until the DM publishes
           </span>
         </header>
         <main className="page">{children}</main>

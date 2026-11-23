@@ -117,6 +117,16 @@ Pacing is per in-game time; the DM chooses how far the clock moves each session.
 
 The web UI uses **stateless replay**: it keeps only `{starting plan, plan revisions by day, seed, resolutions, acknowledged events, target day}`, and the server re-simulates from the start each time (a year takes ~10 ms). Hidden state never lives in the browser.
 
+### Campaigns (real and test)
+
+The DM runs the tool on their own machine; nothing is hosted. `src/campaign/model.ts` holds pure functions over a JSON campaign file, and `src/persistence/campaign-files.ts` stores it in `campaigns/` (gitignored; `ARENTORIA_CAMPAIGN_DIR` overrides). There are two fixed campaigns: `party` (real) and `test` (restartable).
+
+- **Published reports are immutable.** Publishing stores the engine state at the end of the stretch (a snapshot) plus a frozen, player-safe `EditionContent` (`src/views/edition.ts`, built through the player-view allow-list). Later runs continue from the latest snapshot, so a recalibration never rewrites published history.
+- **The draft** is everything since the last report: the DM's recorded answers, acknowledged events, plan changes (from tomorrow), size changes and account entries, as scheduled interventions with unique `refId`s. It is replayed from the last snapshot on every request (cheap and deterministic), so the DM can rewind to the last report and run again without losing inputs.
+- **Publishing** refuses while a question is due today, keeps answers to questions that are still open and changes that haven't happened yet, and keeps snapshots for the latest three reports (enough to undo). **Undo** turns the latest report back into a draft with its inputs restored, so re-publishing reproduces it exactly.
+- The real campaign can be started over only before its first report. Every publish, undo and restart first copies the file to `campaigns/backups/`.
+- All campaign routes (`/api/campaigns…`) are DM-only (`resolveRole`). `/api/campaigns/{id}/reports/{n}` returns a report's player-safe JSON, the shape DungeonShare will receive.
+
 ### The business account
 
 The business keeps its own account, separate from the party's purses. Every money movement lands on a dated statement (`business.account.statement`):

@@ -27,8 +27,8 @@ describe("module boundaries", () => {
     }
   });
 
-  it("narrative, analysis and views never import React or Next", () => {
-    for (const dir of ["src/narrative", "src/analysis", "src/views"]) {
+  it("narrative, analysis, views and campaigns never import React or Next", () => {
+    for (const dir of ["src/narrative", "src/analysis", "src/views", "src/campaign"]) {
       for (const f of files(join(root, dir))) for (const i of imports(f)) expect(/^(react|next)/.test(i), `${f} imports ${i}`).toBe(false);
     }
   });
