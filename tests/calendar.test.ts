@@ -73,3 +73,19 @@ describe("the Calendar of Arentor (canon)", () => {
     for (const f of cal.festivals.filter((x) => x.scale === "district")) expect(f.demandMultiplier["*"]).toBeUndefined();
   });
 });
+
+describe("season guide for reports", () => {
+  it("lists every month in order by season, marks now, and the months a report covers", async () => {
+    const { buildCalendarGuide } = await import("../src/views/calendar-guide");
+    const { arentoria, DEFAULT_START_DAY } = await import("../src/world");
+    const g = buildCalendarGuide(arentoria, DEFAULT_START_DAY, DEFAULT_START_DAY + 20); // 12 Rainmoot to 4 Blossom
+    expect(g.slots.map((s) => s.name)).toEqual([...arentoria.calendar.months.map((m) => m.name), "Council Day"]);
+    expect(g.slots.filter((s) => s.current).map((s) => s.name)).toEqual(["Blossom"]);
+    expect(g.slots.filter((s) => s.covered).map((s) => s.name)).toEqual(["Rainmoot", "Blossom"]);
+    expect(g.current).toMatchObject({ name: "Blossom", number: 5, day: 4, season: "spring" });
+    expect(g.next?.name).toBe("Highsun");
+    expect(g.slots.find((s) => s.name === "Midsummer")!.festivals).toContain("Midsummer Revel");
+    expect(g.slots.find((s) => s.name === "Blossom")!.festivals).toEqual([]); // the Festival of the Rose is a district observance
+    expect(g.slots.every((s) => s.character.length > 0)).toBe(true);
+  });
+});

@@ -8,6 +8,7 @@ import { dateFromDay, formatShortDate } from "../engine/calendar";
 import { rngFor } from "../engine/rng";
 import type { RunResult } from "../engine/simulate";
 import type { Notice, WorldDefinition } from "../engine/types";
+import { buildCalendarGuide, type CalendarGuide } from "./calendar-guide";
 import { buildPlayerView } from "./index";
 
 export interface EditionContent {
@@ -39,6 +40,8 @@ export interface EditionContent {
   totals: { weeks: number; piesSold: number; takingsCp: number; earnedCp: number; withdrawnCp: number };
   weeks: { index: number; dateRange: string; produced: number; sold: number; revenueCp: number; profitCp: number; cashEndCp: number; festivals: string[] }[];
   comingUp: { date: string; text: string; festivalId?: string }[];
+  /** Where we are in the year: the season guide shown with the report. */
+  calendar?: CalendarGuide;
   /** Classified ads: reminders of real options (growing, other districts, hires, services). */
   notices?: Notice[];
   /** The party's standing choices (their own plan; nothing hidden). */
@@ -144,6 +147,7 @@ export function buildEdition(world: WorldDefinition, result: RunResult, o: Editi
     },
     weeks: view.weeks.map((w) => ({ index: w.index, dateRange: w.dateRange, produced: w.produced, sold: w.sold, revenueCp: w.revenueCp, profitCp: w.profitCp, cashEndCp: w.cashEndCp, festivals: w.festivals })),
     ...withNotices(world, result, o.number, comingUp),
+    calendar: buildCalendarGuide(world, o.fromDay, o.toDay),
     choices: {
       neighborhood: n?.name ?? plan.neighborhood,
       size,

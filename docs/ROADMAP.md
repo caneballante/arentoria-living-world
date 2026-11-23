@@ -22,7 +22,7 @@ Done:
 - Repriced for fun (Nov 2026): local prices doubled so a starting cart earns about 20 gp a week and established businesses 50–110 gp a week; repair costs raised so risk still bites.
 - The DM's canon calendar (Council Day outside the week; eight citywide and thirteen district or church observances with modest local effects), the major factions, the seven public churches, and the fifteen small-time crews as a pool each campaign draws its district crews from.
 - One-step launcher and a playtest plan (`docs/TEST_PLAN.md`).
-- 141 automated tests.
+- 142 automated tests.
 
 Next small steps (before Phase 2):
 

@@ -16,6 +16,8 @@ export interface MonthConfig {
   name: string;
   days: number;
   season: Season;
+  /** A few words on what the month is like (for players who don't know the calendar). */
+  character?: string;
 }
 
 export interface IntercalaryConfig {

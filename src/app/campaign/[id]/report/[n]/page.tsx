@@ -2,7 +2,10 @@ import { notFound } from "next/navigation";
 import { isCampaignId } from "@/campaign/model";
 import { formatCp } from "@/engine/math";
 import { loadCampaign } from "@/persistence/campaign-files";
+import { CalendarGuide } from "@/ui/CalendarGuide";
 import { PrintButton } from "@/ui/PrintButton";
+import { buildCalendarGuide } from "@/views/calendar-guide";
+import { arentoria } from "@/world";
 import type { EditionContent } from "@/views/edition";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +41,8 @@ function Edition({ e }: { e: EditionContent }) {
         </div>
         <PrintButton />
       </header>
+
+      <CalendarGuide guide={e.calendar ?? buildCalendarGuide(arentoria, e.period.fromDay, e.period.toDay)} />
 
       <section className="edition-letter">
         <p className="salute">To the partners of {e.business.name},</p>

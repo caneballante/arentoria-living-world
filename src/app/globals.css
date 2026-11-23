@@ -315,3 +315,31 @@ details > summary { cursor: pointer; color: var(--ink-2); }
 .notice-grow { border-width: 2px; }
 .notice-district { border-style: double; border-width: 3px; }
 @media print { .notice-ad { background: none; break-inside: avoid; } }
+
+/* Season guide (where we are in the year) */
+:root { --winter: #e6eef6; --winter-ink: #2f5576; --spring: #e5f2e3; --spring-ink: #2e6a32; --summer: #fbf0d4; --summer-ink: #8a5a12; --autumn: #f7e3d6; --autumn-ink: #9a4320; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --winter: #1c2733; --winter-ink: #9cc1e4; --spring: #1d2a1d; --spring-ink: #9fd39a; --summer: #2e2618; --summer-ink: #e0b062; --autumn: #2f2019; --autumn-ink: #f0a47c; } }
+:root[data-theme="dark"] { --winter: #1c2733; --winter-ink: #9cc1e4; --spring: #1d2a1d; --spring-ink: #9fd39a; --summer: #2e2618; --summer-ink: #e0b062; --autumn: #2f2019; --autumn-ink: #f0a47c; }
+.calendar-guide { display: flex; flex-direction: column; gap: 6px; }
+.cg-seasons { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 640px) { .cg-seasons { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cg-season { border-radius: 6px; padding: 6px 8px 8px; min-width: 0; }
+.cg-winter { background: var(--winter); color: var(--winter-ink); }
+.cg-spring { background: var(--spring); color: var(--spring-ink); }
+.cg-summer { background: var(--summer); color: var(--summer-ink); }
+.cg-autumn { background: var(--autumn); color: var(--autumn-ink); }
+.cg-season-name { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.cg-months { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.cg-months li { display: flex; align-items: baseline; gap: 5px; font-size: 12.5px; color: var(--ink); padding: 2px 4px; border-radius: 4px; flex-wrap: wrap; }
+.cg-name { white-space: nowrap; }
+.cg-num { font-size: 10px; color: var(--muted); min-width: 1.4em; text-align: right; font-variant-numeric: tabular-nums; }
+.cg-fest { font-size: 10px; opacity: 0.8; }
+.cg-intercalary .cg-name { font-style: italic; }
+.cg-covered { background: color-mix(in srgb, currentColor 10%, transparent); }
+.cg-now { background: var(--surface-1); outline: 2px solid currentColor; font-weight: 700; }
+.cg-tag { font-size: 10.5px; font-weight: 700; color: inherit; margin-left: auto; white-space: nowrap; }
+.cg-now .cg-tag { color: var(--ink); }
+.cg-caption { margin: 0; font-size: 13px; color: var(--ink-2); }
+.cg-legend { color: var(--muted); font-size: 12px; }
+.calendar-guide.compact .cg-months li { font-size: 12px; padding: 1px 3px; }
+@media print { .cg-season { break-inside: avoid; } .cg-now { outline-width: 2px; } }

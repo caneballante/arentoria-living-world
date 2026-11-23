@@ -19,6 +19,7 @@ import { parsePlan, safeParsePlan, type BusinessPlanInput } from "../engine/plan
 import { checkPlan, createInitialState, restore, runSimulation, snapshot, type PauseMode, type RunResult, type ScheduledIntervention } from "../engine/simulate";
 import type { SandboxAssumptions, WorldDefinition, WorldState } from "../engine/types";
 import { buildDmView, type DmView } from "../views";
+import { buildCalendarGuide, type CalendarGuide } from "../views/calendar-guide";
 import { buildEdition, type EditionContent } from "../views/edition";
 
 export const CAMPAIGN_IDS = ["party", "test"] as const;
@@ -193,11 +194,19 @@ export interface CampaignView {
   view: DmView;
   /** Answers recorded so far for questions that are still open. */
   answers: Record<string, string>;
+  /** Where the clock is in the year, and the months since the last report. */
+  calendar: CalendarGuide;
 }
 
 export function campaignView(world: WorldDefinition, c: CampaignFile): CampaignView {
   const result = runDraft(world, c);
-  return { campaign: summarize(world, c, result), view: buildDmView(world, result, { digestFromDay: publishedDay(c) + 1 }), answers: c.draft.resolutions };
+  const last = Math.max(result.state.day - 1, c.startDay);
+  return {
+    campaign: summarize(world, c, result),
+    view: buildDmView(world, result, { digestFromDay: publishedDay(c) + 1 }),
+    answers: c.draft.resolutions,
+    calendar: buildCalendarGuide(world, Math.min(publishedDay(c) + 1, last), last),
+  };
 }
 
 const touch = (c: CampaignFile, now: string): CampaignFile => ({ ...c, updatedAt: now });

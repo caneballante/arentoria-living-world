@@ -5,6 +5,7 @@
  * DM did (advance, answer, change orders, money in/out, publish) and shows the result.
  */
 import { useCallback, useEffect, useState } from "react";
+import { CalendarGuide } from "./CalendarGuide";
 import { PlanEditor } from "./PlanEditor";
 import { ResultsView } from "./ResultsView";
 import type { BusinessPlanInput, CampaignSummary, CampaignView, Catalog } from "./types";
@@ -291,6 +292,9 @@ export function CampaignApp({ catalog }: { catalog: Catalog }) {
                     <option value="never">Don't stop (use standing orders)</option>
                   </select>
                 </label>
+              </div>
+              <div className="panel-pad" style={{ borderTop: "1px solid var(--border)", paddingTop: 10, paddingBottom: 10 }}>
+                <CalendarGuide guide={data.calendar} compact />
               </div>
               {summary.draftDays > 0 && (
                 <div className="runbar" style={{ borderTop: "1px solid var(--border)", paddingTop: 10 }}>
